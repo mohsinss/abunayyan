@@ -24,6 +24,29 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+
+    /* ============ ATLAS EDITORIAL PALETTE ============ */
+    /* Dashboard-only tokens. Namespace prevents collision with shadcn. */
+    --atlas-bg: #fafaf7;
+    --atlas-bg-2: #ffffff;
+    --atlas-bg-3: #f2f0e9;
+    --atlas-bg-4: #e8e5db;
+    --atlas-ink: #1a1a1a;
+    --atlas-ink-2: #4a4a48;
+    --atlas-ink-3: #8a8780;
+    --atlas-ink-4: #c2bfb4;
+    --atlas-line: #e4e1d5;
+    --atlas-line-2: #d4d0c2;
+    --atlas-accent: #8B6F2E;
+    --atlas-accent-2: #b8923f;
+    --atlas-accent-soft: #f5efd9;
+    --atlas-alert: #a33828;
+    --atlas-alert-soft: #f7e6e2;
+    --atlas-warn: #b86f1d;
+    --atlas-warn-soft: #fbeed9;
+    --atlas-ok: #4a6b35;
+    --atlas-ok-2: #6d8c52;
+    --atlas-ok-soft: #eaf0dd;
   }
 
   .dark {
@@ -56,5 +79,21 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .atlas-scroll {
+    scroll-behavior: smooth;
+  }
+  .atlas-scope {
+    background: var(--atlas-bg);
+    color: var(--atlas-ink);
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(139, 111, 46, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(74, 107, 53, 0.03) 0%, transparent 40%);
+  }
+  .atlas-section-anchor {
+    scroll-margin-top: 80px;
   }
 }
