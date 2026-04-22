@@ -30,26 +30,36 @@ function intensityQuantile(amount: number, sorted: number[]) {
   return rank === -1 ? 1 : rank / Math.max(sorted.length - 1, 1);
 }
 
-// Diverging green → yellow → red scale. Low allocation = green (light burden),
-// mid = amber, high = saturated red. HSL interpolation keeps the hues vivid.
+// Diverging green → lime → yellow → orange → red scale.
+// Alpha scales with intensity so small allocations fade into the
+// background and large ones saturate — restoring the depth the
+// original single-tone heatmap had, just with hue semantics layered
+// on top. Curve is sqrt() so the mid/upper range fills out more of
+// the palette instead of everything clustering in pale green.
 function intensityToColor(t: number): string {
-  const k = Math.max(0, Math.min(1, t));
+  const raw = Math.max(0, Math.min(1, t));
+  const k = Math.sqrt(raw); // pull mid-range values toward the colorful end
+  let h: number;
+  let s: number;
+  let l: number;
   if (k <= 0.5) {
     const a = k * 2;
-    const h = 95 - a * 45; // 95 (green) → 50 (yellow)
-    const s = 42 + a * 28; // 42% → 70%
-    const l = 78 - a * 16; // 78% → 62%
-    return `hsl(${h}, ${s}%, ${l}%)`;
+    h = 110 - a * 60; // 110 (green) → 50 (yellow)
+    s = 55 + a * 25; // 55% → 80%
+    l = 65 - a * 10; // 65% → 55%
+  } else {
+    const a = (k - 0.5) * 2;
+    h = 50 - a * 45; // 50 (yellow) → 5 (red)
+    s = 80 + a * 10; // 80% → 90%
+    l = 55 - a * 15; // 55% → 40%
   }
-  const a = (k - 0.5) * 2;
-  const h = 50 - a * 40; // 50 (yellow) → 10 (red)
-  const s = 70 + a * 10; // 70% → 80%
-  const l = 62 - a * 22; // 62% → 40%
-  return `hsl(${h}, ${s}%, ${l}%)`;
+  const alpha = 0.25 + k * 0.75; // 0.25 floor so tiny cells still read, 1.0 ceiling
+  return `hsla(${h}, ${s}%, ${l}%, ${alpha})`;
 }
 
 function textColorFor(t: number): string {
-  return t > 0.6 ? "#ffffff" : "var(--atlas-ink)";
+  // White text once the background is deep enough that dark ink loses contrast.
+  return Math.sqrt(t) > 0.68 ? "#ffffff" : "var(--atlas-ink)";
 }
 
 export function CostMatrixSection() {
