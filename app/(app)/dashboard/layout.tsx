@@ -1,4 +1,5 @@
 import { Fraunces, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { AtlasChat } from "@/components/dashboard/chat/atlas-chat";
 import { SelectedEntityProvider } from "@/components/dashboard/selected-entity-provider";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 
@@ -33,6 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <SidebarNav />
           <main className="min-w-0 flex-1">{children}</main>
         </div>
+        <AtlasChat />
       </SelectedEntityProvider>
     </div>
   );
