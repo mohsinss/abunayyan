@@ -13,6 +13,7 @@ import {
 type ColumnSort = "total" | "alpha" | "score";
 type RowSort = "budget" | "allocation" | "alpha";
 type ScaleMode = "linear" | "quantile" | "log";
+type ScopeMode = "row" | "matrix";
 
 function intensityLinear(amount: number, max: number) {
   if (amount <= 0) return 0;
@@ -66,6 +67,7 @@ export function CostMatrixSection() {
   const [columnSort, setColumnSort] = useState<ColumnSort>("alpha");
   const [rowSort, setRowSort] = useState<RowSort>("budget");
   const [scale, setScale] = useState<ScaleMode>("linear");
+  const [scope, setScope] = useState<ScopeMode>("row");
   const { hoveredId, hoverEntity, selectEntity, isActive } = useSelectedEntity();
   const [hoverDept, setHoverDept] = useState<string | null>(null);
 
@@ -109,12 +111,21 @@ export function CostMatrixSection() {
     return t;
   }, [columns, rows]);
 
-  const intensity = (amount: number) =>
-    scale === "linear"
-      ? intensityLinear(amount, max)
-      : scale === "log"
-        ? intensityLog(amount, max)
-        : intensityQuantile(amount, allAmounts);
+  // Intensity is computed against either the whole matrix (scope=matrix)
+  // or just the current row (scope=row). Per-row scope lets each department's
+  // color gradient tell its own story — a 500 SAR cell in Treasury's 4.9M
+  // budget reads as "hot" for that row even though it's cool against ICT.
+  function intensityFor(amount: number, rowMax: number, rowSorted: number[]): number {
+    if (amount <= 0) return 0;
+    if (scope === "row") {
+      if (scale === "linear") return intensityLinear(amount, rowMax);
+      if (scale === "log") return intensityLog(amount, rowMax);
+      return intensityQuantile(amount, rowSorted);
+    }
+    if (scale === "linear") return intensityLinear(amount, max);
+    if (scale === "log") return intensityLog(amount, max);
+    return intensityQuantile(amount, allAmounts);
+  }
 
   return (
     <SectionShell
@@ -154,16 +165,27 @@ export function CostMatrixSection() {
               ]}
             />
           </div>
-          <Segmented
-            label="Scale"
-            value={scale}
-            onChange={setScale}
-            options={[
-              { value: "linear", label: "Linear" },
-              { value: "quantile", label: "Quantile" },
-              { value: "log", label: "Log" },
-            ]}
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <Segmented
+              label="Scope"
+              value={scope}
+              onChange={setScope}
+              options={[
+                { value: "row", label: "Per row" },
+                { value: "matrix", label: "Matrix" },
+              ]}
+            />
+            <Segmented
+              label="Scale"
+              value={scale}
+              onChange={setScale}
+              options={[
+                { value: "linear", label: "Linear" },
+                { value: "quantile", label: "Quantile" },
+                { value: "log", label: "Log" },
+              ]}
+            />
+          </div>
         </Toolbar>
 
         <div className="-mx-6 overflow-x-auto px-6">
@@ -202,6 +224,9 @@ export function CostMatrixSection() {
             <tbody>
               {rows.map((r) => {
                 const deptHighlight = hoverDept === r.deptId;
+                const rowValues = Object.values(r.cells).filter((v) => v > 0);
+                const rowMax = rowValues.length ? Math.max(...rowValues) : 0;
+                const rowSorted = [...rowValues].sort((a, b) => a - b);
                 return (
                   <tr
                     key={r.deptId}
@@ -220,7 +245,7 @@ export function CostMatrixSection() {
                     </td>
                     {columns.map((c) => {
                       const amount = r.cells[c.id] || 0;
-                      const t = intensity(amount);
+                      const t = intensityFor(amount, rowMax, rowSorted);
                       const colActive =
                         hoveredId === c.id || isActive(c.id) || deptHighlight;
                       const bg = amount > 0 ? intensityToColor(t) : "transparent";
@@ -274,7 +299,7 @@ export function CostMatrixSection() {
 
         <div className="mt-5 flex flex-col gap-2 border-t border-dashed border-atlas-line pt-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="font-mono text-[9px] uppercase tracking-[1.2px] text-atlas-ink-3">
-            Cell values in thousand SAR (÷ 1,000) · intensity rescales with the selector above
+            Values in thousand SAR · {scope === "row" ? "each row has its own color scale" : "shared scale across the whole matrix"}
           </div>
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] uppercase tracking-[1.5px] text-atlas-ink-3">
