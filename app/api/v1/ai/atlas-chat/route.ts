@@ -11,18 +11,31 @@ export const maxDuration = 60;
 
 const chartTool = tool({
   description:
-    "Render a chart inline in the chat. Use 'bar' for rankings, 'horizontal-bar' for side-by-side comparisons of many entities, 'pie' for share-of-whole distributions, 'scatter' for relationships between two numeric metrics. Data points require a label and numeric value (x/y for scatter).",
+    "Render a chart inline in the chat. Use 'bar' for rankings, 'horizontal-bar' for side-by-side comparisons of many entities, 'pie' for share-of-whole distributions, 'scatter' for relationships between two numeric metrics. CRITICAL: keep labels under 22 characters and units as short abbreviations (e.g. 'SAR', '%', 'M SAR', 'emp'). Never embed explanations in labels or units — that's what `title` and `description` are for.",
   parameters: z.object({
     type: z.enum(["bar", "horizontal-bar", "pie", "scatter"]),
-    title: z.string(),
-    description: z.string().optional(),
-    unit: z.string().optional().describe("e.g. 'SAR', '%', 'employees'"),
-    xAxisLabel: z.string().optional(),
-    yAxisLabel: z.string().optional(),
+    title: z.string().max(90).describe("Chart title — keep under 90 chars."),
+    description: z
+      .string()
+      .max(140)
+      .optional()
+      .describe("Short subtitle / context. Under 140 chars."),
+    unit: z
+      .string()
+      .max(8)
+      .optional()
+      .describe(
+        "Short unit abbreviation only — max 8 chars. Examples: 'SAR', 'M SAR', '%', 'emp'. Never a full phrase.",
+      ),
+    xAxisLabel: z.string().max(30).optional(),
+    yAxisLabel: z.string().max(30).optional(),
     data: z
       .array(
         z.object({
-          label: z.string(),
+          label: z
+            .string()
+            .max(24)
+            .describe("Short category name — max 24 chars. Entity name only; no values or notes."),
           value: z.number().optional(),
           x: z.number().optional(),
           y: z.number().optional(),

@@ -47,14 +47,92 @@ function hsl(t: number): string {
   return `hsl(${50 - a * 45}, ${80 + a * 10}%, ${48 - a * 10}%)`;
 }
 
+// If the model ships a verbose "unit" (> MAX_UNIT_LEN) we drop it from
+// inline labels so the bar text stays readable. The full unit still
+// shows up in the chart description / tooltips.
+const MAX_UNIT_LEN = 10;
+
+function cleanUnit(unit?: string): string {
+  if (!unit) return "";
+  const trimmed = unit.trim();
+  if (trimmed.length > MAX_UNIT_LEN) return "";
+  return trimmed;
+}
+
 function formatValue(v: number | undefined, unit?: string): string {
   if (v === undefined) return "";
+  const u = cleanUnit(unit);
+  const suffix = u ? ` ${u}` : "";
   const abs = Math.abs(v);
-  if (unit === "%") return `${(v * (abs > 1 ? 1 : 100)).toFixed(1)}%`;
-  if (abs >= 1e9) return `${(v / 1e9).toFixed(2)}B${unit ? ` ${unit}` : ""}`;
-  if (abs >= 1e6) return `${(v / 1e6).toFixed(2)}M${unit ? ` ${unit}` : ""}`;
-  if (abs >= 1e3) return `${(v / 1e3).toFixed(1)}K${unit ? ` ${unit}` : ""}`;
-  return `${v.toFixed(abs < 10 && abs > 0 ? 2 : 0)}${unit ? ` ${unit}` : ""}`;
+  if (u === "%") return `${(v * (abs > 1 ? 1 : 100)).toFixed(1)}%`;
+  if (abs >= 1e9) return `${(v / 1e9).toFixed(2)}B${suffix}`;
+  if (abs >= 1e6) return `${(v / 1e6).toFixed(2)}M${suffix}`;
+  if (abs >= 1e3) return `${(v / 1e3).toFixed(1)}K${suffix}`;
+  return `${v.toFixed(abs < 10 && abs > 0 ? 2 : 0)}${suffix}`;
+}
+
+// Truncate a label with an ellipsis. The full string is kept on a
+// <title> element so the browser tooltip shows the untruncated text.
+const MAX_LABEL_LEN = 22;
+
+function truncate(s: string, max = MAX_LABEL_LEN): string {
+  if (s.length <= max) return s;
+  return s.slice(0, max - 1).trimEnd() + "…";
+}
+
+// Custom Recharts YAxis tick for horizontal bars. Truncates overflow
+// and exposes the full label via SVG <title> on hover.
+function HorizontalBarTick(props: {
+  x?: number;
+  y?: number;
+  payload?: { value?: string };
+}) {
+  const raw = String(props.payload?.value ?? "");
+  const shown = truncate(raw);
+  return (
+    <g transform={`translate(${props.x},${props.y})`}>
+      <text
+        x={-6}
+        y={0}
+        dy={3}
+        textAnchor="end"
+        fontFamily="var(--font-plex-sans)"
+        fontSize={11}
+        fill="var(--atlas-ink)"
+      >
+        {shown}
+        {raw !== shown && <title>{raw}</title>}
+      </text>
+    </g>
+  );
+}
+
+// Vertical (bottom-axis) tick with rotation + truncation for many categories.
+function BottomCategoryTick(props: {
+  x?: number;
+  y?: number;
+  payload?: { value?: string };
+  rotate?: boolean;
+}) {
+  const raw = String(props.payload?.value ?? "");
+  const shown = truncate(raw, props.rotate ? 14 : 18);
+  return (
+    <g transform={`translate(${props.x},${props.y})`}>
+      <text
+        x={0}
+        y={0}
+        dy={props.rotate ? 4 : 14}
+        textAnchor={props.rotate ? "end" : "middle"}
+        transform={props.rotate ? "rotate(-30)" : undefined}
+        fontFamily="var(--font-plex-mono)"
+        fontSize={9}
+        fill="var(--atlas-ink-3)"
+      >
+        {shown}
+        {raw !== shown && <title>{raw}</title>}
+      </text>
+    </g>
+  );
 }
 
 function rankColor(i: number, total: number, tone?: ChartArgs["data"][0]["tone"]): string {
@@ -92,24 +170,26 @@ export function ChatChart({ args }: { args: ChartArgs }) {
       </figcaption>
       <div className="px-2 py-3">
         {type === "horizontal-bar" && (
-          <ResponsiveContainer width="100%" height={Math.max(sorted.length * 24 + 20, 120)}>
+          <ResponsiveContainer width="100%" height={Math.max(sorted.length * 26 + 20, 120)}>
             <BarChart
               data={sorted}
               layout="vertical"
-              margin={{ top: 4, right: 60, bottom: 4, left: 70 }}
+              margin={{ top: 4, right: 72, bottom: 4, left: 8 }}
             >
               <XAxis type="number" hide />
               <YAxis
                 dataKey="label"
                 type="category"
-                width={70}
-                tick={{ fontSize: 10, fontFamily: "var(--font-plex-sans)", fill: "var(--atlas-ink)" }}
+                width={150}
+                tick={<HorizontalBarTick />}
                 axisLine={false}
                 tickLine={false}
+                interval={0}
               />
               <Tooltip
                 cursor={{ fill: "var(--atlas-bg-3)" }}
                 contentStyle={tooltipStyle}
+                labelFormatter={(l) => String(l)}
                 formatter={(v) => [formatValue(Number(v), unit), ""]}
               />
               <Bar
@@ -119,8 +199,8 @@ export function ChatChart({ args }: { args: ChartArgs }) {
                   position: "right",
                   formatter: (v: unknown) => formatValue(Number(v), unit),
                   fontFamily: "var(--font-plex-mono)",
-                  fontSize: 9,
-                  fill: "var(--atlas-ink-3)",
+                  fontSize: 10,
+                  fill: "var(--atlas-ink-2)",
                 }}
               >
                 {sorted.map((d, i) => (
@@ -132,27 +212,35 @@ export function ChatChart({ args }: { args: ChartArgs }) {
         )}
 
         {type === "bar" && (
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={sorted} margin={{ top: 8, right: 8, bottom: 18, left: 8 }}>
+          <ResponsiveContainer width="100%" height={230}>
+            <BarChart
+              data={sorted}
+              margin={{
+                top: 8,
+                right: 8,
+                bottom: sorted.length > 6 ? 56 : 24,
+                left: 8,
+              }}
+            >
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 9, fontFamily: "var(--font-plex-mono)", fill: "var(--atlas-ink-3)" }}
+                tick={<BottomCategoryTick rotate={sorted.length > 6} />}
                 axisLine={{ stroke: "var(--atlas-line-2)" }}
                 tickLine={false}
                 interval={0}
-                angle={sorted.length > 6 ? -30 : 0}
-                textAnchor={sorted.length > 6 ? "end" : "middle"}
-                height={sorted.length > 6 ? 48 : 20}
+                height={sorted.length > 6 ? 56 : 24}
               />
               <YAxis
                 tick={{ fontSize: 9, fontFamily: "var(--font-plex-mono)", fill: "var(--atlas-ink-3)" }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => formatValue(v, unit)}
+                width={48}
               />
               <Tooltip
                 cursor={{ fill: "var(--atlas-bg-3)" }}
                 contentStyle={tooltipStyle}
+                labelFormatter={(l) => String(l)}
                 formatter={(v) => [formatValue(Number(v), unit), ""]}
               />
               <Bar dataKey="value" radius={[2, 2, 0, 0]}>

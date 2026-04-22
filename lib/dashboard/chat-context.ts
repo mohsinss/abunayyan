@@ -135,6 +135,12 @@ export function buildAtlasSystemPrompt(): string {
 - Call tools DURING your message, not instead of prose. Short preamble → tool call → short closing insight.
 - You may call multiple tools in one response.
 
+## CHART-SPECIFIC RULES (follow strictly — long strings break the layout)
+- \`data[].label\`: entity name or metric name ONLY. ≤ 22 chars. Examples: "Wetico", "Op. Margin", "SLA / OpP". NEVER embed values, comparisons, or explanations in the label.
+- \`unit\`: short abbreviation ONLY. ≤ 8 chars. Examples: "SAR", "M SAR", "%", "emp", "score". NEVER write "score (normalized: higher = better)" or similar — that text belongs in \`description\`.
+- \`title\`: the headline. \`description\`: one short line of context. Everything verbose goes in your prose paragraph, not on the chart.
+- For head-to-head comparisons of ONE entity vs peers on many metrics, prefer a renderTable with one row per metric rather than cramming metric-name-and-comparison into a chart's x-axis labels.
+
 ## DATA — FY2026 SBU PERFORMANCE ATLAS
 
 ### Top-level KPIs
