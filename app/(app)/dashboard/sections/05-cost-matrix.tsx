@@ -30,6 +30,28 @@ function intensityQuantile(amount: number, sorted: number[]) {
   return rank === -1 ? 1 : rank / Math.max(sorted.length - 1, 1);
 }
 
+// Diverging green → yellow → red scale. Low allocation = green (light burden),
+// mid = amber, high = saturated red. HSL interpolation keeps the hues vivid.
+function intensityToColor(t: number): string {
+  const k = Math.max(0, Math.min(1, t));
+  if (k <= 0.5) {
+    const a = k * 2;
+    const h = 95 - a * 45; // 95 (green) → 50 (yellow)
+    const s = 42 + a * 28; // 42% → 70%
+    const l = 78 - a * 16; // 78% → 62%
+    return `hsl(${h}, ${s}%, ${l}%)`;
+  }
+  const a = (k - 0.5) * 2;
+  const h = 50 - a * 40; // 50 (yellow) → 10 (red)
+  const s = 70 + a * 10; // 70% → 80%
+  const l = 62 - a * 22; // 62% → 40%
+  return `hsl(${h}, ${s}%, ${l}%)`;
+}
+
+function textColorFor(t: number): string {
+  return t > 0.6 ? "#ffffff" : "var(--atlas-ink)";
+}
+
 export function CostMatrixSection() {
   const [columnSort, setColumnSort] = useState<ColumnSort>("alpha");
   const [rowSort, setRowSort] = useState<RowSort>("budget");
@@ -97,7 +119,7 @@ export function CostMatrixSection() {
     >
       <Card
         title="Cross-departmental SLA allocation"
-        subtitle="Values in SAR · hover a cell for details · click column header to select entity"
+        subtitle="Green = light SLA burden · red = heavy burden · values in thousand SAR"
       >
         <Toolbar>
           <div className="flex flex-wrap items-center gap-3">
@@ -188,21 +210,23 @@ export function CostMatrixSection() {
                     </td>
                     {columns.map((c) => {
                       const amount = r.cells[c.id] || 0;
-                      const alpha = intensity(amount);
+                      const t = intensity(amount);
                       const colActive =
                         hoveredId === c.id || isActive(c.id) || deptHighlight;
+                      const bg = amount > 0 ? intensityToColor(t) : "transparent";
+                      const fg = amount > 0 ? textColorFor(t) : "var(--atlas-ink-4)";
                       return (
                         <td
                           key={c.id}
-                          className={`border-b border-atlas-line px-2 py-2.5 text-right tabular-nums transition-colors ${
-                            amount === 0 ? "text-atlas-ink-4" : "text-atlas-ink"
-                          }`}
+                          className="border-b border-atlas-line px-2 py-2.5 text-right font-medium tabular-nums transition-all"
                           style={{
-                            backgroundColor:
-                              amount > 0
-                                ? `rgba(139, 111, 46, ${alpha * 0.55})`
-                                : "transparent",
-                            outline: colActive && amount > 0 ? "1px solid var(--atlas-gold)" : "none",
+                            backgroundColor: bg,
+                            color: fg,
+                            outline:
+                              colActive && amount > 0
+                                ? "2px solid var(--atlas-ink)"
+                                : "none",
+                            outlineOffset: colActive && amount > 0 ? "-2px" : "0",
                           }}
                           title={`${r.name} → ${c.name}: ${amount.toLocaleString()} SAR`}
                         >
@@ -236,8 +260,25 @@ export function CostMatrixSection() {
               </tr>
             </tbody>
           </table>
-          <div className="mt-2 font-mono text-[9px] uppercase tracking-[1px] text-atlas-ink-3">
-            Cell values in thousand SAR (÷ 1,000). Intensity re-scales with the selector above.
+        </div>
+
+        <div className="mt-5 flex flex-col gap-2 border-t border-dashed border-atlas-line pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="font-mono text-[9px] uppercase tracking-[1.2px] text-atlas-ink-3">
+            Cell values in thousand SAR (÷ 1,000) · intensity rescales with the selector above
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[9px] uppercase tracking-[1.5px] text-atlas-ink-3">
+              Low
+            </span>
+            <div
+              className="h-3 w-56 rounded-full border border-atlas-line"
+              style={{
+                background: `linear-gradient(to right, ${intensityToColor(0)} 0%, ${intensityToColor(0.25)} 25%, ${intensityToColor(0.5)} 50%, ${intensityToColor(0.75)} 75%, ${intensityToColor(1)} 100%)`,
+              }}
+            />
+            <span className="font-mono text-[9px] uppercase tracking-[1.5px] text-atlas-ink-3">
+              High
+            </span>
           </div>
         </div>
       </Card>

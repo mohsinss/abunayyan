@@ -200,6 +200,7 @@ export function QuadrantAnalysisSection() {
   const [xScaleA, setXScaleA] = useState<"linear" | "log">("log");
   const [labelsA, setLabelsA] = useState<"always" | "hover">("always");
   const [labelsB, setLabelsB] = useState<"always" | "hover">("always");
+  const [layout, setLayout] = useState<"stacked" | "side-by-side">("stacked");
   const { selectEntity } = useSelectedEntity();
 
   const handleClick = (id: string) => {
@@ -218,7 +219,22 @@ export function QuadrantAnalysisSection() {
       }
       description="Where each SBU lives on two pain axes"
     >
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mb-4 flex justify-end">
+        <Segmented
+          label="Layout"
+          value={layout}
+          onChange={setLayout}
+          options={[
+            { value: "stacked", label: "Stacked" },
+            { value: "side-by-side", label: "Side by side" },
+          ]}
+        />
+      </div>
+      <div
+        className={`grid gap-5 ${
+          layout === "side-by-side" ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"
+        }`}
+      >
         <Card
           title="Damage vs Scale"
           subtitle="SLA impact to op. profit (y) against revenue size (x)"

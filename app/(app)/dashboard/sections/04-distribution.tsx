@@ -311,6 +311,8 @@ function DistributionPanel({
 }
 
 export function DistributionSection() {
+  const [layout, setLayout] = useState<"stacked" | "side-by-side">("stacked");
+
   return (
     <SectionShell
       id="distribution"
@@ -322,7 +324,22 @@ export function DistributionSection() {
       }
       description="Absolute scale · relative concentration"
     >
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mb-4 flex justify-end">
+        <Segmented
+          label="Layout"
+          value={layout}
+          onChange={setLayout}
+          options={[
+            { value: "stacked", label: "Stacked" },
+            { value: "side-by-side", label: "Side by side" },
+          ]}
+        />
+      </div>
+      <div
+        className={`grid gap-5 ${
+          layout === "side-by-side" ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"
+        }`}
+      >
         <DistributionPanel
           title="Revenue FY2026"
           subtitle="Distribution across 14 operating entities"
