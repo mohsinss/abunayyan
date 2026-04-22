@@ -15,18 +15,28 @@ type RowSort = "budget" | "allocation" | "alpha";
 type ScaleMode = "linear" | "quantile" | "log";
 type ScopeMode = "row" | "matrix";
 
-function intensityLinear(amount: number, max: number) {
+// All three scale modes ignore zero/empty cells when computing the
+// normalization bounds — a missing allocation shouldn't pull the ramp.
+// Uniform non-zero rows (e.g. Strategy: every cell = 810) collapse to
+// a mid-scale color instead of painting everything red.
+function intensityLinear(amount: number, min: number, max: number) {
   if (amount <= 0) return 0;
-  return Math.min(amount / max, 1);
+  if (max <= min) return 0.5;
+  return Math.min(Math.max((amount - min) / (max - min), 0), 1);
 }
 
-function intensityLog(amount: number, max: number) {
+function intensityLog(amount: number, min: number, max: number) {
   if (amount <= 0) return 0;
-  return Math.min(Math.log10(amount + 1) / Math.log10(max + 1), 1);
+  if (max <= min) return 0.5;
+  const la = Math.log10(amount + 1);
+  const lo = Math.log10(min + 1);
+  const hi = Math.log10(max + 1);
+  return Math.min(Math.max((la - lo) / (hi - lo), 0), 1);
 }
 
 function intensityQuantile(amount: number, sorted: number[]) {
-  if (amount <= 0) return 0;
+  if (amount <= 0 || sorted.length === 0) return 0;
+  if (sorted.length === 1) return 0.5;
   const rank = sorted.findIndex((v) => v >= amount);
   return rank === -1 ? 1 : rank / Math.max(sorted.length - 1, 1);
 }
@@ -71,7 +81,7 @@ export function CostMatrixSection() {
   const { hoveredId, hoverEntity, selectEntity, isActive } = useSelectedEntity();
   const [hoverDept, setHoverDept] = useState<string | null>(null);
 
-  const { max } = matrixRange();
+  const { min: matrixMin, max: matrixMax } = matrixRange();
   const allAmounts = useMemo(() => {
     const rows = matrixRows();
     const values: number[] = [];
@@ -115,15 +125,21 @@ export function CostMatrixSection() {
   // or just the current row (scope=row). Per-row scope lets each department's
   // color gradient tell its own story — a 500 SAR cell in Treasury's 4.9M
   // budget reads as "hot" for that row even though it's cool against ICT.
-  function intensityFor(amount: number, rowMax: number, rowSorted: number[]): number {
+  // Zero/empty cells are excluded from min/max and from the quantile ranks.
+  function intensityFor(
+    amount: number,
+    rowMin: number,
+    rowMax: number,
+    rowSorted: number[],
+  ): number {
     if (amount <= 0) return 0;
     if (scope === "row") {
-      if (scale === "linear") return intensityLinear(amount, rowMax);
-      if (scale === "log") return intensityLog(amount, rowMax);
+      if (scale === "linear") return intensityLinear(amount, rowMin, rowMax);
+      if (scale === "log") return intensityLog(amount, rowMin, rowMax);
       return intensityQuantile(amount, rowSorted);
     }
-    if (scale === "linear") return intensityLinear(amount, max);
-    if (scale === "log") return intensityLog(amount, max);
+    if (scale === "linear") return intensityLinear(amount, matrixMin, matrixMax);
+    if (scale === "log") return intensityLog(amount, matrixMin, matrixMax);
     return intensityQuantile(amount, allAmounts);
   }
 
@@ -226,6 +242,7 @@ export function CostMatrixSection() {
                 const deptHighlight = hoverDept === r.deptId;
                 const rowValues = Object.values(r.cells).filter((v) => v > 0);
                 const rowMax = rowValues.length ? Math.max(...rowValues) : 0;
+                const rowMin = rowValues.length ? Math.min(...rowValues) : 0;
                 const rowSorted = [...rowValues].sort((a, b) => a - b);
                 return (
                   <tr
@@ -245,7 +262,7 @@ export function CostMatrixSection() {
                     </td>
                     {columns.map((c) => {
                       const amount = r.cells[c.id] || 0;
-                      const t = intensityFor(amount, rowMax, rowSorted);
+                      const t = intensityFor(amount, rowMin, rowMax, rowSorted);
                       const colActive =
                         hoveredId === c.id || isActive(c.id) || deptHighlight;
                       const bg = amount > 0 ? intensityToColor(t) : "transparent";

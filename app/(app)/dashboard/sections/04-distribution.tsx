@@ -25,21 +25,32 @@ import {
 type ViewMode = "bar" | "treemap" | "donut";
 type SortMode = "value" | "alpha";
 
-const DIST_COLORS = [
-  "var(--atlas-ok)",
-  "var(--atlas-ok-2)",
-  "#a8b876",
-  "var(--atlas-accent-2)",
-  "var(--atlas-accent)",
-  "var(--atlas-warn)",
-  "#d48543",
-  "var(--atlas-alert)",
-  "#c44536",
-];
+// Same diverging HSL scale as the cost matrix, but inverted semantically:
+// high revenue / profit = GREEN (healthy), low = RED (thin). Input t is
+// "position in the sorted list" (0 = biggest, 1 = smallest). We map that
+// directly: t=0 → deep green, t=0.5 → yellow/amber, t=1 → deep red.
+function distributionColor(t: number): string {
+  const k = Math.max(0, Math.min(1, t));
+  let h: number;
+  let s: number;
+  let l: number;
+  if (k <= 0.5) {
+    const a = k * 2; // 0 → green to yellow
+    h = 110 - a * 60; // 110 (green) → 50 (yellow)
+    s = 55 + a * 25; // 55% → 80%
+    l = 48 - a * 5; // 48% → 43%
+  } else {
+    const a = (k - 0.5) * 2; // yellow to red
+    h = 50 - a * 45; // 50 → 5
+    s = 80 + a * 10; // 80% → 90%
+    l = 48 - a * 10; // 48% → 38%
+  }
+  return `hsl(${h}, ${s}%, ${l}%)`;
+}
 
 function colorForRank(rank: number, total: number) {
-  const idx = Math.floor((rank / total) * DIST_COLORS.length);
-  return DIST_COLORS[Math.min(idx, DIST_COLORS.length - 1)];
+  if (total <= 1) return distributionColor(0);
+  return distributionColor(rank / (total - 1));
 }
 
 function Chart({
