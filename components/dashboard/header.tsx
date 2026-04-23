@@ -18,7 +18,7 @@ export function DashboardHeader() {
         <span className="inline-block border border-atlas-line-2 bg-atlas-bg-2 px-2 py-[2px] text-[9px] uppercase tracking-[1px] text-atlas-gold">
           Confidential
         </span>
-        <div className="mt-2">
+        {/* <div className="mt-2">
           Prepared for <strong className="font-semibold text-atlas-ink">Wesam Muhammad</strong>
         </div>
         <div>Distribution: CFO · Strategy · EPMO</div>
@@ -29,7 +29,7 @@ export function DashboardHeader() {
         <div>
           Universe:{" "}
           <strong className="font-semibold text-atlas-ink">14 operating + 3 excluded</strong>
-        </div>
+        </div> */}
       </div>
     </header>
   );
