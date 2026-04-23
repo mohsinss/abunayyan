@@ -4,17 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import config from "@/config";
 
-// Navy used anywhere this page would otherwise render black.
-const NAVY = "#0a1f44";
+// Navy for light mode; dark mode inverts to near-white so text/icons remain legible
+// against the dark navy background.
+const brandText = "text-[#0a1f44] dark:text-slate-100";
+const brandIcon = "text-[#0a1f44] dark:text-slate-200";
 
 export default function LandingPage() {
   return (
     <div>
       <section className="container py-24 text-center">
-        <h1
-          className="mx-auto max-w-3xl text-5xl font-bold tracking-tight"
-          style={{ color: NAVY }}
-        >
+        <h1 className={`mx-auto max-w-3xl text-5xl font-bold tracking-tight ${brandText}`}>
           {config.appName}
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
@@ -24,8 +23,7 @@ export default function LandingPage() {
           <Button
             size="lg"
             asChild
-            style={{ backgroundColor: NAVY, color: "#ffffff" }}
-            className="hover:opacity-90"
+            className="bg-[#0a1f44] text-white hover:opacity-90 dark:bg-slate-100 dark:text-[#0a1f44] dark:hover:bg-white"
           >
             <Link href="/sign-up">Get started</Link>
           </Button>
@@ -33,7 +31,7 @@ export default function LandingPage() {
             size="lg"
             variant="outline"
             asChild
-            style={{ borderColor: NAVY, color: NAVY }}
+            className="border-[#0a1f44] text-[#0a1f44] hover:bg-[#0a1f44]/5 dark:border-slate-300 dark:text-slate-100 dark:hover:bg-slate-100/10"
           >
             <Link href="/pricing">See pricing</Link>
           </Button>
@@ -43,10 +41,8 @@ export default function LandingPage() {
       <section className="container grid gap-6 pb-24 md:grid-cols-3">
         <Card>
           <CardHeader>
-            <Sparkles className="h-6 w-6" style={{ color: NAVY }} />
-            <CardTitle className="mt-3" style={{ color: NAVY }}>
-              Streaming AI
-            </CardTitle>
+            <Sparkles className={`h-6 w-6 ${brandIcon}`} />
+            <CardTitle className={`mt-3 ${brandText}`}>Streaming AI</CardTitle>
             <CardDescription>Claude Sonnet 4.6 with tool-use and prompt caching.</CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
@@ -55,10 +51,8 @@ export default function LandingPage() {
         </Card>
         <Card>
           <CardHeader>
-            <Zap className="h-6 w-6" style={{ color: NAVY }} />
-            <CardTitle className="mt-3" style={{ color: NAVY }}>
-              Typed data layer
-            </CardTitle>
+            <Zap className={`h-6 w-6 ${brandIcon}`} />
+            <CardTitle className={`mt-3 ${brandText}`}>Typed data layer</CardTitle>
             <CardDescription>Postgres + Drizzle + pgvector, RAG-ready.</CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
@@ -67,10 +61,8 @@ export default function LandingPage() {
         </Card>
         <Card>
           <CardHeader>
-            <Shield className="h-6 w-6" style={{ color: NAVY }} />
-            <CardTitle className="mt-3" style={{ color: NAVY }}>
-              Batteries included
-            </CardTitle>
+            <Shield className={`h-6 w-6 ${brandIcon}`} />
+            <CardTitle className={`mt-3 ${brandText}`}>Batteries included</CardTitle>
             <CardDescription>Clerk, Stripe, Resend, PostHog, Sentry.</CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
