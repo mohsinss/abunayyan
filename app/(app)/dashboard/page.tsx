@@ -14,7 +14,7 @@ export const metadata = { title: "SBU Performance Atlas · FY2026" };
 export default async function DashboardPage() {
   await requireUser();
   return (
-    <div className="mx-auto max-w-[1520px] px-8 py-10 lg:px-12">
+    <div className="mx-auto max-w-[1520px] overflow-x-hidden px-8 py-10 lg:px-12">
       <DashboardHeader />
       <KpiStrip />
       <CompositeRankingSection />
