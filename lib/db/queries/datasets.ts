@@ -3,9 +3,11 @@ import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import {
   db,
   datasetFiles,
+  datasetRows,
   datasets,
   type Dataset,
   type DatasetFile,
+  type DatasetRow,
   type NewDataset,
   type NewDatasetFile,
 } from "@/db";
@@ -75,4 +77,16 @@ export async function updateDataset(
     .where(and(eq(datasets.id, id), isNull(datasets.deletedAt)))
     .returning();
   return row ?? null;
+}
+
+// Fetches all parsed rows for a dataset, ordered deterministically so pages
+// paginate consistently. Row count is capped at platform_settings
+// dataset_max_rows_per_dataset (default 100k), well within a single query's
+// sane budget — no pagination needed at the query layer today.
+export async function getRowsForDataset(datasetId: string): Promise<DatasetRow[]> {
+  return db
+    .select()
+    .from(datasetRows)
+    .where(eq(datasetRows.datasetId, datasetId))
+    .orderBy(asc(datasetRows.fileId), asc(datasetRows.sheet), asc(datasetRows.rowIndex));
 }
