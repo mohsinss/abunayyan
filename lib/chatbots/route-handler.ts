@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getBotBySlug } from "./registry";
 import { runBotStream } from "./runtime";
 import { captureError } from "@/lib/logger";
+import { getDatasetByChatbotId } from "@/lib/db/queries/datasets";
 
 const BodySchema = z.object({
   messages: z.array(z.unknown()).min(1),
@@ -31,12 +32,18 @@ export async function handleChatRequest(req: Request, slug: string): Promise<Res
     return new Response("Bad Request", { status: 400 });
   }
 
+  // If this chatbot is linked to a dataset card, stamp datasetId onto the
+  // run so card-scoped tools (searchDatasetDocs, queryDatasetRows) resolve
+  // their target. Non-card bots (atlas-analyst, general) get null.
+  const linkedDataset = await getDatasetByChatbotId(bot.id);
+
   try {
     const result = await runBotStream({
       bot,
       user: { id: user.id, role: user.role, disabled: user.disabled },
       threadId: body.threadId,
       messages: body.messages as Parameters<typeof runBotStream>[0]["messages"],
+      datasetId: linkedDataset?.id ?? null,
     });
 
     if (!result.ok) {

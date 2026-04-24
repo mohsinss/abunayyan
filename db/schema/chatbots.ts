@@ -40,6 +40,7 @@ export const TOOL_IDS = [
   "renderKpiList",
   "searchDocs",
   "searchDatasetDocs",
+  "queryDatasetRows",
   "atlasSnapshot",
 ] as const;
 export type ToolId = (typeof TOOL_IDS)[number];

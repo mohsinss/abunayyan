@@ -1,10 +1,13 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { MessageSquareText } from "lucide-react";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/session";
 import { getBuiltinByKey } from "@/lib/datasets/builtins";
 import { getDatasetBySlug, getRowsForDataset } from "@/lib/db/queries/datasets";
 import { CardConfigProposalSchema } from "@/lib/datasets/proposer";
 import { CardRenderer } from "@/components/dashboard/generated/card-renderer";
+import { Button } from "@/components/ui/button";
 
 // Accepts the editable subset of CardConfigProposal we actually persist on a
 // generated card (no title/description/narrative required here — those live
@@ -55,17 +58,27 @@ export default async function DatasetCardPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
-      <header className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          {dataset.title}
-        </h1>
-        {dataset.description ? (
-          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{dataset.description}</p>
-        ) : null}
-        {parsed.data.narrative ? (
-          <p className="mt-4 max-w-3xl rounded-md border border-border bg-muted/40 p-3 text-sm">
-            {parsed.data.narrative}
-          </p>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            {dataset.title}
+          </h1>
+          {dataset.description ? (
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{dataset.description}</p>
+          ) : null}
+          {parsed.data.narrative ? (
+            <p className="mt-4 max-w-3xl rounded-md border border-border bg-muted/40 p-3 text-sm">
+              {parsed.data.narrative}
+            </p>
+          ) : null}
+        </div>
+        {dataset.chatbotId ? (
+          <Button asChild variant="outline" size="sm" className="shrink-0">
+            <Link href={`/dashboard/${slug}/chat`}>
+              <MessageSquareText className="mr-1.5 h-4 w-4" />
+              Chat
+            </Link>
+          </Button>
         ) : null}
       </header>
 

@@ -69,13 +69,25 @@ export async function insertDatasetFile(input: NewDatasetFile): Promise<DatasetF
 
 export async function updateDataset(
   id: string,
-  patch: Partial<Pick<Dataset, "title" | "description" | "config">>,
+  patch: Partial<Pick<Dataset, "title" | "description" | "config" | "chatbotId">>,
 ): Promise<Dataset | null> {
   const [row] = await db
     .update(datasets)
     .set({ ...patch, updatedAt: new Date() })
     .where(and(eq(datasets.id, id), isNull(datasets.deletedAt)))
     .returning();
+  return row ?? null;
+}
+
+// Reverse lookup: given a chatbot id, return the dataset it belongs to (if any).
+// Used by the chat route handler to stamp ctx.datasetId so the card's bot
+// only sees its own chunks and rows. Covered by the datasets_chatbot_id FK.
+export async function getDatasetByChatbotId(chatbotId: string): Promise<Dataset | null> {
+  const [row] = await db
+    .select()
+    .from(datasets)
+    .where(and(eq(datasets.chatbotId, chatbotId), isNull(datasets.deletedAt)))
+    .limit(1);
   return row ?? null;
 }
 

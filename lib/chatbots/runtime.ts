@@ -26,6 +26,10 @@ export type RunInput = {
   user: { id: string; role: UserRole; disabled: boolean };
   threadId?: string;
   messages: UIMessage[];
+  // Per-card chatbots set this so tools like searchDatasetDocs /
+  // queryDatasetRows scope to the card. The chat route handler resolves
+  // it via getDatasetByChatbotId before calling us.
+  datasetId?: string | null;
 };
 
 export type RunSuccess = {
@@ -37,7 +41,7 @@ export type RunSuccess = {
 export type RunResult = RunSuccess | { ok: false; error: RunError };
 
 export async function runBotStream(input: RunInput): Promise<RunResult> {
-  const { bot, user, threadId, messages } = input;
+  const { bot, user, threadId, messages, datasetId } = input;
 
   const settings = await getPlatformSettings();
   if (settings.globalChatDisabled) {
@@ -104,7 +108,7 @@ export async function runBotStream(input: RunInput): Promise<RunResult> {
   }
 
   const model = resolveModel(bot.provider, bot.modelId);
-  const tools = getToolsForBot(bot, user, thread.id);
+  const tools = getToolsForBot(bot, user, thread.id, datasetId ?? null);
 
   const result = streamText({
     model,

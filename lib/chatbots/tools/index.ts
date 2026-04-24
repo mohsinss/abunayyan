@@ -7,6 +7,7 @@ import { renderTable } from "./render-table";
 import { renderKpiList } from "./render-kpi";
 import { searchDocs } from "./search-docs";
 import { searchDatasetDocs } from "./search-dataset-docs";
+import { queryDatasetRows } from "./query-dataset-rows";
 import { atlasSnapshot } from "./atlas-snapshot";
 import type { ToolContext, ToolDefinition } from "./types";
 
@@ -16,6 +17,7 @@ const ALL_TOOLS: Record<ToolId, ToolDefinition> = {
   renderKpiList,
   searchDocs,
   searchDatasetDocs,
+  queryDatasetRows,
   atlasSnapshot,
 };
 

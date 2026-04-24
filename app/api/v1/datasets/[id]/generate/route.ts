@@ -3,6 +3,7 @@ import { requireAdminApi } from "@/lib/auth/rbac";
 import { captureError } from "@/lib/logger";
 import { getDatasetById, updateDataset } from "@/lib/db/queries/datasets";
 import { CardConfigProposalSchema } from "@/lib/datasets/proposer";
+import { seedCardChatbot } from "@/lib/datasets/seed-chatbot";
 import type { CardConfig } from "@/db/schema/datasets";
 
 export const runtime = "nodejs";
@@ -63,6 +64,16 @@ export async function POST(
       config: nextConfig,
     });
     if (!updated) return new Response("Not found", { status: 404 });
+
+    // Seed/refresh the per-card chatbot. Failure here isn't fatal for the
+    // admin's save — we log and still return success so the card lands in
+    // the gallery; an admin can re-run /generate to retry bot seeding.
+    try {
+      await seedCardChatbot(updated.id);
+    } catch (err) {
+      captureError(err, { route: "datasets.generate.seedChatbot", datasetId: id });
+    }
+
     return Response.json({ id: updated.id, slug: updated.slug });
   } catch (err) {
     captureError(err, { route: "datasets.generate", datasetId: id });

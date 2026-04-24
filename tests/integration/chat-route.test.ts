@@ -11,6 +11,11 @@ vi.mock("@/lib/chatbots/registry", () => ({
 vi.mock("@/lib/chatbots/runtime", () => ({
   runBotStream: vi.fn(),
 }));
+// Route handler now stamps datasetId by looking up the bot's linked card.
+// Stub the reverse lookup so tests don't require a DB.
+vi.mock("@/lib/db/queries/datasets", () => ({
+  getDatasetByChatbotId: vi.fn(async () => null),
+}));
 
 import { getBotBySlug } from "@/lib/chatbots/registry";
 import { runBotStream } from "@/lib/chatbots/runtime";
