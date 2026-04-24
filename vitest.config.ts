@@ -22,6 +22,8 @@ export default defineConfig({
         "lib/chatbots/providers.ts",
         "lib/validation/chatbot.ts",
         "lib/validation/schemas.ts",
+        "lib/text/diff.ts",
+        "lib/text/csv.ts",
       ],
       thresholds: {
         lines: 85,

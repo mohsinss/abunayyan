@@ -26,13 +26,24 @@ export default async function AdminAuditPage({
     .orderBy(desc(auditLog.createdAt))
     .limit(200);
 
+  const exportHref = `/api/v1/admin/audit/export${events.length ? `?${events.map((e) => `event=${encodeURIComponent(e)}`).join("&")}` : ""}`;
+
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-semibold">Audit log</h1>
-        <p className="mt-1 text-sm text-neutral-600">
-          Every security-relevant action and every chat turn is recorded here.
-        </p>
+      <header className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Audit log</h1>
+          <p className="mt-1 text-sm text-neutral-600">
+            Every security-relevant action and every chat turn is recorded here.
+          </p>
+        </div>
+        <a
+          href={exportHref}
+          download
+          className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
+        >
+          Export CSV
+        </a>
       </header>
 
       <form className="flex flex-wrap gap-2">

@@ -5,6 +5,7 @@ import { availableProviders } from "@/lib/chatbots/providers";
 import { listPromptHistory } from "@/lib/chatbots/prompts";
 import { ChatbotForm } from "@/components/admin/chatbots/chatbot-form";
 import { PromptTestPanel } from "@/components/admin/chatbots/prompt-test-panel";
+import { PromptDiffPanel } from "@/components/admin/chatbots/prompt-diff-panel";
 import { rollbackPromptActionVoid } from "@/app/(app)/admin/actions";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,13 @@ export default async function EditChatbotPage({
           Test prompt live
         </h2>
         <PromptTestPanel botId={bot.id} />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+          Diff between versions
+        </h2>
+        <PromptDiffPanel history={history} activeVersion={bot.systemPromptVersion} />
       </section>
 
       <section>

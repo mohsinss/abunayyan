@@ -41,6 +41,14 @@ export default async function AdminUserDetailPage({
           <h1 className="mt-1 text-2xl font-semibold">{user.name ?? user.email ?? user.id}</h1>
           <p className="mt-1 text-sm text-neutral-600">{user.email}</p>
         </div>
+        <a
+          href={`/api/v1/admin/users/${user.id}/export`}
+          download
+          className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
+          title="Download this user's profile, threads, messages, and audit entries as JSON"
+        >
+          Export data
+        </a>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-4">
