@@ -19,6 +19,13 @@ export default auth((req) => {
   const path = req.nextUrl.pathname;
 
   if (PROTECTED.some((re) => re.test(path)) && !req.auth) {
+    // API paths want a status code, not a browser redirect — the redirect
+    // chain confuses fetch-based callers and hides the real error. Page
+    // paths continue to redirect through /sign-in so users land on the
+    // login form with their callbackUrl preserved.
+    if (path.startsWith("/api/")) {
+      return new Response("Unauthorized", { status: 401 });
+    }
     const url = new URL("/sign-in", req.nextUrl);
     url.searchParams.set("callbackUrl", path);
     return Response.redirect(url);

@@ -77,3 +77,36 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck]
+    env:
+      # Unauthenticated E2E suite runs without real secrets. Placeholder
+      # DATABASE_URL satisfies env-validation skip; no DB is actually hit
+      # by these tests (every protected path returns 401/redirect before
+      # touching persistence).
+      SKIP_ENV_VALIDATION: "1"
+      DATABASE_URL: postgres://placeholder:placeholder@localhost/placeholder
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      AUTH_SECRET: ci-placeholder-secret-must-be-at-least-32-chars
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Playwright ships its own webServer so the dev server boots before
+      # tests. No Chromium needed — our E2Es are request-context only.
+      - name: Run Playwright
+        run: pnpm test:e2e
+      - name: Upload HTML report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
