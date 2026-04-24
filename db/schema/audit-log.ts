@@ -23,6 +23,9 @@ export const AUDIT_EVENTS = [
   "settings.updated",
   "settings.kill_switch_toggled",
 
+  "archival.run",
+  "archival.failed",
+
   "persistence_failed",
 ] as const;
 export type AuditEvent = (typeof AUDIT_EVENTS)[number];

@@ -1,6 +1,7 @@
 import { captureError } from "@/lib/logger";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 async function handler(req: Request) {
   try {
@@ -10,6 +11,43 @@ async function handler(req: Request) {
       case "send-welcome-email": {
         const { sendWelcomeEmail } = await import("@/lib/email/resend");
         await sendWelcomeEmail(payload as { to: string; name: string | null });
+        break;
+      }
+      case "archive-old-messages": {
+        const { runArchivalSweep } = await import("@/lib/chatbots/archival");
+        const { getPlatformSettings } = await import("@/lib/chatbots/settings");
+        const { writeAudit } = await import("@/lib/chatbots/audit");
+        const opts =
+          (payload as {
+            archiveAfterDays?: number;
+            pruneAfterDays?: number;
+            batchSize?: number;
+            maxBatches?: number;
+          }) ?? {};
+        const settings = await getPlatformSettings();
+        try {
+          const result = await runArchivalSweep({
+            archiveAfterDays: opts.archiveAfterDays ?? 180,
+            pruneAfterDays: opts.pruneAfterDays ?? settings.dataRetentionDays,
+            batchSize: opts.batchSize,
+            maxBatches: opts.maxBatches,
+          });
+          await writeAudit({
+            event: "archival.run",
+            payload: {
+              source: "qstash",
+              ...result,
+              archiveAfterDays: opts.archiveAfterDays ?? 180,
+              pruneAfterDays: opts.pruneAfterDays ?? settings.dataRetentionDays,
+            },
+          });
+        } catch (err) {
+          await writeAudit({
+            event: "archival.failed",
+            payload: { source: "qstash", error: (err as Error).message },
+          });
+          throw err;
+        }
         break;
       }
       default:

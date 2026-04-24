@@ -3,6 +3,7 @@ import { AI_PROVIDERS } from "@/db/schema/chatbots";
 import { SIGNUP_POLICIES } from "@/db/schema/platform-settings";
 import { updateSettingsActionVoid } from "@/app/(app)/admin/actions";
 import { availableProviders } from "@/lib/chatbots/providers";
+import { ArchivalPanel } from "@/components/admin/archival-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -144,6 +145,8 @@ export default async function AdminSettingsPage() {
           </button>
         </div>
       </form>
+
+      <ArchivalPanel />
 
       <style>{`
         .input { width: 100%; border: 1px solid rgb(212 212 212); border-radius: .375rem; padding: .5rem .75rem; font-size: .875rem; outline: none; background: white; }

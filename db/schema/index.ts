@@ -8,5 +8,6 @@ export * from "./documents";
 export * from "./chatbots";
 export * from "./threads";
 export * from "./messages";
+export * from "./messages-archive";
 export * from "./audit-log";
 export * from "./platform-settings";
