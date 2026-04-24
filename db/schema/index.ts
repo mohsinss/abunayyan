@@ -5,3 +5,8 @@ export * from "./verification-tokens";
 export * from "./subscriptions";
 export * from "./projects";
 export * from "./documents";
+export * from "./chatbots";
+export * from "./threads";
+export * from "./messages";
+export * from "./audit-log";
+export * from "./platform-settings";

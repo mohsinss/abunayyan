@@ -16,8 +16,17 @@ export const env = createEnv({
     AUTH_URL: z.string().url().optional(),
 
     // AI (doc 05)
-    ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-"),
+    ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-").optional(),
     OPENAI_API_KEY: z.string().startsWith("sk-").optional(),
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(20).optional(),
+    XAI_API_KEY: z.string().min(8).optional(),
+
+    // Admin seed (promote this email to "owner" on `pnpm db:seed`)
+    SEED_OWNER_EMAIL: z.string().email().optional(),
+
+    // Ops escape hatches
+    DISABLE_RATELIMIT: z.string().optional(),
+    ENABLE_AI_TRACES: z.string().optional(),
 
     // Stripe (doc 06)
     STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
@@ -57,6 +66,11 @@ export const env = createEnv({
     AUTH_URL: process.env.AUTH_URL,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+    XAI_API_KEY: process.env.XAI_API_KEY,
+    SEED_OWNER_EMAIL: process.env.SEED_OWNER_EMAIL,
+    DISABLE_RATELIMIT: process.env.DISABLE_RATELIMIT,
+    ENABLE_AI_TRACES: process.env.ENABLE_AI_TRACES,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     RESEND_API_KEY: process.env.RESEND_API_KEY,

@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 export async function requireUser() {
   const session = await auth();
   if (!session?.user) redirect("/sign-in");
+  if (session.user.disabled) redirect("/sign-in?error=AccountDisabled");
   return session.user;
 }
 

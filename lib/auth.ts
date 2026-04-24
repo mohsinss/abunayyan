@@ -10,11 +10,15 @@ import {
   verificationTokens,
   subscriptions,
 } from "@/db";
+import type { UserRole } from "@/db/schema/users";
 
 declare module "next-auth" {
+  // eslint-disable-next-line no-unused-vars
   interface Session {
     user: {
       id: string;
+      role: UserRole;
+      disabled: boolean;
       hasAccess?: boolean;
     } & DefaultSession["user"];
   }
@@ -44,13 +48,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = user.id;
         try {
-          const [sub] = await db
-            .select({ hasAccess: subscriptions.hasAccess })
-            .from(subscriptions)
-            .where(eq(subscriptions.userId, user.id))
+          const [row] = await db
+            .select({
+              role: users.role,
+              disabled: users.disabled,
+              hasAccess: subscriptions.hasAccess,
+            })
+            .from(users)
+            .leftJoin(subscriptions, eq(subscriptions.userId, users.id))
+            .where(eq(users.id, user.id))
             .limit(1);
-          session.user.hasAccess = sub?.hasAccess ?? false;
+          session.user.role = (row?.role ?? "member") as UserRole;
+          session.user.disabled = row?.disabled ?? false;
+          session.user.hasAccess = row?.hasAccess ?? false;
         } catch {
+          session.user.role = "member";
+          session.user.disabled = false;
           session.user.hasAccess = false;
         }
       }
