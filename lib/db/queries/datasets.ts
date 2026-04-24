@@ -1,7 +1,8 @@
 import "server-only";
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, lt } from "drizzle-orm";
 import {
   db,
+  chatbots,
   datasetFiles,
   datasetRows,
   datasets,
@@ -89,6 +90,52 @@ export async function getDatasetByChatbotId(chatbotId: string): Promise<Dataset 
     .where(and(eq(datasets.chatbotId, chatbotId), isNull(datasets.deletedAt)))
     .limit(1);
   return row ?? null;
+}
+
+// Soft-deletes the card and its linked chatbot atomically-enough for our
+// retention model: both get a deletedAt stamp so they vanish from the
+// gallery / chat routes immediately. Hard-delete runs ≥30 days later via
+// the sweep job.
+export async function softDeleteDataset(id: string): Promise<Dataset | null> {
+  const now = new Date();
+  const [row] = await db
+    .update(datasets)
+    .set({ deletedAt: now, updatedAt: now })
+    .where(and(eq(datasets.id, id), isNull(datasets.deletedAt)))
+    .returning();
+  if (row?.chatbotId) {
+    await db
+      .update(chatbots)
+      .set({ deletedAt: now, updatedAt: now })
+      .where(and(eq(chatbots.id, row.chatbotId), isNull(chatbots.deletedAt)));
+  }
+  return row ?? null;
+}
+
+// For the sweep: soft-deleted datasets whose deletedAt is older than cutoff
+// are candidates for hard-delete (DB rows + their Vercel Blob objects).
+export async function listStaleDeletedDatasets(cutoff: Date): Promise<Dataset[]> {
+  return db
+    .select()
+    .from(datasets)
+    .where(and(isNotNull(datasets.deletedAt), lt(datasets.deletedAt, cutoff)));
+}
+
+// Hard-delete. Cascades to dataset_files, dataset_rows, and documents
+// via dataset_id FKs. Caller is responsible for Blob cleanup before this.
+export async function hardDeleteDataset(id: string): Promise<void> {
+  await db.delete(datasets).where(eq(datasets.id, id));
+}
+
+// Hard-delete a chatbot row, but only if already soft-deleted. Protects
+// against removing a live bot when sweeping a dataset whose chatbot_id
+// got reassigned post-soft-delete (extremely unlikely, but cheap to check).
+export async function hardDeleteChatbotIfSoftDeleted(chatbotId: string): Promise<boolean> {
+  const rows = await db
+    .delete(chatbots)
+    .where(and(eq(chatbots.id, chatbotId), isNotNull(chatbots.deletedAt)))
+    .returning({ id: chatbots.id });
+  return rows.length > 0;
 }
 
 // Fetches all parsed rows for a dataset, ordered deterministically so pages

@@ -1,5 +1,11 @@
 import { requireAdminApi } from "@/lib/auth/rbac";
-import { getDatasetById, listFilesForDataset } from "@/lib/db/queries/datasets";
+import { captureError } from "@/lib/logger";
+import { writeAudit } from "@/lib/chatbots/audit";
+import {
+  getDatasetById,
+  listFilesForDataset,
+  softDeleteDataset,
+} from "@/lib/db/queries/datasets";
 
 export const runtime = "nodejs";
 
@@ -35,4 +41,33 @@ export async function GET(
       createdAt: f.createdAt,
     })),
   });
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const guard = await requireAdminApi(req);
+  if (!guard.ok) return guard.response;
+
+  const { id } = await params;
+  const dataset = await getDatasetById(id);
+  if (!dataset) return new Response("Not found", { status: 404 });
+  if (dataset.kind === "builtin") {
+    return new Response("Cannot delete builtin cards", { status: 400 });
+  }
+
+  try {
+    const deleted = await softDeleteDataset(id);
+    if (!deleted) return new Response("Not found", { status: 404 });
+    await writeAudit({
+      actorId: guard.user.id,
+      event: "dataset.soft_deleted",
+      payload: { datasetId: id, slug: deleted.slug },
+    });
+    return new Response(null, { status: 204 });
+  } catch (err) {
+    captureError(err, { route: "datasets.delete", datasetId: id });
+    return new Response("Delete failed", { status: 500 });
+  }
 }

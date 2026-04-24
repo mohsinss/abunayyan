@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { MessageSquareText } from "lucide-react";
+import { MessageSquareText, Pencil } from "lucide-react";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/session";
+import { hasRole } from "@/lib/auth/rbac";
 import { getBuiltinByKey } from "@/lib/datasets/builtins";
 import { getDatasetBySlug, getRowsForDataset } from "@/lib/db/queries/datasets";
 import { CardConfigProposalSchema } from "@/lib/datasets/proposer";
@@ -28,7 +29,8 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function DatasetCardPage({ params }: Props) {
-  await requireUser();
+  const user = await requireUser();
+  const isAdmin = hasRole(user.role, "admin");
   const { slug } = await params;
   const dataset = await getDatasetBySlug(slug);
   if (!dataset) notFound();
@@ -72,14 +74,24 @@ export default async function DatasetCardPage({ params }: Props) {
             </p>
           ) : null}
         </div>
-        {dataset.chatbotId ? (
-          <Button asChild variant="outline" size="sm" className="shrink-0">
-            <Link href={`/dashboard/${slug}/chat`}>
-              <MessageSquareText className="mr-1.5 h-4 w-4" />
-              Chat
-            </Link>
-          </Button>
-        ) : null}
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {dataset.chatbotId ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/dashboard/${slug}/chat`}>
+                <MessageSquareText className="mr-1.5 h-4 w-4" />
+                Chat
+              </Link>
+            </Button>
+          ) : null}
+          {isAdmin && dataset.kind === "generated" ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/dashboard/${slug}/edit`}>
+                <Pencil className="mr-1.5 h-4 w-4" />
+                Manage
+              </Link>
+            </Button>
+          ) : null}
+        </div>
       </header>
 
       {parsed.data.views.length === 0 ? (

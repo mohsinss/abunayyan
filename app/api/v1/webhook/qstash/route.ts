@@ -20,6 +20,25 @@ async function handler(req: Request) {
         await runParseJob(fileId);
         break;
       }
+      case "sweep-deleted-datasets": {
+        const { runDatasetSweep } = await import("@/lib/datasets/sweep");
+        const { writeAudit } = await import("@/lib/chatbots/audit");
+        const opts = (payload as { retentionDays?: number }) ?? {};
+        try {
+          const result = await runDatasetSweep({ retentionDays: opts.retentionDays });
+          await writeAudit({
+            event: "dataset.sweep_cron",
+            payload: { ...result, retentionDays: opts.retentionDays ?? 30, source: "qstash" },
+          });
+        } catch (err) {
+          await writeAudit({
+            event: "dataset.sweep_failed",
+            payload: { source: "qstash", error: (err as Error).message },
+          });
+          throw err;
+        }
+        break;
+      }
       case "archive-old-messages": {
         const { runArchivalSweep } = await import("@/lib/chatbots/archival");
         const { getPlatformSettings } = await import("@/lib/chatbots/settings");

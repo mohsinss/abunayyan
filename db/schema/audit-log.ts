@@ -27,6 +27,11 @@ export const AUDIT_EVENTS = [
   "archival.run",
   "archival.failed",
 
+  "dataset.soft_deleted",
+  "dataset.sweep_manual",
+  "dataset.sweep_cron",
+  "dataset.sweep_failed",
+
   "persistence_failed",
 ] as const;
 export type AuditEvent = (typeof AUDIT_EVENTS)[number];
