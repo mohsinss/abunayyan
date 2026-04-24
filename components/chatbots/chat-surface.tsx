@@ -16,6 +16,12 @@ export type ChatSurfaceProps = {
   initialMessages?: Message[];
   onThreadIdAssigned?: (_threadId: string) => void;
   className?: string;
+  /**
+   * Override the API URL (default: `/api/v1/chatbots/<slug>/chat`). The
+   * public-share `/s/<token>` page uses this to post to the anonymous
+   * endpoint `/api/v1/public/chat/<token>` instead.
+   */
+  api?: string;
 };
 
 /**
@@ -32,6 +38,7 @@ export function ChatSurface({
   initialMessages,
   onThreadIdAssigned,
   className,
+  api,
 }: ChatSurfaceProps) {
   const {
     messages,
@@ -45,6 +52,7 @@ export function ChatSurface({
     initialThreadId,
     initialMessages,
     onThreadIdAssigned,
+    api,
     onError: (err) => console.error(`chatbot ${slug} error:`, err),
   });
 

@@ -138,6 +138,46 @@ export async function hardDeleteChatbotIfSoftDeleted(chatbotId: string): Promise
   return rows.length > 0;
 }
 
+// Public-share token lookup. Returns the dataset only if the token is active
+// (share_enabled=true) and the dataset isn't soft-deleted. Called with no
+// auth from /s/<token> and /api/v1/public/chat/<token>.
+export async function getDatasetByShareToken(token: string): Promise<Dataset | null> {
+  const [row] = await db
+    .select()
+    .from(datasets)
+    .where(
+      and(
+        eq(datasets.shareToken, token),
+        eq(datasets.shareEnabled, true),
+        isNull(datasets.deletedAt),
+      ),
+    )
+    .limit(1);
+  return row ?? null;
+}
+
+// Toggles share_enabled and optionally stamps a fresh shareToken.
+// Called by the admin POST (enable/rotate) and DELETE (disable) handlers.
+export async function setShareState(
+  id: string,
+  opts: { enabled: boolean; rotate?: boolean; token?: string },
+): Promise<Dataset | null> {
+  const now = new Date();
+  const patch: Partial<Pick<Dataset, "shareEnabled" | "shareToken" | "sharedAt">> & {
+    updatedAt: Date;
+  } = { shareEnabled: opts.enabled, updatedAt: now };
+  if (opts.enabled) {
+    if (opts.rotate || opts.token) patch.shareToken = opts.token ?? null;
+    patch.sharedAt = now;
+  }
+  const [row] = await db
+    .update(datasets)
+    .set(patch)
+    .where(and(eq(datasets.id, id), isNull(datasets.deletedAt)))
+    .returning();
+  return row ?? null;
+}
+
 // Fetches all parsed rows for a dataset, ordered deterministically so pages
 // paginate consistently. Row count is capped at platform_settings
 // dataset_max_rows_per_dataset (default 100k), well within a single query's

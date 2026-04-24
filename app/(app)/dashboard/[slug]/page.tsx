@@ -8,6 +8,7 @@ import { getBuiltinByKey } from "@/lib/datasets/builtins";
 import { getDatasetBySlug, getRowsForDataset } from "@/lib/db/queries/datasets";
 import { CardConfigProposalSchema } from "@/lib/datasets/proposer";
 import { CardRenderer } from "@/components/dashboard/generated/card-renderer";
+import { ShareCardButton } from "@/components/dashboard/share-card-button";
 import { Button } from "@/components/ui/button";
 
 // Accepts the editable subset of CardConfigProposal we actually persist on a
@@ -84,12 +85,18 @@ export default async function DatasetCardPage({ params }: Props) {
             </Button>
           ) : null}
           {isAdmin && dataset.kind === "generated" ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/dashboard/${slug}/edit`}>
-                <Pencil className="mr-1.5 h-4 w-4" />
-                Manage
-              </Link>
-            </Button>
+            <>
+              <ShareCardButton
+                datasetId={dataset.id}
+                initial={{ enabled: dataset.shareEnabled, token: dataset.shareToken }}
+              />
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/dashboard/${slug}/edit`}>
+                  <Pencil className="mr-1.5 h-4 w-4" />
+                  Manage
+                </Link>
+              </Button>
+            </>
           ) : null}
         </div>
       </header>

@@ -14,6 +14,13 @@ export type UseBotOptions = {
    * `/chat/new/[slug]` to `/chat/[threadId]`.
    */
   onThreadIdAssigned?: (_threadId: string) => void;
+  /**
+   * Override the API URL. Default is `/api/v1/chatbots/<slug>/chat`; public
+   * share pages pass a token-scoped URL instead. When set, threadId tracking
+   * still reads the X-Thread-Id response header (public endpoint just
+   * doesn't emit one).
+   */
+  api?: string;
 };
 
 /**
@@ -37,7 +44,7 @@ export function useBot(slug: string, opts: UseBotOptions = {}) {
   }, [opts.onThreadIdAssigned]);
 
   const chat = useChat({
-    api: `/api/v1/chatbots/${slug}/chat`,
+    api: opts.api ?? `/api/v1/chatbots/${slug}/chat`,
     initialMessages: opts.initialMessages,
     experimental_prepareRequestBody: ({ messages }) => ({
       messages,

@@ -31,6 +31,9 @@ export const AUDIT_EVENTS = [
   "dataset.sweep_manual",
   "dataset.sweep_cron",
   "dataset.sweep_failed",
+  "dataset.share_enabled",
+  "dataset.share_disabled",
+  "dataset.share_rotated",
 
   "persistence_failed",
 ] as const;
