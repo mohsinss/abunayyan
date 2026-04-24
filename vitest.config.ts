@@ -17,9 +17,11 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "lcov", "html"],
       include: [
+        "lib/auth/rbac.ts",
         "lib/chatbots/cost.ts",
         "lib/chatbots/authz.ts",
         "lib/chatbots/providers.ts",
+        "lib/chatbots/rate-limit.ts",
         "lib/validation/chatbot.ts",
         "lib/validation/schemas.ts",
         "lib/text/diff.ts",
