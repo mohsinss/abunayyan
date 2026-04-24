@@ -1,115 +1,104 @@
 # E2E tests (Playwright)
 
-## What runs today
+## Suite layout
 
-Three suites, all unauthenticated — safe to run in any environment:
+```
+tests/e2e/
+├─ smoke.spec.ts                        public  → landing, pricing, health
+├─ middleware.spec.ts                   public  → redirects, API 401s
+├─ security-headers.spec.ts             public  → CSP, HSTS, frame-options
+├─ sign-in-page.spec.ts                 public  → sign-in page + callbackUrl
+├─ auth.setup.ts                        setup   → seeds DB users + writes storageState
+└─ authenticated/
+   ├─ admin/
+   │  └─ console.spec.ts                admin   → admin UI + admin API
+   └─ member/
+      └─ rbac.spec.ts                   member  → admin rejected, own surfaces ok
+```
 
-- **`smoke.spec.ts`** — public pages render + health endpoint.
-- **`middleware.spec.ts`** — every protected route redirects / rejects
-  without a session; covers the pages AND the API boundaries (chat, admin).
-- **`security-headers.spec.ts`** — CSP, X-Frame-Options, HSTS,
-  Referrer-Policy, Permissions-Policy reach the wire.
-- **`sign-in-page.spec.ts`** — sign-in page renders, callbackUrl preserved
-  when bounced from protected routes (including nested paths like
-  `/admin/chatbots`).
+## Projects
 
-Run:
+Playwright's project system separates CI-safe tests from DB-requiring tests:
+
+| Project | storageState | DB needed | Scripts |
+|---------|--------------|-----------|---------|
+| `public` | none | no | `pnpm test:e2e` |
+| `setup-auth` | writes `.auth/admin.json` + `.auth/member.json` | yes | implicit |
+| `authenticated:admin` | `.auth/admin.json` | yes | `pnpm test:e2e:authenticated` |
+| `authenticated:member` | `.auth/member.json` | yes | `pnpm test:e2e:authenticated` |
+
+Run everything locally:
 
 ```bash
-pnpm test:e2e           # headless
-pnpm test:e2e:headed    # with a visible browser
-pnpm test:e2e:ui        # Playwright UI mode
+pnpm test:e2e:all         # all projects — needs .env.local
+pnpm test:e2e             # public only — no env needed
+pnpm test:e2e:authenticated   # setup-auth + authenticated:* only
+pnpm test:e2e:headed      # any project, with a browser window
+pnpm test:e2e:ui          # Playwright UI mode
 ```
 
-The config uses **port 3005 by default** so `pnpm dev` on 3000 doesn't
-clash. Override with `E2E_PORT=3010 pnpm test:e2e`.
+Port defaults to 3000; override with `E2E_PORT=3005` if it's taken.
 
-## What's deferred: authenticated journeys
+## No browser required
 
-The full critical-path E2Es below all require an authenticated session.
-They're queued for the next session once we add a test-auth fixture
-(either session-cookie injection from a seeded user row, or the Auth.js
-"Credentials" provider gated to `NODE_ENV !== 'production'`).
+All tests use Playwright's `request` context (HTTP only) — no Chromium
+needed. The `auth.setup.ts` file writes `storageState` JSON directly via
+`fs.writeFileSync` after seeding a user + session row in Postgres,
+skipping the "launch browser and `addCookies`" step. This keeps CI
+lightweight and the suite fast (~10 s for all 40 tests).
 
-Once the fixture lands, these tests go in `tests/e2e/authenticated/`:
+## Authenticated-E2E contract
 
-1. **Chat + persistence.** Sign in → send "hello" to `atlas-analyst` →
-   wait for the stream to finish → refresh the page → the message is
-   still there. Confirms thread + message rows persist and the rehydrate
-   path works.
+The setup project (`auth.setup.ts`) is the heart of the authenticated
+flow:
 
-2. **Admin creates a bot via UI.** Sign in as admin → `/admin/chatbots/new`
-   → fill provider, model, prompt, tools → submit → land on edit page
-   → use the "Test" button → response comes back.
+1. **Upsert** a deterministic test user (`e2e-playwright-admin` or
+   `e2e-playwright-member`) with the right role.
+2. **Issue** a fresh session row, deleting prior sessions for the user
+   so the table doesn't grow.
+3. **Write** `tests/e2e/.auth/{admin,member}.json` with a single
+   `authjs.session-token` cookie that the test project picks up via
+   `use.storageState`.
 
-3. **Admin changes a user's role.** Sign in as admin → `/admin/users/[id]`
-   → change role dropdown → save → navigate to `/admin/audit` → the
-   `user.role_changed` event is visible.
+Every authenticated test then operates through the session cookie as
+though a real user signed in via OAuth. The `request` fixture
+automatically inherits cookies from the project's storageState.
 
-4. **Admin views another user's conversation.** Sign in as admin → click
-   a thread in `/admin/users/[id]` → read-only conversation viewer
-   renders token/cost metadata per turn.
+## Running against a fresh DB
 
-5. **Prompt rollback.** Edit prompt (creates v2) → click Restore on v1
-   → prompt reverts (shows up as v3 forward) → `bot.prompt_updated`
-   audited twice.
+If you point `.env.local` at a new Neon branch, migrations must be
+applied first:
 
-6. **Kill switch blocks chat.** Sign in as admin → `/admin` → click
-   "Emergency stop" → send a chat from another tab → 503 → toggle back.
-
-7. **Rate limit 429.** Seed a test bot with `rateLimitTokens: 2` /
-   `rateLimitWindow: 1 m` → fire 3 requests → third returns 429 with
-   `Retry-After`.
-
-8. **Non-admin cannot access /admin.** Member-role user → `/admin` →
-   redirect to `/dashboard?error=forbidden`.
-
-## Auth fixture plan (for the next session)
-
-The cleanest fixture approach is Playwright's
-[`storageState`](https://playwright.dev/docs/auth):
-
-```ts
-// global-setup.ts
-import { chromium } from "@playwright/test";
-import { db } from "@/db";
-import { users, sessions } from "@/db/schema";
-
-export default async function globalSetup() {
-  // Insert a test admin user + an active DB session row directly.
-  const userId = "e2e-admin";
-  const token = crypto.randomUUID();
-  await db.insert(users).values({ id: userId, email: "e2e-admin@test", role: "owner", disabled: false }).onConflictDoNothing();
-  await db.insert(sessions).values({
-    sessionToken: token,
-    userId,
-    expires: new Date(Date.now() + 3600_000),
-  });
-  // Bake the session cookie into storageState.
-  const browser = await chromium.launch();
-  const ctx = await browser.newContext();
-  await ctx.addCookies([{
-    name: "authjs.session-token",
-    value: token,
-    domain: "localhost",
-    path: "/",
-    httpOnly: true,
-    secure: false,
-  }]);
-  await ctx.storageState({ path: "tests/e2e/.auth/admin.json" });
-  await browser.close();
-}
+```bash
+pnpm db:migrate                  # applies pending Drizzle migrations
+pnpm test:e2e:authenticated      # seeds + runs authenticated suite
 ```
 
-Reference this file from `playwright.config.ts` with
-`use.storageState: "tests/e2e/.auth/admin.json"` (per-project, so we can
-have `member` + `admin` + `anonymous` contexts running in parallel).
+The setup will throw with a clear error if `DATABASE_URL` is unset or
+is the CI placeholder.
 
-Teardown wipes the `sessions` row.
+## Still deferred
+
+Not yet written; no blockers left — just more tests:
+
+1. **Chat + refresh persistence.** Create a thread via
+   `POST /api/v1/chatbots/atlas-analyst/chat`, fetch via
+   `GET /api/v1/chatbots/atlas-analyst/threads/[id]`, assert messages
+   round-trip. Needs a stub LLM (MSW) or acceptance of a real API call.
+2. **Admin creates a bot via UI.** Post the form action and follow to
+   the edit page.
+3. **Prompt rollback.** Edit → rollback → verify current version
+   matches the restored text.
+4. **Kill switch blocks chat.** Toggle on → chat returns 503 → toggle
+   off.
+5. **Rate-limit 429.** Seed a test bot with `rateLimitTokens: 2`
+   + `rateLimitWindow: 1 m`, fire 3 calls, third returns 429.
 
 ## CI
 
-Unauthenticated E2Es can run in the existing GitHub Actions pipeline
-after the `build` job. Authenticated E2Es need a test Postgres + Redis
-(cheap: Neon branch + Upstash free tier) — add as an optional nightly
-job rather than per-PR.
+- `public` project runs in the existing `e2e` job with placeholder env
+  (no DB access needed — every protected path short-circuits at the
+  middleware).
+- Authenticated suite needs a real test DB; when we add one, spin up a
+  new `e2e-authenticated` job (nightly, or gated by a label) with real
+  secrets.
