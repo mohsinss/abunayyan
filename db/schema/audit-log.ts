@@ -9,6 +9,7 @@ export const AUDIT_EVENTS = [
   "user.disabled_changed",
   "user.deleted",
   "user.disabled_access_attempt",
+  "user.exported",
 
   "bot.created",
   "bot.updated",
