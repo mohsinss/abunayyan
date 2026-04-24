@@ -6,6 +6,7 @@ import { renderChart } from "./render-chart";
 import { renderTable } from "./render-table";
 import { renderKpiList } from "./render-kpi";
 import { searchDocs } from "./search-docs";
+import { searchDatasetDocs } from "./search-dataset-docs";
 import { atlasSnapshot } from "./atlas-snapshot";
 import type { ToolContext, ToolDefinition } from "./types";
 
@@ -14,6 +15,7 @@ const ALL_TOOLS: Record<ToolId, ToolDefinition> = {
   renderTable,
   renderKpiList,
   searchDocs,
+  searchDatasetDocs,
   atlasSnapshot,
 };
 
@@ -29,12 +31,14 @@ export function getToolsForBot(
   bot: Pick<Chatbot, "id" | "tools">,
   user: { id: string; role: UserRole; disabled: boolean },
   threadId: string | null = null,
+  datasetId: string | null = null,
 ): Record<string, Tool> {
   const ctx: ToolContext = {
     userId: user.id,
     role: user.role,
     botId: bot.id,
     threadId,
+    datasetId,
   };
   const out: Record<string, Tool> = {};
   for (const id of bot.tools) {

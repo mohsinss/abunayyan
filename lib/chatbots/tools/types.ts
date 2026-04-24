@@ -7,6 +7,9 @@ export type ToolContext = {
   role: UserRole;
   botId: string;
   threadId: string | null;
+  // Set by per-card chatbot routes (phase 7 wires this in). Tools that scope
+  // by card (searchDatasetDocs) require it; other tools ignore it.
+  datasetId: string | null;
 };
 
 export type ToolBuilder = (_ctx: ToolContext) => Tool;

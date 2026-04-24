@@ -8,13 +8,14 @@ import {
   documents,
   type NewDatasetRow,
 } from "@/db";
+import { embedTextMany } from "@/lib/ai/embed";
 import { captureError } from "@/lib/logger";
 import { fetchBlob } from "./blob";
 import { checkCanAddRows } from "./limits";
 import { parseFile, UnsupportedFileError } from "./parsers";
 
 const ROW_INSERT_BATCH = 500;
-const CHUNK_INSERT_BATCH = 100;
+const CHUNK_INSERT_BATCH = 64;
 
 export type ParseJobCode =
   | "NOT_FOUND"
@@ -114,10 +115,19 @@ async function insertRowsBatched(
 
 async function insertChunksBatched(datasetId: string, userId: string, chunks: string[]) {
   if (chunks.length === 0) return;
-  // Embeddings land in phase 4; we store the plain content here so the
-  // embedder can backfill in bulk without re-parsing the blob.
-  const payload = chunks.map((content) => ({ datasetId, userId, content, embedding: null }));
-  for (let i = 0; i < payload.length; i += CHUNK_INSERT_BATCH) {
-    await db.insert(documents).values(payload.slice(i, i + CHUNK_INSERT_BATCH));
+  // Embed in batches, then insert each batch with its embeddings populated.
+  // If embedding throws, the outer catch marks the file failed — the admin
+  // can retry the whole file (phase 8 delete-and-reupload, or the reembed
+  // endpoint for after-the-fact fixes).
+  for (let i = 0; i < chunks.length; i += CHUNK_INSERT_BATCH) {
+    const slice = chunks.slice(i, i + CHUNK_INSERT_BATCH);
+    const embeddings = await embedTextMany(slice);
+    const payload = slice.map((content, j) => ({
+      datasetId,
+      userId,
+      content,
+      embedding: embeddings[j] ?? null,
+    }));
+    await db.insert(documents).values(payload);
   }
 }
