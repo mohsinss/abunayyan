@@ -9,7 +9,7 @@ function bot(overrides: Partial<Chatbot> = {}): Chatbot {
     name: "Test",
     description: null,
     provider: "anthropic",
-    modelId: "claude-sonnet-4-7",
+    modelId: "claude-sonnet-4-6",
     temperature: 0.3,
     maxTokens: null,
     maxSteps: 3,

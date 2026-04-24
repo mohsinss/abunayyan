@@ -8,7 +8,7 @@ const VALID = {
   slug: "cs-triage",
   name: "Customer Support Triage",
   provider: "anthropic" as const,
-  modelId: "claude-sonnet-4-7" as const,
+  modelId: "claude-sonnet-4-6" as const,
   temperature: 0.3,
   maxSteps: 3,
   systemPrompt: "You are the customer support triage assistant.",

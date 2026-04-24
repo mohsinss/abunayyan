@@ -19,7 +19,6 @@ export type AiProvider = (typeof AI_PROVIDERS)[number];
 export const MODEL_IDS = [
   // Anthropic
   "claude-opus-4-7",
-  "claude-sonnet-4-7",
   "claude-sonnet-4-6",
   "claude-haiku-4-5-20251001",
   // OpenAI

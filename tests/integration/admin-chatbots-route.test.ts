@@ -72,7 +72,7 @@ const VALID_BODY = {
   slug: "cs-triage",
   name: "Customer Support Triage",
   provider: "anthropic",
-  modelId: "claude-sonnet-4-7",
+  modelId: "claude-sonnet-4-6",
   temperature: 0.3,
   maxSteps: 3,
   systemPrompt: "You are the triage assistant.",
@@ -205,7 +205,7 @@ describe("POST /api/v1/admin/chatbots", () => {
       slug: "cs-triage",
       name: "Customer Support Triage",
       provider: "anthropic",
-      modelId: "claude-sonnet-4-7",
+      modelId: "claude-sonnet-4-6",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const r = await POST(jsonReq(VALID_BODY));

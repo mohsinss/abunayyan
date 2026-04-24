@@ -12,7 +12,7 @@ describe("estimateCostUsd", () => {
   });
 
   it("prices Claude Sonnet 4.7 correctly", () => {
-    const cost = estimateCostUsd("anthropic", "claude-sonnet-4-7", {
+    const cost = estimateCostUsd("anthropic", "claude-sonnet-4-6", {
       promptTokens: 1000,
       completionTokens: 1000,
     });
@@ -48,7 +48,7 @@ describe("estimateCostUsd", () => {
   });
 
   it("returns 0 for zero tokens", () => {
-    const cost = estimateCostUsd("anthropic", "claude-sonnet-4-7", {
+    const cost = estimateCostUsd("anthropic", "claude-sonnet-4-6", {
       promptTokens: 0,
       completionTokens: 0,
     });
@@ -56,15 +56,15 @@ describe("estimateCostUsd", () => {
   });
 
   it("is additive across the two token buckets", () => {
-    const a = estimateCostUsd("anthropic", "claude-sonnet-4-7", {
+    const a = estimateCostUsd("anthropic", "claude-sonnet-4-6", {
       promptTokens: 500,
       completionTokens: 0,
     });
-    const b = estimateCostUsd("anthropic", "claude-sonnet-4-7", {
+    const b = estimateCostUsd("anthropic", "claude-sonnet-4-6", {
       promptTokens: 0,
       completionTokens: 500,
     });
-    const combined = estimateCostUsd("anthropic", "claude-sonnet-4-7", {
+    const combined = estimateCostUsd("anthropic", "claude-sonnet-4-6", {
       promptTokens: 500,
       completionTokens: 500,
     });

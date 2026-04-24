@@ -72,6 +72,16 @@ export async function handleChatRequest(req: Request, slug: string): Promise<Res
 
     return result.result.toDataStreamResponse({
       headers: { "X-Thread-Id": result.threadId },
+      getErrorMessage: (err) => {
+        if (err == null) return "Unknown error";
+        if (typeof err === "string") return err;
+        if (err instanceof Error) return err.message;
+        try {
+          return JSON.stringify(err);
+        } catch {
+          return String(err);
+        }
+      },
     });
   } catch (err) {
     captureError(err, { route: "chatbots.chat", slug });

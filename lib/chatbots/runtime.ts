@@ -118,6 +118,17 @@ export async function runBotStream(input: RunInput): Promise<RunResult> {
       isEnabled: env.NODE_ENV !== "production" || env.ENABLE_AI_TRACES === "1",
       functionId: `bot.${bot.slug}`,
     },
+    onError: ({ error }) => {
+      captureError(error, {
+        route: "runtime.streamText",
+        slug: bot.slug,
+        botId: bot.id,
+        userId: user.id,
+        threadId: thread.id,
+        provider: bot.provider,
+        modelId: bot.modelId,
+      });
+    },
     onFinish: async ({ text, toolCalls, usage, finishReason }) => {
       try {
         const costUsd = estimateCostUsd(bot.provider, bot.modelId, usage);

@@ -14,7 +14,7 @@ describe("resolveModel", () => {
 
   it("throws when the Anthropic key is missing", () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "");
-    expect(() => resolveModel("anthropic", "claude-sonnet-4-7")).toThrow(
+    expect(() => resolveModel("anthropic", "claude-sonnet-4-6")).toThrow(
       ProviderNotConfiguredError,
     );
   });
@@ -34,7 +34,7 @@ describe("resolveModel", () => {
 
   it("returns a model object when Anthropic is configured", () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "sk-ant-test");
-    const m = resolveModel("anthropic", "claude-sonnet-4-7");
+    const m = resolveModel("anthropic", "claude-sonnet-4-6");
     expect(m).toBeDefined();
     // Vercel AI SDK language models expose a `specificationVersion` + `provider`.
     expect(typeof (m as unknown as { provider: string }).provider).toBe("string");
