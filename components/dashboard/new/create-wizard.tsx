@@ -92,8 +92,14 @@ export function CreateWizard() {
               prev.map((row) => (row.id === tempId ? { ...row, uploadProgress: pct } : row)),
             );
           });
-          setFiles((prev) =>
-            prev.map((row) =>
+          setFiles((prev) => {
+            // Race: the 2s poll may have already added the real server row
+            // before this XHR callback fires. If so, just drop the tmp
+            // placeholder — replacing it would create a duplicate key.
+            if (prev.some((r) => r.id === data.fileId)) {
+              return prev.filter((r) => r.id !== tempId);
+            }
+            return prev.map((row) =>
               row.id === tempId
                 ? {
                     id: data.fileId,
@@ -103,8 +109,8 @@ export function CreateWizard() {
                     parseError: null,
                   }
                 : row,
-            ),
-          );
+            );
+          });
         } catch (err) {
           setFiles((prev) => prev.filter((row) => row.id !== tempId));
           setError((err as Error).message || `Upload failed for ${f.name}`);
