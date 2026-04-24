@@ -13,6 +13,13 @@ async function handler(req: Request) {
         await sendWelcomeEmail(payload as { to: string; name: string | null });
         break;
       }
+      case "parse-dataset-file": {
+        const { runParseJob } = await import("@/lib/datasets/parse");
+        const { fileId } = (payload as { fileId?: string }) ?? {};
+        if (!fileId) return new Response("Missing fileId", { status: 400 });
+        await runParseJob(fileId);
+        break;
+      }
       case "archive-old-messages": {
         const { runArchivalSweep } = await import("@/lib/chatbots/archival");
         const { getPlatformSettings } = await import("@/lib/chatbots/settings");
