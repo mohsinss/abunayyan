@@ -29,6 +29,21 @@ jobs:
       - run: pnpm type-check
       - run: pnpm format:check
 
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Fail the pipeline on any high/critical CVE in production deps.
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level=high
+
   unit:
     runs-on: ubuntu-latest
     env:
@@ -46,7 +61,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, unit]
+    needs: [lint-and-typecheck, unit, audit]
     env:
       SKIP_ENV_VALIDATION: "1"
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
