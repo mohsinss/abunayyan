@@ -1,41 +1,34 @@
 "use client";
 
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { ATLAS_COLORS, ATLAS_LEGEND, ATLAS_TOOLTIP } from "@/lib/datasets/renderer/palette";
 
 type Slice = { name: string; value: number };
 
-const COLORS = [
-  "#4f46e5",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#0ea5e9",
-  "#a855f7",
-  "#84cc16",
-  "#ec4899",
-  "#14b8a6",
-  "#f97316",
-  "#6366f1",
-  "#22c55e",
-];
-
-export function PieView({ title, data }: { title: string; data: Slice[] }) {
+export function PieView({ data }: { title: string; data: Slice[] }) {
   return (
-    <section className="rounded-lg border border-border bg-card p-5">
-      <h3 className="mb-3 text-base font-semibold">{title}</h3>
-      <div className="h-72 w-full">
-        <ResponsiveContainer>
-          <PieChart>
-            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
-              {data.map((_, i) => (
-                <Cell key={i} fill={COLORS[i % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    </section>
+    <div className="h-72 w-full">
+      <ResponsiveContainer>
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            outerRadius={100}
+            stroke="#fafaf7"
+            strokeWidth={2}
+            label={{ fontSize: 11, fontFamily: "var(--font-plex-mono), ui-monospace, monospace", fill: "#4a4a48" }}
+          >
+            {data.map((_, i) => (
+              <Cell key={i} fill={ATLAS_COLORS[i % ATLAS_COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip {...ATLAS_TOOLTIP} />
+          <Legend {...ATLAS_LEGEND} />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

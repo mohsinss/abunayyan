@@ -1,6 +1,16 @@
 "use client";
 
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { ATLAS_AXIS, ATLAS_COLORS, ATLAS_GRID, ATLAS_LEGEND, ATLAS_TOOLTIP } from "@/lib/datasets/renderer/palette";
 
 type Point = { x: string | number; y: number; series?: string };
 
@@ -24,10 +34,7 @@ function pivot(points: Point[]): {
   return { rows: Array.from(byX.values()), seriesKeys };
 }
 
-const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#0ea5e9", "#a855f7"];
-
 export function LineView({
-  title,
   data,
   xLabel,
   yLabel,
@@ -39,22 +46,56 @@ export function LineView({
 }) {
   const { rows, seriesKeys } = pivot(data);
   return (
-    <section className="rounded-lg border border-border bg-card p-5">
-      <h3 className="mb-3 text-base font-semibold">{title}</h3>
-      <div className="h-72 w-full">
-        <ResponsiveContainer>
-          <LineChart data={rows} margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" tick={{ fontSize: 12 }} label={xLabel ? { value: xLabel, position: "insideBottom", offset: -5 } : undefined} />
-            <YAxis tick={{ fontSize: 12 }} label={yLabel ? { value: yLabel, angle: -90, position: "insideLeft" } : undefined} />
-            <Tooltip />
-            {seriesKeys.length > 1 ? <Legend /> : null}
-            {seriesKeys.map((k, i) => (
-              <Line key={k} type="monotone" dataKey={k} stroke={COLORS[i % COLORS.length]} strokeWidth={2} dot={false} />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </section>
+    <div className="h-72 w-full">
+      <ResponsiveContainer>
+        <LineChart data={rows} margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
+          <CartesianGrid {...ATLAS_GRID} />
+          <XAxis
+            dataKey="x"
+            {...ATLAS_AXIS}
+            label={
+              xLabel
+                ? {
+                    value: xLabel,
+                    position: "insideBottom",
+                    offset: -5,
+                    fill: "#8a8780",
+                    fontSize: 11,
+                    fontFamily: "var(--font-plex-mono), ui-monospace, monospace",
+                  }
+                : undefined
+            }
+          />
+          <YAxis
+            {...ATLAS_AXIS}
+            label={
+              yLabel
+                ? {
+                    value: yLabel,
+                    angle: -90,
+                    position: "insideLeft",
+                    fill: "#8a8780",
+                    fontSize: 11,
+                    fontFamily: "var(--font-plex-mono), ui-monospace, monospace",
+                  }
+                : undefined
+            }
+          />
+          <Tooltip {...ATLAS_TOOLTIP} />
+          {seriesKeys.length > 1 ? <Legend {...ATLAS_LEGEND} /> : null}
+          {seriesKeys.map((k, i) => (
+            <Line
+              key={k}
+              type="monotone"
+              dataKey={k}
+              stroke={ATLAS_COLORS[i % ATLAS_COLORS.length]}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

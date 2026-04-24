@@ -8,17 +8,19 @@ import {
   resolveViewColumns,
   type DatasetRow,
 } from "@/lib/datasets/renderer/aggregate";
+import { SectionShell, Card } from "@/components/dashboard/section-shell";
 import { BarView } from "./bar-view";
-import { KpiView } from "./kpi-view";
+import { formatKpiValue } from "./kpi-view";
 import { LineView } from "./line-view";
 import { PieView } from "./pie-view";
 import { TableView } from "./table-view";
 import { ViewBoundary } from "./view-boundary";
+import { GeneratedKpiStrip, type KpiTile } from "./kpi-strip";
 
-// Server component: receives the validated config + raw dataset_rows, runs
-// aggregation on the server (no row data leaks to the client), and emits a
-// tree of presentation components per view. View components are client
-// components for Recharts interactivity; they receive already-shaped data.
+// Server component: validated config + raw rows go in, an editorially-styled
+// tree of sections + charts comes out. KPI views collapse into a single
+// strip up top (matches the SBU rhythm); every other view becomes its own
+// numbered SectionShell so the sidebar nav has anchors to scroll to.
 export function CardRenderer({
   columns,
   views,
@@ -31,26 +33,59 @@ export function CardRenderer({
   const kpis = views.filter((v) => v.kind === "kpi");
   const others = views.filter((v) => v.kind !== "kpi");
 
+  const kpiTiles: KpiTile[] = [];
+  for (const v of kpis) {
+    if (v.kind !== "kpi") continue;
+    const col = findColumn(columns, v.columnId);
+    if (!col) continue;
+    const value = aggregateKpi(rows, col, v.aggregation);
+    kpiTiles.push({
+      id: v.id,
+      label: v.title,
+      value: formatKpiValue(value, v.format),
+      sub: col.label,
+    });
+  }
+
   return (
-    <div className="space-y-6">
-      {kpis.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {kpis.map((v) => (
-            <ViewBoundary key={v.id} title={v.title}>
-              <RenderOne view={v} columns={columns} rows={rows} />
-            </ViewBoundary>
-          ))}
-        </div>
-      ) : null}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {others.map((v) => (
-          <ViewBoundary key={v.id} title={v.title}>
-            <RenderOne view={v} columns={columns} rows={rows} />
-          </ViewBoundary>
-        ))}
-      </div>
+    <div className="space-y-2">
+      {kpiTiles.length > 0 ? <GeneratedKpiStrip tiles={kpiTiles} /> : null}
+
+      {others.map((v, i) => {
+        const num = String(i + 1).padStart(2, "0");
+        return (
+          <SectionShell
+            key={v.id}
+            id={`view-${v.id}`}
+            num={num}
+            title={v.title}
+            description={kindLabel(v.kind)}
+          >
+            <Card>
+              <ViewBoundary title={v.title}>
+                <RenderOne view={v} columns={columns} rows={rows} />
+              </ViewBoundary>
+            </Card>
+          </SectionShell>
+        );
+      })}
     </div>
   );
+}
+
+function kindLabel(kind: ProposedView["kind"]): string {
+  switch (kind) {
+    case "bar":
+      return "Bar chart";
+    case "line":
+      return "Line chart";
+    case "pie":
+      return "Composition";
+    case "table":
+      return "Tabular";
+    case "kpi":
+      return "KPI";
+  }
 }
 
 function RenderOne({
@@ -65,22 +100,17 @@ function RenderOne({
   const check = resolveViewColumns(view, columns);
   if (!check.ok) {
     return (
-      <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-5">
-        <h3 className="text-base font-semibold">{view.title}</h3>
-        <p className="mt-2 text-sm text-destructive">
-          View references columns that are no longer in the dataset: {check.missing.join(", ")}.
-        </p>
-      </section>
+      <p className="font-mono text-[10px] uppercase tracking-[1.2px] text-atlas-alert">
+        Missing columns: {check.missing.join(", ")}
+      </p>
     );
   }
 
   switch (view.kind) {
-    case "kpi": {
-      const col = findColumn(columns, view.columnId);
-      if (!col) return null;
-      const value = aggregateKpi(rows, col, view.aggregation);
-      return <KpiView title={view.title} value={value} format={view.format} />;
-    }
+    case "kpi":
+      // KPI views are surfaced through GeneratedKpiStrip; this branch only
+      // hits if a KPI view somehow lands outside the strip path (it shouldn't).
+      return null;
     case "bar":
     case "line": {
       const xCol = findColumn(columns, view.xColumnId);
@@ -102,7 +132,9 @@ function RenderOne({
       return <PieView title={view.title} data={data} />;
     }
     case "table": {
-      const tableCols = view.columnIds.map((id) => findColumn(columns, id)).filter(Boolean) as ProposedColumn[];
+      const tableCols = view.columnIds
+        .map((id) => findColumn(columns, id))
+        .filter(Boolean) as ProposedColumn[];
       const tableRows = projectTable(rows, tableCols);
       return (
         <TableView
