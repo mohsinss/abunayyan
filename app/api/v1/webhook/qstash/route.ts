@@ -90,9 +90,20 @@ async function handler(req: Request) {
 // Lazy-import so the signature verifier doesn't read env at module-load time
 // (important for `next build` when QSTASH keys may be absent).
 export async function POST(req: Request) {
-  if (!process.env.QSTASH_CURRENT_SIGNING_KEY || !process.env.QSTASH_NEXT_SIGNING_KEY) {
+  const hasKeys =
+    !!process.env.QSTASH_CURRENT_SIGNING_KEY && !!process.env.QSTASH_NEXT_SIGNING_KEY;
+
+  // Dev fallback: without QStash creds, lib/queue/index.ts posts straight to
+  // this endpoint. Running the handler unsigned here lets parse jobs fire
+  // locally without ngrok + a real QStash account. Strictly dev-only — prod
+  // still 503s so nobody can drive background work from a forged request.
+  if (!hasKeys) {
+    if (process.env.NODE_ENV !== "production") {
+      return handler(req);
+    }
     return new Response("QStash not configured", { status: 503 });
   }
+
   const { verifySignatureAppRouter } = await import("@upstash/qstash/nextjs");
   return verifySignatureAppRouter(handler)(req);
 }
