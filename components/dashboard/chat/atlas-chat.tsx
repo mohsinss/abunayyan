@@ -1,9 +1,9 @@
 "use client";
 
-import { useChat } from "ai/react";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Loader2, MessageSquareText, Sparkles, Trash2, X } from "lucide-react";
 import { ChatMessage } from "./chat-message";
+import { useBot } from "@/components/chatbots/use-bot";
 
 const SUGGESTIONS = [
   "What is Wetico's financial position?",
@@ -14,11 +14,17 @@ const SUGGESTIONS = [
 
 export function AtlasChat() {
   const [open, setOpen] = useState(false);
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, setInput } =
-    useChat({
-      api: "/api/v1/ai/atlas-chat",
-      onError: (err) => console.error("Atlas chat error:", err),
-    });
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    setInput,
+    resetThread,
+  } = useBot("atlas-analyst", {
+    onError: (err) => console.error("Atlas chat error:", err),
+  });
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -80,10 +86,10 @@ export function AtlasChat() {
               {messages.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => setMessages([])}
+                  onClick={resetThread}
                   aria-label="Clear chat"
                   className="flex size-8 items-center justify-center rounded-sm text-atlas-ink-3 hover:bg-atlas-bg-3 hover:text-atlas-ink"
-                  title="Clear conversation"
+                  title="Start new conversation"
                 >
                   <Trash2 className="size-4" />
                 </button>
