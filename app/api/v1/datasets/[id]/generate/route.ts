@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requireAdminApi } from "@/lib/auth/rbac";
 import { captureError } from "@/lib/logger";
+import { capture, EVENTS } from "@/lib/analytics/posthog";
 import { getDatasetById, updateDataset } from "@/lib/db/queries/datasets";
 import { CardConfigProposalSchema } from "@/lib/datasets/proposer";
 import { seedCardChatbot } from "@/lib/datasets/seed-chatbot";
@@ -73,6 +74,16 @@ export async function POST(
     } catch (err) {
       captureError(err, { route: "datasets.generate.seedChatbot", datasetId: id });
     }
+
+    await capture({
+      distinctId: guard.user.id,
+      event: EVENTS.dataset_generated,
+      properties: {
+        datasetId: id,
+        slug: updated.slug,
+        viewCount: parsed.data.config.views.length,
+      },
+    });
 
     return Response.json({ id: updated.id, slug: updated.slug });
   } catch (err) {

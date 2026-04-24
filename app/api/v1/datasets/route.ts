@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requireAdminApi } from "@/lib/auth/rbac";
 import { captureError } from "@/lib/logger";
+import { capture, EVENTS } from "@/lib/analytics/posthog";
 import { insertDataset, slugExists } from "@/lib/db/queries/datasets";
 import { checkCanCreateDataset } from "@/lib/datasets/limits";
 import { uniqueSlug } from "@/lib/datasets/slug";
@@ -48,6 +49,11 @@ export async function POST(req: Request) {
       kind: "generated",
       config: { version: 1, columns: [], views: [] },
       createdBy: guard.user.id,
+    });
+    await capture({
+      distinctId: guard.user.id,
+      event: EVENTS.dataset_created,
+      properties: { datasetId: row.id, slug: row.slug },
     });
     return Response.json({ id: row.id, slug: row.slug, kind: row.kind }, { status: 201 });
   } catch (err) {

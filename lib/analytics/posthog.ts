@@ -18,6 +18,16 @@ export const EVENTS = {
   checkout_succeeded: "checkout_succeeded",
   subscription_cancelled: "subscription_cancelled",
   ai_completion: "ai_completion",
+
+  // Dataset-card lifecycle (docs/datasets-cards-plan.md).
+  dataset_created: "dataset_created",
+  dataset_file_uploaded: "dataset_file_uploaded",
+  dataset_proposed: "dataset_proposed",
+  dataset_generated: "dataset_generated",
+  dataset_share_enabled: "dataset_share_enabled",
+  dataset_share_disabled: "dataset_share_disabled",
+  dataset_share_rotated: "dataset_share_rotated",
+  dataset_public_chat_sent: "dataset_public_chat_sent",
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];

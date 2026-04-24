@@ -13,6 +13,7 @@ import { KpiView } from "./kpi-view";
 import { LineView } from "./line-view";
 import { PieView } from "./pie-view";
 import { TableView } from "./table-view";
+import { ViewBoundary } from "./view-boundary";
 
 // Server component: receives the validated config + raw dataset_rows, runs
 // aggregation on the server (no row data leaks to the client), and emits a
@@ -35,13 +36,17 @@ export function CardRenderer({
       {kpis.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {kpis.map((v) => (
-            <RenderOne key={v.id} view={v} columns={columns} rows={rows} />
+            <ViewBoundary key={v.id} title={v.title}>
+              <RenderOne view={v} columns={columns} rows={rows} />
+            </ViewBoundary>
           ))}
         </div>
       ) : null}
       <div className="grid gap-6 lg:grid-cols-2">
         {others.map((v) => (
-          <RenderOne key={v.id} view={v} columns={columns} rows={rows} />
+          <ViewBoundary key={v.id} title={v.title}>
+            <RenderOne view={v} columns={columns} rows={rows} />
+          </ViewBoundary>
         ))}
       </div>
     </div>

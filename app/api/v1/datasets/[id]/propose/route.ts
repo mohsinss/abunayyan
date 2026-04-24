@@ -1,5 +1,6 @@
 import { requireAdminApi } from "@/lib/auth/rbac";
 import { captureError } from "@/lib/logger";
+import { capture, EVENTS } from "@/lib/analytics/posthog";
 import { getDatasetById, listFilesForDataset, updateDataset } from "@/lib/db/queries/datasets";
 import { gatherFileSamples } from "@/lib/datasets/sample-data";
 import { proposeCardConfig } from "@/lib/datasets/proposer";
@@ -55,6 +56,16 @@ export async function POST(
       title: proposal.title,
       description: proposal.description,
       config: nextConfig,
+    });
+
+    await capture({
+      distinctId: guard.user.id,
+      event: EVENTS.dataset_proposed,
+      properties: {
+        datasetId: id,
+        viewCount: proposal.views.length,
+        columnCount: proposal.columns.length,
+      },
     });
 
     return Response.json({ proposal });

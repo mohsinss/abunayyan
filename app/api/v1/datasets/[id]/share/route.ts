@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requireAdminApi } from "@/lib/auth/rbac";
 import { captureError } from "@/lib/logger";
+import { capture, EVENTS } from "@/lib/analytics/posthog";
 import { writeAudit } from "@/lib/chatbots/audit";
 import { getDatasetById, setShareState } from "@/lib/db/queries/datasets";
 import { generateShareToken } from "@/lib/datasets/share";
@@ -49,6 +50,11 @@ export async function POST(
       event: rotate ? "dataset.share_rotated" : "dataset.share_enabled",
       payload: { datasetId: id, slug: updated.slug },
     });
+    await capture({
+      distinctId: guard.user.id,
+      event: rotate ? EVENTS.dataset_share_rotated : EVENTS.dataset_share_enabled,
+      properties: { datasetId: id, slug: updated.slug },
+    });
     return Response.json({
       enabled: updated.shareEnabled,
       token: updated.shareToken,
@@ -78,6 +84,11 @@ export async function DELETE(
       actorId: guard.user.id,
       event: "dataset.share_disabled",
       payload: { datasetId: id, slug: updated.slug },
+    });
+    await capture({
+      distinctId: guard.user.id,
+      event: EVENTS.dataset_share_disabled,
+      properties: { datasetId: id, slug: updated.slug },
     });
     return new Response(null, { status: 204 });
   } catch (err) {

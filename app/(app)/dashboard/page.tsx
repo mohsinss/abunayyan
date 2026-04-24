@@ -1,6 +1,7 @@
 import { hasRole } from "@/lib/auth/rbac";
 import { requireUser } from "@/lib/auth/session";
 import { CardTile, CreateCardTile } from "@/components/dashboard/card-tile";
+import { HashRedirect } from "@/components/dashboard/hash-redirect";
 import { getBuiltinByKey } from "@/lib/datasets/builtins";
 import { listDatasets } from "@/lib/db/queries/datasets";
 
@@ -13,6 +14,7 @@ export default async function DashboardGalleryPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
+      <HashRedirect />
       <header className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">Datasets</h1>
         <p className="mt-2 text-sm text-muted-foreground">

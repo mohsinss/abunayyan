@@ -3,6 +3,7 @@ import { getBotById } from "@/lib/chatbots/registry";
 import { getDatasetByShareToken } from "@/lib/db/queries/datasets";
 import { runPublicBotStream } from "@/lib/datasets/public-chat";
 import { captureError } from "@/lib/logger";
+import { capture, EVENTS } from "@/lib/analytics/posthog";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -38,11 +39,12 @@ export async function POST(
     return new Response("Bad Request", { status: 400 });
   }
 
+  const clientIp = clientIpFrom(req);
   try {
     const result = await runPublicBotStream({
       bot,
       datasetId: dataset.id,
-      clientIp: clientIpFrom(req),
+      clientIp,
       messages: body.messages as Parameters<typeof runPublicBotStream>[0]["messages"],
     });
 
@@ -68,6 +70,13 @@ export async function POST(
           });
       }
     }
+
+    // Fire-and-forget event. We don't block the stream on PostHog.
+    capture({
+      distinctId: `anon:${clientIp}`,
+      event: EVENTS.dataset_public_chat_sent,
+      properties: { datasetId: dataset.id, botId: bot.id },
+    }).catch(() => {});
 
     return result.result.toDataStreamResponse({
       getErrorMessage: (err) => {

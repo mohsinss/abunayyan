@@ -1,5 +1,6 @@
 import { requireAdminApi } from "@/lib/auth/rbac";
 import { captureError } from "@/lib/logger";
+import { capture, EVENTS } from "@/lib/analytics/posthog";
 import { env } from "@/lib/env";
 import { enqueue } from "@/lib/queue";
 import {
@@ -95,6 +96,17 @@ export async function POST(
     // Leave the file in `queued`; an admin can retry. The blob is already
     // written, so retry is just re-enqueuing.
   }
+
+  await capture({
+    distinctId: guard.user.id,
+    event: EVENTS.dataset_file_uploaded,
+    properties: {
+      datasetId,
+      fileId: row.id,
+      mimeType: row.mimeType,
+      sizeBytes: row.sizeBytes,
+    },
+  });
 
   return Response.json(
     {
