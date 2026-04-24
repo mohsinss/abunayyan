@@ -9,9 +9,16 @@ import { uniqueSlug } from "@/lib/datasets/slug";
 export const runtime = "nodejs";
 
 const CreateSchema = z.object({
-  title: z.string().min(1).max(160),
+  // Title is optional now — the wizard creates a draft on first file drop and
+  // the AI fills in the title via /suggest-meta after parsing. Server defaults
+  // to "Untitled dataset" so the slug + row constraints stay satisfied.
+  title: z.string().min(1).max(160).optional(),
   description: z.string().max(2000).nullable().optional(),
 });
+
+function defaultDraftTitle() {
+  return `Untitled dataset ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
+}
 
 export async function POST(req: Request) {
   const guard = await requireAdminApi(req);
@@ -39,12 +46,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const slug = await uniqueSlug(parsed.data.title, slugExists);
+  const title = parsed.data.title ?? defaultDraftTitle();
+  const slug = await uniqueSlug(title, slugExists);
 
   try {
     const row = await insertDataset({
       slug,
-      title: parsed.data.title,
+      title,
       description: parsed.data.description ?? null,
       kind: "generated",
       config: { version: 1, columns: [], views: [] },

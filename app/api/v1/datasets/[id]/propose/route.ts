@@ -52,11 +52,12 @@ export async function POST(
       chatbotSystemPrompt: proposal.chatbotSystemPrompt,
     };
 
-    await updateDataset(id, {
-      title: proposal.title,
-      description: proposal.description,
-      config: nextConfig,
-    });
+    // Don't override title/description here — the wizard's "describe" /
+    // "suggest-meta" step lets the admin choose those, and we already
+    // PATCHed the row before /propose was called. The proposer's title +
+    // description suggestions surface in the Review form as the AI's
+    // "preferred" framing if the admin wants to swap.
+    await updateDataset(id, { config: nextConfig });
 
     await capture({
       distinctId: guard.user.id,

@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-type Step = "describe" | "upload" | "generating";
+type Step = "upload" | "generating";
 type FileRow = {
   id: string;
   filename: string;
@@ -34,48 +34,45 @@ function progressFor(f: FileRow): number {
 
 export function CreateWizard() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("describe");
+  const [step, setStep] = useState<Step>("upload");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
   const [files, setFiles] = useState<FileRow[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  // Tracks whether the AI suggest-meta call has already populated title +
+  // description. Latch so a second wave of files doesn't stomp the admin's
+  // manual edits.
+  const [suggestState, setSuggestState] = useState<"idle" | "running" | "done">("idle");
 
-  const createDraft = useCallback(async () => {
-    setError(null);
-    if (!title.trim()) {
-      setError("Title is required");
-      return;
+  // Lazy create a draft dataset row on first file drop. Title is server-defaulted
+  // ("Untitled dataset <ts>") and replaced once the admin edits or
+  // suggest-meta returns.
+  const ensureDraft = useCallback(async (): Promise<string | null> => {
+    if (draftId) return draftId;
+    const res = await fetch("/api/v1/datasets", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      setError(body || `Create failed (${res.status})`);
+      return null;
     }
-    setBusy(true);
-    try {
-      const res = await fetch("/api/v1/datasets", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title, description: description || null }),
-      });
-      if (!res.ok) {
-        const body = await res.text();
-        setError(body || `Create failed (${res.status})`);
-        return;
-      }
-      const data = (await res.json()) as { id: string; slug: string };
-      setDraftId(data.id);
-      setStep("upload");
-    } finally {
-      setBusy(false);
-    }
-  }, [title, description]);
+    const data = (await res.json()) as { id: string; slug: string };
+    setDraftId(data.id);
+    return data.id;
+  }, [draftId]);
 
   const uploadFiles = useCallback(
     async (fileList: FileList | null) => {
-      if (!draftId || !fileList || fileList.length === 0) return;
+      if (!fileList || fileList.length === 0) return;
       setError(null);
+      const id = await ensureDraft();
+      if (!id) return;
+
       for (const f of Array.from(fileList)) {
-        // XHR (not fetch) because we need real upload progress events.
-        // Render an optimistic row keyed by filename + size + random id so
-        // the progress bar lights up the second we start streaming.
         const tempId = `tmp-${Math.random().toString(36).slice(2, 10)}`;
         setFiles((prev) => [
           ...prev,
@@ -90,7 +87,7 @@ export function CreateWizard() {
         ]);
 
         try {
-          const data = await uploadOne(`/api/v1/datasets/${draftId}/files`, f, (pct) => {
+          const data = await uploadOne(`/api/v1/datasets/${id}/files`, f, (pct) => {
             setFiles((prev) =>
               prev.map((row) => (row.id === tempId ? { ...row, uploadProgress: pct } : row)),
             );
@@ -114,7 +111,7 @@ export function CreateWizard() {
         }
       }
     },
-    [draftId],
+    [ensureDraft],
   );
 
   // Poll status of files until they're all terminal (ready/failed). Merges
@@ -143,7 +140,6 @@ export function CreateWizard() {
         return [...data.files, ...unfinishedOptimistic];
       });
       if (!data.files.some((f) => f.status === "queued" || f.status === "parsing")) {
-        // Stop polling only if there are no optimistic uploads still in flight.
         const hasInFlight = files.some((f) => f.id.startsWith("tmp-"));
         if (!hasInFlight) {
           clearInterval(iv);
@@ -157,11 +153,57 @@ export function CreateWizard() {
     };
   }, [draftId, files]);
 
+  // Auto-fill title + description from the AI as soon as the first file is
+  // ready. Runs once per draft. Admin can still type over the suggestions.
+  useEffect(() => {
+    if (!draftId) return;
+    if (suggestState !== "idle") return;
+    const anyReady = files.some((f) => f.status === "ready");
+    const anyPending = files.some((f) => f.status === "queued" || f.status === "parsing");
+    if (!anyReady || anyPending) return;
+
+    let cancelled = false;
+    setSuggestState("running");
+    (async () => {
+      try {
+        const res = await fetch(`/api/v1/datasets/${draftId}/suggest-meta`, { method: "POST" });
+        if (!res.ok) {
+          // Soft-fail: admin can still type their own title.
+          if (!cancelled) setSuggestState("done");
+          return;
+        }
+        const data = (await res.json()) as { title: string; description: string };
+        if (cancelled) return;
+        setTitle((current) => (current.trim() ? current : data.title));
+        setDescription((current) => (current.trim() ? current : data.description));
+        setSuggestState("done");
+      } catch {
+        if (!cancelled) setSuggestState("done");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [draftId, files, suggestState]);
+
   const propose = useCallback(async () => {
     if (!draftId) return;
     setError(null);
     setStep("generating");
     try {
+      // Save admin-edited title/description first so /propose runs against
+      // the latest text and the row reflects the admin's framing in /review.
+      const patch = await fetch(`/api/v1/datasets/${draftId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title, description: description || null }),
+      });
+      if (!patch.ok) {
+        const body = await patch.text();
+        setError(body || `Save failed (${patch.status})`);
+        setStep("upload");
+        return;
+      }
       const res = await fetch(`/api/v1/datasets/${draftId}/propose`, { method: "POST" });
       if (!res.ok) {
         const body = await res.text();
@@ -174,155 +216,176 @@ export function CreateWizard() {
       setError((err as Error).message);
       setStep("upload");
     }
-  }, [draftId, router]);
+  }, [draftId, title, description, router]);
 
   const readyCount = files.filter((f) => f.status === "ready").length;
   const failedCount = files.filter((f) => f.status === "failed").length;
   const anyPending =
     files.some((f) => f.status === "queued" || f.status === "parsing") ||
     files.some((f) => f.id.startsWith("tmp-"));
-  const canPropose = !anyPending && readyCount > 0;
+  const canPropose = !anyPending && readyCount > 0 && title.trim().length > 0;
   const aggregateProgress =
     files.length === 0
       ? 0
       : Math.round(files.reduce((sum, f) => sum + progressFor(f), 0) / files.length);
 
+  const showDetails = readyCount > 0;
+
   return (
     <div className="mx-auto max-w-2xl">
-      <Stepper current={step} />
+      <Stepper current={step} hasFiles={files.length > 0} canPropose={canPropose} />
       {error ? (
         <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </div>
       ) : null}
 
-      {step === "describe" ? (
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={160}
-              placeholder="Q1 Supplier Spend Review"
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="description">Description (optional)</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={2000}
-              rows={3}
-              placeholder="What this dataset covers, who uses it, what decisions it drives."
-              className="mt-1"
-            />
-          </div>
-          <div className="flex justify-end">
-            <Button onClick={createDraft} disabled={busy || !title.trim()}>
-              {busy ? "Creating…" : "Next: upload files"}
-            </Button>
-          </div>
-        </div>
-      ) : null}
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Drop one or more files. Accepted: .xlsx, .xls, .csv, .docx, .pptx. Each file parses in
+          the background — title and description fill in automatically when the first one is
+          ready.
+        </p>
 
-      {step === "upload" || step === "generating" ? (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Accepted: .xlsx, .xls, .csv, .docx, .pptx. Each file parses in the background.
-          </p>
-          <input
-            type="file"
-            multiple
-            accept=".xlsx,.xls,.csv,.docx,.pptx"
-            onChange={(e) => uploadFiles(e.target.files)}
-            disabled={step === "generating"}
-            className="block w-full text-sm file:mr-4 file:rounded-md file:border file:border-border file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-muted/80"
-          />
+        <input
+          type="file"
+          multiple
+          accept=".xlsx,.xls,.csv,.docx,.pptx"
+          onChange={(e) => uploadFiles(e.target.files)}
+          disabled={step === "generating"}
+          className="block w-full text-sm file:mr-4 file:rounded-md file:border file:border-border file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-muted/80"
+        />
 
-          {files.length > 0 ? (
-            <div className="space-y-2 rounded-md border border-border bg-card p-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium">
-                  {readyCount} of {files.length} ready
-                  {failedCount > 0 ? ` · ${failedCount} failed` : null}
-                </span>
-                <span className="tabular-nums text-muted-foreground">{aggregateProgress}%</span>
-              </div>
-              <ProgressBar value={aggregateProgress} indeterminate={anyPending && aggregateProgress < 100} />
+        {files.length > 0 ? (
+          <div className="space-y-2 rounded-md border border-border bg-card p-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium">
+                {readyCount} of {files.length} ready
+                {failedCount > 0 ? ` · ${failedCount} failed` : null}
+              </span>
+              <span className="tabular-nums text-muted-foreground">{aggregateProgress}%</span>
             </div>
-          ) : null}
-
-          <ul className="space-y-2">
-            {files.map((f) => {
-              const pct = progressFor(f);
-              return (
-                <li
-                  key={f.id}
-                  className="space-y-2 rounded-md border border-border bg-card px-3 py-2 text-sm"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="truncate font-medium">{f.filename}</span>
-                    <StatusIcon file={f} />
-                  </div>
-                  <ProgressBar
-                    value={pct}
-                    failed={f.status === "failed"}
-                    indeterminate={f.status === "parsing" || f.status === "queued"}
-                  />
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{stageLabel(f)}</span>
-                    <span className="tabular-nums">{pct}%</span>
-                  </div>
-                </li>
-              );
-            })}
-            {files.length === 0 ? (
-              <li className="rounded-md border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
-                No files yet. Select one or more above.
-              </li>
-            ) : null}
-          </ul>
-
-          <div className="flex justify-between">
-            <Button variant="ghost" onClick={() => setStep("describe")} disabled={step === "generating"}>
-              Back
-            </Button>
-            <Button onClick={propose} disabled={!canPropose || step === "generating"}>
-              {step === "generating" ? "Asking the model…" : "Generate proposal →"}
-            </Button>
+            <ProgressBar
+              value={aggregateProgress}
+              indeterminate={anyPending && aggregateProgress < 100}
+            />
           </div>
+        ) : null}
+
+        <ul className="space-y-2">
+          {files.map((f) => {
+            const pct = progressFor(f);
+            return (
+              <li
+                key={f.id}
+                className="space-y-2 rounded-md border border-border bg-card px-3 py-2 text-sm"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="truncate font-medium">{f.filename}</span>
+                  <StatusIcon file={f} />
+                </div>
+                <ProgressBar
+                  value={pct}
+                  failed={f.status === "failed"}
+                  indeterminate={f.status === "parsing" || f.status === "queued"}
+                />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{stageLabel(f)}</span>
+                  <span className="tabular-nums">{pct}%</span>
+                </div>
+              </li>
+            );
+          })}
+          {files.length === 0 ? (
+            <li className="rounded-md border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
+              No files yet. Pick one or more above.
+            </li>
+          ) : null}
+        </ul>
+
+        {showDetails ? (
+          <section className="space-y-3 rounded-md border border-border bg-card p-4">
+            <header className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Card details</h2>
+              {suggestState === "running" ? (
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+                  Suggesting…
+                </span>
+              ) : suggestState === "done" && (title || description) ? (
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  AI-suggested · edit anything
+                </span>
+              ) : null}
+            </header>
+            <div>
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={160}
+                placeholder={
+                  suggestState === "running" ? "Suggesting…" : "Q1 Supplier Spend Review"
+                }
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="description">Description (optional)</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={2000}
+                rows={3}
+                placeholder={
+                  suggestState === "running"
+                    ? "Suggesting…"
+                    : "What this dataset covers, who uses it, what decisions it drives."
+                }
+                className="mt-1"
+              />
+            </div>
+          </section>
+        ) : null}
+
+        <div className="flex justify-end">
+          <Button onClick={propose} disabled={!canPropose || step === "generating"}>
+            {step === "generating"
+              ? "Asking the model…"
+              : !title.trim() && readyCount > 0
+                ? "Title required"
+                : "Generate proposal →"}
+          </Button>
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
 
-function Stepper({ current }: { current: Step }) {
-  const order: Step[] = ["describe", "upload", "generating"];
-  const labels: Record<Step, string> = {
-    describe: "1. Describe",
-    upload: "2. Upload",
-    generating: "3. Generate",
-  };
-  const idx = order.indexOf(current);
+function Stepper({
+  current,
+  hasFiles,
+  canPropose,
+}: {
+  current: Step;
+  hasFiles: boolean;
+  canPropose: boolean;
+}) {
+  // Three perceived phases mapped onto the two real steps. Lights as the
+  // user moves through them so the wizard doesn't feel single-page.
+  const steps = [
+    { key: "upload", label: "1. Upload", active: true },
+    { key: "details", label: "2. Review details", active: hasFiles && canPropose },
+    { key: "generate", label: "3. Generate", active: current === "generating" },
+  ];
   return (
     <ol className="mb-6 flex items-center gap-4 text-xs text-muted-foreground">
-      {order.map((s, i) => (
-        <li
-          key={s}
-          className={
-            i === idx
-              ? "font-medium text-foreground"
-              : i < idx
-                ? "text-foreground/70"
-                : undefined
-          }
-        >
-          {labels[s]}
+      {steps.map((s) => (
+        <li key={s.key} className={s.active ? "font-medium text-foreground" : undefined}>
+          {s.label}
         </li>
       ))}
     </ol>
