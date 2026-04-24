@@ -64,3 +64,15 @@ export async function insertDatasetFile(input: NewDatasetFile): Promise<DatasetF
   if (!row) throw new Error("insertDatasetFile returned no row");
   return row;
 }
+
+export async function updateDataset(
+  id: string,
+  patch: Partial<Pick<Dataset, "title" | "description" | "config">>,
+): Promise<Dataset | null> {
+  const [row] = await db
+    .update(datasets)
+    .set({ ...patch, updatedAt: new Date() })
+    .where(and(eq(datasets.id, id), isNull(datasets.deletedAt)))
+    .returning();
+  return row ?? null;
+}

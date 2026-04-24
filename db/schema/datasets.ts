@@ -27,6 +27,9 @@ export type CardConfig = {
   builtinKey?: string;
   columns?: unknown[];
   views?: unknown[];
+  // Populated by the AI proposer (phase 5); editable on the Review page.
+  narrative?: string;
+  chatbotSystemPrompt?: string;
 };
 
 export const datasets = pgTable(
