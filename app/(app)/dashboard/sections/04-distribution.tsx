@@ -129,7 +129,7 @@ function Chart({
   data: ChartDatum[];
   view: ViewMode;
   total: number;
-  onClick: (id: string) => void;
+  onClick: (_id: string) => void;
 }) {
   const { isActive, hoverEntity } = useSelectedEntity();
 

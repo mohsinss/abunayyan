@@ -257,7 +257,7 @@ export function ChatChart({ args }: { args: ChartArgs }) {
             <PieChart>
               <Tooltip
                 contentStyle={tooltipStyle}
-                formatter={(v, _n, item) => {
+                formatter={(v, _n, _item) => {
                   const total = data.reduce((s, d) => s + (d.value ?? 0), 0);
                   const share = total ? Number(v) / total : 0;
                   return [`${formatValue(Number(v), unit)} · ${(share * 100).toFixed(1)}%`, ""];

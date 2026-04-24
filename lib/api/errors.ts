@@ -1,14 +1,16 @@
 import { ZodError } from "zod";
 
 export class AppError extends Error {
-  constructor(
-    public readonly code: string,
-    public readonly status: number,
-    message: string,
-    public readonly details?: unknown,
-  ) {
+  readonly code: string;
+  readonly status: number;
+  readonly details?: unknown;
+
+  constructor(code: string, status: number, message: string, details?: unknown) {
     super(message);
     this.name = "AppError";
+    this.code = code;
+    this.status = status;
+    this.details = details;
   }
 }
 

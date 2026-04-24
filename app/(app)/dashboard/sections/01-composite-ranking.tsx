@@ -31,7 +31,7 @@ export function CompositeRankingSection() {
       return true;
     });
 
-    const sortFns: Record<SortKey, (a: typeof entities[0], b: typeof entities[0]) => number> = {
+    const sortFns: Record<SortKey, (_a: typeof entities[0], _b: typeof entities[0]) => number> = {
       score: (a, b) => a.compositeScore - b.compositeScore,
       revenue: (a, b) => b.revenue - a.revenue,
       opProfit: (a, b) => b.opProfit - a.opProfit,

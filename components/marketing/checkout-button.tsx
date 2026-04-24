@@ -33,7 +33,7 @@ export function CheckoutButton({
         toast.error(data?.error?.message ?? "Checkout failed");
         setLoading(false);
       }
-    } catch (err) {
+    } catch {
       toast.error("Checkout failed");
       setLoading(false);
     }

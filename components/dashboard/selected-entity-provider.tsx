@@ -5,9 +5,9 @@ import { createContext, useCallback, useContext, useMemo, useState } from "react
 interface SelectedEntityState {
   selectedId: string | null;
   hoveredId: string | null;
-  selectEntity: (id: string | null) => void;
-  hoverEntity: (id: string | null) => void;
-  isActive: (id: string) => boolean;
+  selectEntity: (_id: string | null) => void;
+  hoverEntity: (_id: string | null) => void;
+  isActive: (_id: string) => boolean;
 }
 
 const Ctx = createContext<SelectedEntityState | null>(null);

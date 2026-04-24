@@ -91,7 +91,7 @@ export function CostMatrixSection() {
 
   const rows = useMemo(() => {
     const base = matrixRows();
-    const sortFns: Record<RowSort, (a: typeof base[0], b: typeof base[0]) => number> = {
+    const sortFns: Record<RowSort, (_a: typeof base[0], _b: typeof base[0]) => number> = {
       budget: (a, b) => b.budget - a.budget,
       allocation: (a, b) => b.total - a.total,
       alpha: (a, b) => a.name.localeCompare(b.name),

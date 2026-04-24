@@ -96,10 +96,10 @@ function ScatterPlot({
   xScale: "linear" | "log";
   xDomain: [number, number];
   yDomain: [number, number];
-  xTickFormatter: (v: number) => string;
-  yTickFormatter: (v: number) => string;
+  xTickFormatter: (_v: number) => string;
+  yTickFormatter: (_v: number) => string;
   showLabels: boolean;
-  onDotClick: (id: string) => void;
+  onDotClick: (_id: string) => void;
 }) {
   const { isActive, hoverEntity } = useSelectedEntity();
   const data = dotData.map((d) => ({ ...d, x: d[xKey] as number, y: d[yKey] as number }));

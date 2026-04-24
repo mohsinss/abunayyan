@@ -19,7 +19,7 @@ type HandlerOptions<TIn, TOut, TParams> = {
   schema?: ZodTypeAny;
   auth?: "required" | "optional" | "none";
   rateLimit?: RateLimitBucket;
-  handler: (ctx: Ctx<TIn, TParams>) => Promise<TOut> | TOut;
+  handler: (_ctx: Ctx<TIn, TParams>) => Promise<TOut> | TOut;
 };
 
 export function createHandler<TIn = unknown, TOut = unknown, TParams = Record<string, string>>(

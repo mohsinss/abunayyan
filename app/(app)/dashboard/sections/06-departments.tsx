@@ -26,7 +26,7 @@ export function DepartmentsSection() {
 
   const filtered = useMemo(() => {
     const list = departments.filter((d) => enabled.includes(d.classification));
-    const fns: Record<SortMode, (a: typeof list[0], b: typeof list[0]) => number> = {
+    const fns: Record<SortMode, (_a: typeof list[0], _b: typeof list[0]) => number> = {
       budget: (a, b) => b.budget - a.budget,
       absorbed: (a, b) => b.absorbed - a.absorbed,
       recovery: (a, b) => b.recoveredPct - a.recoveredPct,

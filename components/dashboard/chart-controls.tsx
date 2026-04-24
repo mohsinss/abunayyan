@@ -14,7 +14,7 @@ export function Segmented<T extends string>({
   label,
 }: {
   value: T;
-  onChange: (v: T) => void;
+  onChange: (_v: T) => void;
   options: SegmentedOption<T>[];
   label?: string;
 }) {
@@ -55,7 +55,7 @@ export function FilterChips<T extends string>({
   label,
 }: {
   values: T[];
-  onToggle: (v: T) => void;
+  onToggle: (_v: T) => void;
   options: Array<{ value: T; label: string; dot?: string }>;
   label?: string;
 }) {
