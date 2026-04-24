@@ -22,6 +22,7 @@ export default defineConfig({
         "lib/chatbots/authz.ts",
         "lib/chatbots/providers.ts",
         "lib/chatbots/rate-limit.ts",
+        "lib/chatbots/route-handler.ts",
         "lib/validation/chatbot.ts",
         "lib/validation/schemas.ts",
         "lib/text/diff.ts",
@@ -36,6 +37,7 @@ export default defineConfig({
     },
     include: [
       "tests/unit/**/*.{test,spec}.{ts,tsx}",
+      "tests/integration/**/*.{test,spec}.{ts,tsx}",
       "lib/**/*.{test,spec}.{ts,tsx}",
     ],
   },
