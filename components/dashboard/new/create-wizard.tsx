@@ -160,37 +160,48 @@ export function CreateWizard() {
   }, [draftId, files]);
 
   // Auto-fill title + description from the AI as soon as the first file is
-  // ready. Runs once per draft. Admin can still type over the suggestions.
+  // ready. Ref-based latch (not state + cleanup) because the polling effect
+  // re-runs `files` on every tick — a useEffect cleanup that sets `cancelled
+  // = true` would race the in-flight fetch and silently swallow the result,
+  // leaving the wizard stuck on "Suggesting…" forever.
+  const suggestKickedRef = useRef(false);
   useEffect(() => {
     if (!draftId) return;
-    if (suggestState !== "idle") return;
+    if (suggestKickedRef.current) return;
     const anyReady = files.some((f) => f.status === "ready");
     const anyPending = files.some((f) => f.status === "queued" || f.status === "parsing");
     if (!anyReady || anyPending) return;
 
-    let cancelled = false;
+    suggestKickedRef.current = true;
     setSuggestState("running");
+    const controller = new AbortController();
+    // 45s client timeout. /suggest-meta has maxDuration=60 server-side;
+    // give up before then so the user isn't staring at "Suggesting…" if
+    // the model stalls.
+    const timeout = setTimeout(() => controller.abort(), 45_000);
+
     (async () => {
       try {
-        const res = await fetch(`/api/v1/datasets/${draftId}/suggest-meta`, { method: "POST" });
+        const res = await fetch(`/api/v1/datasets/${draftId}/suggest-meta`, {
+          method: "POST",
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
         if (!res.ok) {
           // Soft-fail: admin can still type their own title.
-          if (!cancelled) setSuggestState("done");
+          setSuggestState("done");
           return;
         }
         const data = (await res.json()) as { title: string; description: string };
-        if (cancelled) return;
         setTitle((current) => (current.trim() ? current : data.title));
         setDescription((current) => (current.trim() ? current : data.description));
         setSuggestState("done");
       } catch {
-        if (!cancelled) setSuggestState("done");
+        clearTimeout(timeout);
+        setSuggestState("done");
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [draftId, files, suggestState]);
+  }, [draftId, files]);
 
   const propose = useCallback(async () => {
     if (!draftId) return;
@@ -323,6 +334,10 @@ export function CreateWizard() {
                   <Sparkles className="h-3.5 w-3.5" />
                   AI-suggested · edit anything
                 </span>
+              ) : suggestState === "done" ? (
+                <span className="text-xs text-muted-foreground">
+                  Couldn&apos;t auto-suggest — type one in.
+                </span>
               ) : null}
             </header>
             <div>
@@ -333,7 +348,11 @@ export function CreateWizard() {
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={160}
                 placeholder={
-                  suggestState === "running" ? "Suggesting…" : "Q1 Supplier Spend Review"
+                  suggestState === "running"
+                    ? "Suggesting…"
+                    : suggestState === "done"
+                      ? "What would you call this?"
+                      : "Q1 Supplier Spend Review"
                 }
                 className="mt-1"
               />
@@ -349,7 +368,9 @@ export function CreateWizard() {
                 placeholder={
                   suggestState === "running"
                     ? "Suggesting…"
-                    : "What this dataset covers, who uses it, what decisions it drives."
+                    : suggestState === "done"
+                      ? "Optional summary for viewers."
+                      : "What this dataset covers, who uses it, what decisions it drives."
                 }
                 className="mt-1"
               />

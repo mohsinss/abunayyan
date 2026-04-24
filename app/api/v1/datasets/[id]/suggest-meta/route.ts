@@ -53,8 +53,12 @@ export async function POST(
   try {
     const samples = await gatherFileSamples(id);
     const userPrompt = buildPrompt(samples);
+    // Use the platform default (Sonnet 4.6) rather than Haiku — Haiku's
+    // generateObject reliability via the Anthropic adapter is patchy for
+    // multi-line text fields, and we'd rather pay 2× tokens than have the
+    // wizard spin. Latency is a couple of seconds either way.
     const { object } = await generateObject({
-      model: models.cheap,
+      model: models.default,
       schema: SuggestSchema,
       system: SYSTEM_PROMPT,
       prompt: userPrompt,
