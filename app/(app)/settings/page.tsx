@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { threads } from "@/db/schema/threads";
 import { messages } from "@/db/schema/messages";
 import { auditLog } from "@/db/schema/audit-log";
+import { DeleteAccountPanel } from "@/components/account/delete-account-panel";
 
 export const metadata = { title: "Account" };
 export const dynamic = "force-dynamic";
@@ -104,7 +105,7 @@ export default async function AccountSettingsPage() {
         </div>
       </section>
 
-      <section className="rounded-md border border-neutral-200 bg-neutral-50 p-5 text-sm text-neutral-600">
+      <section className="mb-8 rounded-md border border-neutral-200 bg-neutral-50 p-5 text-sm text-neutral-600">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
           Quick links
         </h2>
@@ -126,6 +127,8 @@ export default async function AccountSettingsPage() {
           </li>
         </ul>
       </section>
+
+      <DeleteAccountPanel email={user.email ?? null} role={user.role} />
     </div>
   );
 }
