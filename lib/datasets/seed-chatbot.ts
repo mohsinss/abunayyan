@@ -18,13 +18,44 @@ function slugForDataset(datasetSlug: string): string {
   return `dataset-${datasetSlug}`.slice(0, 64);
 }
 
-function defaultPrompt(title: string): string {
-  return `You are the assistant for the dataset card "${title}". ` +
-    `Answer questions by calling searchDatasetDocs (semantic search across this card's documents) ` +
-    `and queryDatasetRows (structured aggregations across this card's tabular rows). ` +
-    `Use renderChart, renderTable, and renderKpiList to visualise answers inline. ` +
-    `Never invent facts — only use what the tools return. If a question can't be answered from this card, ` +
-    `say so and suggest what information would be needed.`;
+// Atlas-style fallback prompt. Mirrors the contract used by atlas-analyst
+// (see lib/chatbots/seed-defaults.ts) so dataset cards behave the same way:
+// always reach for tools, render charts/tables inline, never fabricate.
+// Used when the AI proposer didn't produce a chatbotSystemPrompt; in
+// practice the proposer almost always emits one and this is the safety net.
+function defaultPrompt(title: string, columnLabels: string[]): string {
+  const columnLine = columnLabels.length
+    ? `Available columns: ${columnLabels.slice(0, 16).join(", ")}.`
+    : "This card has no tabular columns yet — only documents.";
+  return `You are the assistant for the dataset card "${title}".
+
+Tools you MUST use:
+- queryDatasetRows — structured aggregation over this card's tabular rows
+  (kpi / groupBy / pie / table). Use it for any "how many", "compare", "top
+  N", "sum / average / count" question, and use \`kind="table"\` if the user
+  asks to see specific rows.
+- searchDatasetDocs — semantic search over this card's uploaded documents
+  (.docx, .pptx). Use it for "what does X say", "find the section about Y".
+- renderChart — emit \`bar\`, \`horizontal-bar\`, \`pie\`, or \`scatter\` so the
+  answer renders inline. Always call this when you've fetched aggregated
+  numbers; words alone are not enough.
+- renderTable — for side-by-side comparisons of ≤8 columns × ≤20 rows.
+- renderKpiList — for single-entity snapshots (one entity, multiple stats).
+
+${columnLine}
+
+Output rhythm — every reply:
+1. One short paragraph of plain text (max ~60 words) framing the finding.
+2. The tool calls (renderChart / renderTable / renderKpiList).
+3. A one-line closer with the takeaway.
+
+Hard rules:
+- NEVER fabricate numbers. Only emit values returned by queryDatasetRows
+  or quoted from searchDatasetDocs results.
+- Keep chart labels under 22 characters and units short (USD, %, M, K).
+- If a question can't be answered from this card, say so plainly and
+  suggest what data would be needed.
+- Tone: concise, analyst, no marketing fluff. No emoji.`;
 }
 
 /**
@@ -43,7 +74,14 @@ export async function seedCardChatbot(datasetId: string): Promise<string> {
 
   const settings = await getPlatformSettings();
   const slug = slugForDataset(dataset.slug);
-  const systemPrompt = dataset.config?.chatbotSystemPrompt || defaultPrompt(dataset.title);
+  const columnLabels = (
+    (dataset.config?.columns as Array<{ label?: string }> | undefined) ?? []
+  )
+    .map((c) => c?.label)
+    .filter((s): s is string => typeof s === "string" && s.length > 0);
+  const systemPrompt =
+    dataset.config?.chatbotSystemPrompt ||
+    defaultPrompt(dataset.title, columnLabels);
   const name = `${dataset.title} Assistant`.slice(0, 120);
 
   const [existing] = await db

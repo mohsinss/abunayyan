@@ -40,6 +40,7 @@ export default async function DashboardNewReviewPage({ searchParams }: Props) {
           description: dataset.description ?? "",
           narrative: (cfg.narrative as string | undefined) ?? "",
           chatbotSystemPrompt: (cfg.chatbotSystemPrompt as string | undefined) ?? "",
+          starterPrompts: cfg.starterPrompts ?? [],
           columns: cfg.columns as unknown[],
           views: cfg.views as unknown[],
         }}

@@ -30,6 +30,10 @@ export type CardConfig = {
   // Populated by the AI proposer (phase 5); editable on the Review page.
   narrative?: string;
   chatbotSystemPrompt?: string;
+  // 3–6 dataset-specific starter questions for the floating chat's empty
+  // state. Populated by the proposer (Phase A of parity work). See
+  // docs/datasets-cards-parity.md.
+  starterPrompts?: string[];
 };
 
 export const datasets = pgTable(

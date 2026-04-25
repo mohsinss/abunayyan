@@ -28,6 +28,14 @@ export const AUDIT_EVENTS = [
   "archival.run",
   "archival.failed",
 
+  "dataset.soft_deleted",
+  "dataset.sweep_manual",
+  "dataset.sweep_cron",
+  "dataset.sweep_failed",
+  "dataset.share_enabled",
+  "dataset.share_disabled",
+  "dataset.share_rotated",
+
   "persistence_failed",
 ] as const;
 export type AuditEvent = (typeof AUDIT_EVENTS)[number];

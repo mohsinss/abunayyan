@@ -19,6 +19,7 @@ const BodySchema = z.object({
     views: CardConfigProposalSchema.shape.views,
     narrative: CardConfigProposalSchema.shape.narrative.optional(),
     chatbotSystemPrompt: CardConfigProposalSchema.shape.chatbotSystemPrompt.optional(),
+    starterPrompts: CardConfigProposalSchema.shape.starterPrompts.optional(),
   }),
 });
 
@@ -56,6 +57,7 @@ export async function POST(
     views: parsed.data.config.views,
     narrative: parsed.data.config.narrative,
     chatbotSystemPrompt: parsed.data.config.chatbotSystemPrompt,
+    starterPrompts: parsed.data.config.starterPrompts,
   };
 
   try {

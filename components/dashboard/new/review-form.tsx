@@ -22,6 +22,7 @@ type Initial = {
   description: string;
   narrative: string;
   chatbotSystemPrompt: string;
+  starterPrompts?: string[];
   columns: unknown[];
   views: unknown[];
 };
@@ -32,10 +33,19 @@ export function ReviewForm({ datasetId, initial }: { datasetId: string; initial:
   const [description, setDescription] = useState(initial.description);
   const [narrative, setNarrative] = useState(initial.narrative);
   const [systemPrompt, setSystemPrompt] = useState(initial.chatbotSystemPrompt);
+  const [starterPrompts, setStarterPrompts] = useState<string[]>(
+    initial.starterPrompts && initial.starterPrompts.length >= 3
+      ? initial.starterPrompts
+      : [],
+  );
   const [views, setViews] = useState<AnyView[]>(
     (initial.views as AnyView[]) ?? [],
   );
   const columns = useMemo(() => (initial.columns as Column[]) ?? [], [initial.columns]);
+
+  const updateStarter = useCallback((idx: number, next: string) => {
+    setStarterPrompts((prev) => prev.map((p, i) => (i === idx ? next : p)));
+  }, []);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +70,9 @@ export function ReviewForm({ datasetId, initial }: { datasetId: string; initial:
     }
     setBusy(true);
     try {
+      const trimmedStarters = starterPrompts
+        .map((s) => s.trim())
+        .filter((s) => s.length >= 8 && s.length <= 110);
       const body = {
         title,
         description: description || null,
@@ -68,6 +81,7 @@ export function ReviewForm({ datasetId, initial }: { datasetId: string; initial:
           views,
           narrative: narrative || undefined,
           chatbotSystemPrompt: systemPrompt || undefined,
+          starterPrompts: trimmedStarters.length >= 3 ? trimmedStarters : undefined,
         },
       };
       const res = await fetch(`/api/v1/datasets/${datasetId}/generate`, {
@@ -85,7 +99,7 @@ export function ReviewForm({ datasetId, initial }: { datasetId: string; initial:
     } finally {
       setBusy(false);
     }
-  }, [title, description, narrative, systemPrompt, columns, views, datasetId, router]);
+  }, [title, description, narrative, systemPrompt, starterPrompts, columns, views, datasetId, router]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -136,10 +150,40 @@ export function ReviewForm({ datasetId, initial }: { datasetId: string; initial:
         <Textarea
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
-          rows={6}
+          rows={10}
           maxLength={4000}
         />
+        <p className="text-xs text-muted-foreground">
+          Tells the chatbot exactly how to respond to questions about this card. The
+          AI-proposed prompt instructs it to render charts/tables inline (Atlas-style)
+          and never invent numbers.
+        </p>
       </section>
+
+      {starterPrompts.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">
+            Starter questions{" "}
+            <span className="text-sm text-muted-foreground">
+              ({starterPrompts.length})
+            </span>
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Shown as buttons in the chat&apos;s empty state. Each one should be
+            answerable by the chatbot using the columns above.
+          </p>
+          <div className="space-y-2">
+            {starterPrompts.map((p, i) => (
+              <Input
+                key={i}
+                value={p}
+                onChange={(e) => updateStarter(i, e.target.value)}
+                maxLength={110}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">

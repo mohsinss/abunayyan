@@ -20,6 +20,7 @@ const StoredConfigSchema = z.object({
   views: CardConfigProposalSchema.shape.views,
   narrative: CardConfigProposalSchema.shape.narrative.optional(),
   chatbotSystemPrompt: CardConfigProposalSchema.shape.chatbotSystemPrompt.optional(),
+  starterPrompts: CardConfigProposalSchema.shape.starterPrompts.optional(),
 });
 
 type Props = { params: Promise<{ slug: string }> };
@@ -135,7 +136,13 @@ export default async function DatasetCardPage({ params }: Props) {
           )}
         </div>
       </main>
-      {bot ? <AtlasCardChat botSlug={bot.slug} datasetTitle={dataset.title} /> : null}
+      {bot ? (
+        <AtlasCardChat
+          botSlug={bot.slug}
+          datasetTitle={dataset.title}
+          suggestions={parsed.data.starterPrompts}
+        />
+      ) : null}
     </div>
   );
 }

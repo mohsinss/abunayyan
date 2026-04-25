@@ -68,6 +68,10 @@ export const CardConfigProposalSchema = z.object({
   description: z.string().max(2000),
   narrative: z.string().max(800),
   chatbotSystemPrompt: z.string().max(4000),
+  // 4 short questions specific to THIS dataset, surfaced as the empty-state
+  // buttons on the floating chat. Generic prompts ("summarise this") are
+  // useless; we want concrete asks the user can click and get a chart back.
+  starterPrompts: z.array(z.string().min(8).max(110)).min(3).max(6),
   columns: z.array(ColumnSchema),
   views: z.array(ViewSchema).min(1),
 });
@@ -78,8 +82,8 @@ export type ProposedView = z.infer<typeof ViewSchema>;
 
 const SYSTEM_PROMPT = `You are a data analyst proposing a dashboard "card" config for a newly uploaded dataset.
 
-Follow these rules strictly:
-- Only reference columns that actually exist in the provided files. Never invent column names.
+Hard rules:
+- Only reference columns that actually exist in the provided files. NEVER invent column names.
 - Column \`id\` should be a URL-safe slug (lowercase, digits, dashes).
 - Prefer 3–6 views total. Always include at least one table view (kind="table") that lists the most important columns.
 - If there are aggregable numbers, include one or two KPI views (kind="kpi") summarising the top-line.
@@ -87,7 +91,42 @@ Follow these rules strictly:
 - For \`pie\` views: value is a numeric column, category has ≤12 distinct values.
 - Titles: short (≤40 chars), descriptive.
 - narrative: 2–4 sentences explaining what the dataset is about.
-- chatbotSystemPrompt: instructions for a chatbot that will answer questions about this dataset via semantic search over its documents and structured queries over its rows. Include: role, tone, and a reminder to only use facts from the tools (no fabrication).`;
+
+chatbotSystemPrompt — write it in this EXACT structure (the chatbot will be served with this verbatim):
+
+  You are the assistant for the dataset card "<TITLE>".
+
+  Tools you MUST use:
+  - queryDatasetRows — structured aggregation over this card's tabular rows
+    (kpi / groupBy / pie / table). Use it for any "how many", "compare",
+    "top N", "sum / average / count" question. Use kind="table" if the user
+    asks to see specific rows.
+  - searchDatasetDocs — semantic search over this card's uploaded docs.
+    Use for "what does X say", "find the section about Y".
+  - renderChart — emit bar / horizontal-bar / pie / scatter so the answer
+    renders inline. ALWAYS call this when you've fetched aggregated numbers.
+  - renderTable — for side-by-side comparisons (≤8 cols × ≤20 rows).
+  - renderKpiList — for single-entity snapshots.
+
+  Available columns: <comma-separated column LABELS that actually exist in the dataset>.
+
+  Output rhythm — every reply:
+  1. One short paragraph framing the finding (≤60 words).
+  2. The tool calls (renderChart / renderTable / renderKpiList).
+  3. A one-line closer with the takeaway.
+
+  Hard rules:
+  - NEVER fabricate numbers. Only emit values returned by tools.
+  - Keep chart labels under 22 characters and units short.
+  - If a question can't be answered from this card, say so plainly.
+  - Tone: concise, analyst, no marketing fluff. No emoji.
+
+starterPrompts — exactly 4 short questions (≤90 chars each) tailored to THIS dataset's actual columns. Each must be answerable by calling queryDatasetRows with the columns you proposed. Examples:
+- "What is total spend by category?" (when there's category + amount)
+- "Top 10 suppliers by amount" (when there's supplier + amount)
+- "Compare Q1 vs Q4 revenue" (when there's a quarter column)
+- "Which regions exceeded $1M?" (when there's region + amount)
+Avoid generic prompts like "summarise this" or "what's in this dataset" — those return prose, not charts.`;
 
 export async function proposeCardConfig(input: {
   title: string;

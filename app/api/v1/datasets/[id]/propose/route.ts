@@ -50,6 +50,7 @@ export async function POST(
       views: proposal.views,
       narrative: proposal.narrative,
       chatbotSystemPrompt: proposal.chatbotSystemPrompt,
+      starterPrompts: proposal.starterPrompts,
     };
 
     // Don't override title/description here — the wizard's "describe" /
