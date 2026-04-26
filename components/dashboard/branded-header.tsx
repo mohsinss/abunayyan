@@ -45,7 +45,7 @@ export function BrandedHeader({
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--app-header-h",
-      compact ? "3rem" : "4rem",
+      compact ? "2.25rem" : "4rem",
     );
     return () => {
       document.documentElement.style.removeProperty("--app-header-h");
@@ -58,16 +58,26 @@ export function BrandedHeader({
       style={{
         background:
           "linear-gradient(120deg,#06224f 0%,#0B3378 38%,#2964A9 78%,#418CC0 100%)",
-        height: compact ? "3rem" : "4rem",
+        height: compact ? "2.25rem" : "4rem",
       }}
     >
-      <div className="mx-auto flex h-full max-w-[1520px] items-center justify-between gap-6 px-6 lg:px-9">
+      <div
+        className={
+          "mx-auto flex h-full max-w-[1520px] items-center justify-between gap-6 px-6 lg:px-9 " +
+          // In compact mode, force every nested icon button + the avatar
+          // down to 28px so the 36px-tall header still has visual breathing
+          // room and nothing overflows.
+          (compact
+            ? "[&_button[data-slot=button]]:h-7 [&_button[data-slot=button]]:w-7 [&_.h-8]:h-7 [&_.w-8]:w-7"
+            : "")
+        }
+      >
         <div className="flex min-w-0 items-center gap-5">
-          <Link href="/dashboard" className="min-w-0">
+          <Link href="/dashboard" className="min-w-0 leading-none">
             <span
               className={
                 "block truncate font-semibold tracking-wide transition-[font-size] duration-200 " +
-                (compact ? "text-[13px]" : "text-[15px]")
+                (compact ? "text-[12px]" : "text-[15px]")
               }
             >
               Abunayyan Holding
@@ -93,7 +103,7 @@ export function BrandedHeader({
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          {shareSlug ? <ShareButton slug={shareSlug} /> : null}
+          {shareSlug ? <ShareButton slug={shareSlug} compact={compact} /> : null}
           {rightSlot}
         </div>
       </div>

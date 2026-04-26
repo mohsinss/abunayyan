@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Check, Share2 } from "lucide-react";
 
-export function ShareButton({ slug }: { slug: string }) {
+export function ShareButton({ slug, compact = false }: { slug: string; compact?: boolean }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -39,13 +39,18 @@ export function ShareButton({ slug }: { slug: string }) {
       onClick={copy}
       title="Copy public share link"
       className={
-        "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] transition " +
+        "inline-flex items-center gap-2 rounded-full border font-semibold uppercase tracking-[0.14em] transition " +
+        (compact ? "px-3 py-1 text-[10px] " : "px-4 py-2 text-[11px] ") +
         (copied
           ? "border-emerald-400 bg-emerald-500 text-white"
           : "border-white/30 bg-white/15 text-white backdrop-blur hover:-translate-y-px hover:border-white/50 hover:bg-white/25 hover:shadow-[0_6px_16px_rgba(0,0,0,0.18)]")
       }
     >
-      {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+      {copied ? (
+        <Check className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+      ) : (
+        <Share2 className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+      )}
       <span>{copied ? "Link copied" : "Share"}</span>
     </button>
   );
