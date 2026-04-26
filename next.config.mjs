@@ -23,6 +23,22 @@ const CSP = [
   "upgrade-insecure-requests",
 ].join("; ");
 
+// Looser CSP for self-contained interactive dashboards served from
+// /dashboards/*.html (Chart.js via jsDelivr, Google Fonts). Same-origin
+// framing is allowed so we can embed them inside our own /dashboard pages.
+const DASHBOARD_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self'",
+  "frame-ancestors 'self'",
+  "form-action 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join("; ");
+
 const SECURITY_HEADERS = [
   { key: "Content-Security-Policy", value: CSP },
   { key: "X-Frame-Options", value: "DENY" },
@@ -36,6 +52,16 @@ const SECURITY_HEADERS = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
+];
+
+// Headers applied to /dashboards/*.html assets that get embedded inside our
+// own /dashboard pages. Allows same-origin framing and the third parties
+// the embedded dashboards load (Chart.js via jsDelivr, Google Fonts).
+const DASHBOARD_FRAME_HEADERS = [
+  { key: "Content-Security-Policy", value: DASHBOARD_CSP },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
 ];
 
 /** @type {import('next').NextConfig} */
@@ -56,6 +82,10 @@ const nextConfig = {
       {
         source: "/:path*",
         headers: SECURITY_HEADERS,
+      },
+      {
+        source: "/dashboards/:path*",
+        headers: DASHBOARD_FRAME_HEADERS,
       },
     ];
   },

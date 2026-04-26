@@ -2,15 +2,60 @@ import { hasRole } from "@/lib/auth/rbac";
 import { requireUser } from "@/lib/auth/session";
 import { CardTile, CreateCardTile } from "@/components/dashboard/card-tile";
 import { HashRedirect } from "@/components/dashboard/hash-redirect";
-import { getBuiltinByKey } from "@/lib/datasets/builtins";
+import { BUILTIN_CARDS, getBuiltinByKey } from "@/lib/datasets/builtins";
 import { listDatasets } from "@/lib/db/queries/datasets";
 
 export const metadata = { title: "Datasets · Dashboard" };
+
+type Tile = {
+  id: string;
+  title: string;
+  description: string | null;
+  href: string;
+  meta: string;
+};
 
 export default async function DashboardGalleryPage() {
   const user = await requireUser();
   const isAdmin = hasRole(user.role, "admin");
   const rows = await listDatasets();
+
+  const tiles: Tile[] = rows.map((ds) => {
+    const builtin = ds.kind === "builtin" ? getBuiltinByKey(ds.config?.builtinKey) : null;
+    return {
+      id: ds.id,
+      title: ds.title,
+      description: ds.description,
+      href: builtin ? `/dashboard/${builtin.route}` : `/dashboard/${ds.slug}`,
+      meta:
+        ds.kind === "builtin"
+          ? "Builtin"
+          : new Date(ds.createdAt).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+    };
+  });
+
+  // Surface any registered builtin that hasn't been seeded into the DB yet
+  // (Vercel build runs db:migrate but not db:seed). Keeps the gallery in sync
+  // with the BUILTIN_CARDS registry without requiring a manual seed.
+  const seededRoutes = new Set(
+    rows
+      .filter((ds) => ds.kind === "builtin")
+      .map((ds) => getBuiltinByKey(ds.config?.builtinKey)?.route ?? ds.slug),
+  );
+  for (const card of Object.values(BUILTIN_CARDS)) {
+    if (seededRoutes.has(card.route)) continue;
+    tiles.unshift({
+      id: `builtin-${card.key}`,
+      title: card.title,
+      description: card.description,
+      href: `/dashboard/${card.route}`,
+      meta: "Builtin",
+    });
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
@@ -23,32 +68,19 @@ export default async function DashboardGalleryPage() {
         </p>
       </header>
 
-      {rows.length === 0 && !isAdmin ? (
+      {tiles.length === 0 && !isAdmin ? (
         <EmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map((ds) => {
-            const builtin =
-              ds.kind === "builtin" ? getBuiltinByKey(ds.config?.builtinKey) : null;
-            const href = builtin ? `/dashboard/${builtin.route}` : `/dashboard/${ds.slug}`;
-            const meta =
-              ds.kind === "builtin"
-                ? "Builtin"
-                : new Date(ds.createdAt).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  });
-            return (
-              <CardTile
-                key={ds.id}
-                title={ds.title}
-                description={ds.description}
-                href={href}
-                meta={meta}
-              />
-            );
-          })}
+          {tiles.map((t) => (
+            <CardTile
+              key={t.id}
+              title={t.title}
+              description={t.description}
+              href={t.href}
+              meta={t.meta}
+            />
+          ))}
           {isAdmin ? <CreateCardTile href="/dashboard/new" /> : null}
         </div>
       )}
