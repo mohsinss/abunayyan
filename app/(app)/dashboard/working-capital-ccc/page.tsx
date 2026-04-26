@@ -13,7 +13,8 @@ export default async function WorkingCapitalCccPage() {
     <iframe
       src={`/dashboards/working-capital-ccc.html?v=${v}`}
       title="Abunayyan Holding · Working Capital & CCC Interactive Brief"
-      className="h-[calc(100dvh-4rem)] w-full border-0"
+      className="w-full border-0"
+      style={{ height: "calc(100dvh - var(--app-header-h, 4rem))" }}
     />
   );
 }

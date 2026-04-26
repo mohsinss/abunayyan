@@ -37,7 +37,8 @@ export default async function PublicSharePage({
     <iframe
       src={`${dash.htmlPath}?v=${v}`}
       title={dash.title}
-      className="h-[calc(100dvh-4rem)] w-full border-0"
+      className="w-full border-0"
+      style={{ height: "calc(100dvh - var(--app-header-h, 4rem))" }}
     />
   );
 }
