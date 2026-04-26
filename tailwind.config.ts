@@ -21,9 +21,9 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        serif: ["var(--font-fraunces)", "Fraunces", "Georgia", "serif"],
-        sans: ["var(--font-plex-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
-        mono: ["var(--font-plex-mono)", "IBM Plex Mono", "ui-monospace", "monospace"],
+        serif: ["Arial", "Helvetica", "sans-serif"],
+        sans: ["Arial", "Helvetica", "sans-serif"],
+        mono: ["Arial", "Helvetica", "sans-serif"],
       },
       colors: {
         background: "hsl(var(--background))",
