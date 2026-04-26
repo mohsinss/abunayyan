@@ -11,6 +11,8 @@ const PUBLIC_DASHBOARDS: Record<string, { title: string; htmlPath: string }> = {
   },
 };
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {
@@ -30,9 +32,10 @@ export default async function PublicSharePage({
   const { slug } = await params;
   const dash = PUBLIC_DASHBOARDS[slug];
   if (!dash) notFound();
+  const v = process.env.VERCEL_GIT_COMMIT_SHA ?? Date.now().toString();
   return (
     <iframe
-      src={dash.htmlPath}
+      src={`${dash.htmlPath}?v=${v}`}
       title={dash.title}
       className="h-[calc(100dvh-4rem)] w-full border-0"
     />

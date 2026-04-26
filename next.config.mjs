@@ -57,11 +57,14 @@ const SECURITY_HEADERS = [
 // Headers applied to /dashboards/*.html assets that get embedded inside our
 // own /dashboard pages. Allows same-origin framing and the third parties
 // the embedded dashboards load (Chart.js via jsDelivr, Google Fonts).
+// Cache-Control disables CDN/browser caching so HTML edits ship immediately;
+// the assets are tiny so the bandwidth hit is negligible.
 const DASHBOARD_FRAME_HEADERS = [
   { key: "Content-Security-Policy", value: DASHBOARD_CSP },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Cache-Control", value: "no-store, max-age=0, must-revalidate" },
 ];
 
 /** @type {import('next').NextConfig} */
