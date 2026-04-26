@@ -97,8 +97,8 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'
 }
 
 .sliders-pane{
-  position:sticky; top:14px; align-self:start;
-  max-height:calc(100vh - 32px); overflow-y:auto;
+  position:sticky; top:84px; align-self:start;
+  max-height:calc(100vh - 104px); overflow-y:auto;
   display:flex; flex-direction:column; gap:14px;
   padding-right:6px;
 }
@@ -1255,6 +1255,19 @@ document.querySelectorAll('input[type="range"]').forEach(inp=>{
   const v = parseFloat(inp.value);
   inp.style.setProperty("--pct", Math.min(100,Math.max(0,v/max*100)).toFixed(1)+"%");
 });
+
+/* Land on the SBU action panel rather than the hero — the interactive
+   levers are what readers came for. Offset by the sticky ticker height
+   so the section title isn't covered. */
+function scrollToSbuPanel(){
+  const section = document.getElementById("sbuTabs")?.closest(".section");
+  if(!section) return;
+  const ticker = document.getElementById("ticker");
+  const tickerH = ticker ? ticker.offsetHeight : 0;
+  const top = section.getBoundingClientRect().top + window.scrollY - tickerH - 12;
+  window.scrollTo({top: Math.max(0, top), behavior: "auto"});
+}
+requestAnimationFrame(()=>requestAnimationFrame(scrollToSbuPanel));
 
 </script>
 </body>
