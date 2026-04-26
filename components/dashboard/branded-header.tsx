@@ -22,29 +22,12 @@ export function BrandedHeader({
     >
       <div className="mx-auto flex h-16 max-w-[1520px] items-center justify-between gap-6 px-6 lg:px-9">
         <div className="flex min-w-0 items-center gap-5">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <span
-              className="grid h-10 w-10 place-items-center rounded-[10px] border border-white/25 bg-white/15 backdrop-blur"
-              aria-hidden
-            >
-              <svg viewBox="0 0 32 32" fill="none" className="h-6 w-6">
-                <path
-                  d="M4 26 L12 6 L20 22 L28 6"
-                  stroke="#fff"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle cx="28" cy="26" r="2" fill="#fff" />
-              </svg>
+          <Link href="/dashboard" className="min-w-0">
+            <span className="block truncate text-[15px] font-semibold tracking-wide">
+              Abunayyan Holding
             </span>
-            <span className="min-w-0">
-              <span className="block truncate text-[15px] font-semibold tracking-wide">
-                Abunayyan Holding
-              </span>
-              <span className="block truncate text-[10px] uppercase tracking-[0.18em] text-white/75">
-                Group Finance · Working Capital Office
-              </span>
+            <span className="block truncate text-[10px] uppercase tracking-[0.18em] text-white/75">
+              Group Finance · Working Capital Office
             </span>
           </Link>
           <nav className="hidden items-center gap-4 text-sm md:flex">
