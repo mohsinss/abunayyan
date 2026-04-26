@@ -1,0 +1,1285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Abunayyan Holding · Working Capital & CCC Interactive Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --brand-1:#0B3378;
+  --brand-2:#2964A9;
+  --brand-3:#418CC0;
+  --gray-1:#7F7F7F;
+  --gray-2:#595959;
+  --ink:#1a2233;
+  --ink-soft:#4a5568;
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --line:#e3e8f1;
+  --good:#0e8a5f;
+  --bad:#c8463a;
+  --warn:#c98a2b;
+  --shadow:0 1px 2px rgba(11,51,120,.04), 0 8px 24px rgba(11,51,120,.06);
+  --shadow-lg:0 6px 18px rgba(11,51,120,.08), 0 18px 48px rgba(11,51,120,.10);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.serif{font-family:'DM Serif Display',Georgia,serif;font-weight:400;letter-spacing:-.01em}
+
+/* Header */
+.topbar{background:linear-gradient(120deg,#06224f 0%,var(--brand-1) 38%,var(--brand-2) 78%,var(--brand-3) 100%);color:#fff;padding:22px 36px;display:flex;align-items:center;justify-content:space-between;gap:24px;box-shadow:0 6px 20px rgba(11,51,120,.18)}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:46px;height:46px;border-radius:10px;background:rgba(255,255,255,.14);display:grid;place-items:center;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.22)}
+.logo svg{width:28px;height:28px}
+.brand-text strong{display:block;font-size:18px;letter-spacing:.04em;font-weight:600}
+.brand-text small{display:block;opacity:.78;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;margin-top:2px}
+.topbar .right{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;opacity:.85}
+
+/* Hero */
+.hero{padding:44px 36px 18px}
+.hero h1{font-size:38px;line-height:1.08;margin:0 0 10px}
+.hero p{margin:0;color:var(--ink-soft);max-width:760px;font-size:15px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--ink-soft);box-shadow:var(--shadow)}
+.chip b{color:var(--brand-1);font-weight:600}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--brand-3)}
+
+/* Group dashboard */
+.section{padding:18px 36px 36px}
+.section-title{display:flex;align-items:baseline;justify-content:space-between;margin:14px 0 18px;gap:16px}
+.section-title h2{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--brand-1);margin:0;font-weight:700}
+.section-title .sub{color:var(--gray-1);font-size:12px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--brand-1),var(--brand-3))}
+.kpi h3{margin:0 0 8px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray-1);font-weight:600}
+.kpi .v{font-size:26px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .v small{font-size:13px;color:var(--ink-soft);font-weight:500;margin-left:4px}
+.kpi .delta{margin-top:6px;font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+.kpi .delta b{font-weight:600}
+.delta.good b{color:var(--good)}
+.delta.bad b{color:var(--bad)}
+.kpi .baseline{font-size:11px;color:var(--gray-1);margin-top:2px}
+
+.dual-grid{display:grid;grid-template-columns:1.45fr 1fr;gap:18px;margin-top:18px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
+.panel h3{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand-1);margin:0 0 4px;font-weight:700}
+.panel .sub{color:var(--gray-1);font-size:12px;margin-bottom:12px}
+.chart-wrap{position:relative;height:280px}
+.chart-wrap.big{height:320px}
+
+/* SBU list */
+.sbu-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 18px}
+.tab{border:1px solid var(--line);background:#fff;color:var(--ink-soft);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:12.5px;font-weight:500;letter-spacing:.02em;display:inline-flex;gap:8px;align-items:center;transition:all .15s ease}
+.tab:hover{border-color:var(--brand-3);color:var(--brand-1)}
+.tab.active{background:linear-gradient(135deg,var(--brand-1),var(--brand-2));color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(11,51,120,.22)}
+.tab .pill{font-size:10.5px;background:rgba(0,0,0,.06);padding:1px 7px;border-radius:999px;color:inherit}
+.tab.active .pill{background:rgba(255,255,255,.22)}
+
+/* SBU card */
+.sbu-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:var(--shadow-lg);display:none;animation:fade .25s ease}
+.sbu-card.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.sbu-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:18px;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:20px}
+.sbu-head h3{font-size:26px;margin:0 0 6px;font-weight:700;letter-spacing:-.01em;color:var(--brand-1)}
+.sbu-head p{margin:0;color:var(--ink-soft);font-size:13px;max-width:560px}
+.sbu-meta{display:flex;gap:10px;flex-wrap:wrap}
+.meta-pill{padding:8px 12px;border-radius:10px;background:#f6f9ff;border:1px solid var(--line);min-width:120px}
+.meta-pill .lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray-1);font-weight:600}
+.meta-pill .val{font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em;margin-top:2px}
+.meta-pill .delta{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-soft);margin-top:2px}
+.meta-pill .delta.good{color:var(--good)}
+.meta-pill .delta.bad{color:var(--bad)}
+
+/* Split layout: sticky sliders left, scrollable content right */
+.sbu-split{display:grid;grid-template-columns:minmax(420px,460px) 1fr;gap:24px;align-items:start}
+@media (max-width:1100px){
+  .sbu-split{grid-template-columns:1fr}
+  .sliders-pane{position:static!important;max-height:none!important}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .dual-grid{grid-template-columns:1fr}
+}
+
+.sliders-pane{
+  position:sticky; top:14px; align-self:start;
+  max-height:calc(100vh - 32px); overflow-y:auto;
+  display:flex; flex-direction:column; gap:14px;
+  padding-right:6px;
+}
+/* slim, branded scrollbar for the sticky pane */
+.sliders-pane::-webkit-scrollbar{width:8px}
+.sliders-pane::-webkit-scrollbar-thumb{background:linear-gradient(var(--brand-2),var(--brand-3));border-radius:8px}
+.sliders-pane::-webkit-scrollbar-track{background:transparent}
+
+.sticky-summary{
+  background:linear-gradient(135deg,var(--brand-1),var(--brand-2) 70%,var(--brand-3));
+  color:#fff;border-radius:14px;padding:14px 16px;
+  box-shadow:0 8px 24px rgba(11,51,120,.22), inset 0 0 0 1px rgba(255,255,255,.08);
+  position:relative;overflow:hidden
+}
+.sticky-summary::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.07)}
+.sticky-summary .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1}
+.sticky-summary .cell{padding:6px 0}
+.sticky-summary .lbl{font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.78;font-weight:600}
+.sticky-summary .val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em;margin-top:2px}
+.sticky-summary .val small{font-size:11px;opacity:.78;font-weight:500;margin-left:3px}
+.sticky-summary .delta{font-size:11px;margin-top:2px;font-variant-numeric:tabular-nums;opacity:.95}
+.sticky-summary .delta b{font-weight:700}
+.sticky-summary .delta.good b{color:#a8f0c8}
+.sticky-summary .delta.bad  b{color:#ffc4be}
+
+.scroll-pane{display:flex;flex-direction:column;gap:18px;min-width:0}
+
+.lever{background:#fafbfd;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.lever h4{margin:0 0 2px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand-1);font-weight:700}
+.lever .descr{color:var(--gray-1);font-size:11px;margin-bottom:10px}
+.lever .formula{font-family:'SF Mono',Menlo,monospace;font-size:10.5px;color:var(--brand-2);background:#eef3fb;padding:3px 7px;border-radius:5px;display:inline-block;margin-bottom:10px;letter-spacing:.02em}
+
+.slider-row{display:grid;grid-template-columns:108px 1fr 88px;align-items:center;gap:12px;padding:8px 0;border-top:1px dashed var(--line)}
+.slider-row:first-of-type{border-top:0}
+.slider-row .lab{font-size:11.5px;font-weight:600;color:var(--ink);letter-spacing:.02em}
+.slider-row .lab .unit{display:block;font-size:10px;color:var(--gray-1);font-weight:500;letter-spacing:.04em;margin-top:1px}
+.slider-row .vals{text-align:right;font-variant-numeric:tabular-nums;font-size:13px;font-weight:700;color:var(--brand-1)}
+.slider-row .vals .target-line{display:block;font-size:9.5px;color:#c98a2b;font-weight:600;margin-top:2px;letter-spacing:.02em}
+.slider-row .vals .delta{display:block;font-size:10px;font-weight:600;margin-top:1px}
+.slider-row .vals .delta.good{color:var(--good)}
+.slider-row .vals .delta.bad{color:var(--bad)}
+.slider-row.on-target .vals .target-line{color:var(--good)}
+.slider-row.on-target .sweet-spot{background:var(--good);box-shadow:0 0 0 3px rgba(14,138,95,.22)}
+
+/* Slider with sweet-spot marker */
+.slider-wrap{position:relative;padding:6px 0 16px}
+.slider-wrap input[type="range"]{position:relative;z-index:2}
+.sweet-spot{
+  position:absolute; top:8px;
+  width:2px; height:18px;
+  background:#c98a2b; border-radius:2px;
+  transform:translateX(-50%);
+  pointer-events:none; z-index:1;
+  box-shadow:0 0 0 2.5px rgba(201,138,43,.18);
+  transition:background .15s ease, box-shadow .15s ease;
+}
+.sweet-label{
+  position:absolute; bottom:0;
+  font-size:9.5px; color:#c98a2b; font-weight:600;
+  transform:translateX(-50%); white-space:nowrap;
+  pointer-events:none; letter-spacing:.02em;
+  background:#fff7e9; padding:1px 5px; border-radius:4px;
+  border:1px solid #f1d9aa;
+}
+.slider-row.on-target .sweet-label{color:var(--good);background:#e8f7ef;border-color:#b8e3ca}
+
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;background:linear-gradient(90deg,var(--brand-3) 0%,var(--brand-3) var(--pct,50%),#dde6f3 var(--pct,50%),#dde6f3 100%);outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2.5px solid var(--brand-1);box-shadow:0 2px 6px rgba(11,51,120,.25);cursor:grab;transition:transform .12s ease;position:relative;z-index:3}
+input[type="range"]::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.12)}
+input[type="range"]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:2.5px solid var(--brand-1);box-shadow:0 2px 6px rgba(11,51,120,.25);cursor:grab}
+
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:1400px){.charts-row{grid-template-columns:1fr}}
+.mini-chart{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.mini-chart h5{margin:0 0 4px;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand-1);font-weight:700}
+.mini-chart .sub{font-size:11px;color:var(--gray-1);margin-bottom:8px}
+.mini-chart .canvas-box{position:relative;height:240px}
+
+.observations{margin-top:22px;background:linear-gradient(135deg,#f6f9ff,#eef3fb);border:1px solid #d5e2f3;border-radius:14px;padding:16px 18px}
+.observations h5{margin:0 0 8px;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand-1);font-weight:700;display:flex;align-items:center;gap:8px}
+.observations h5::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--brand-3)}
+.observations ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--ink-soft)}
+.observations li{margin:4px 0}
+
+.targets-line{font-size:11px;color:var(--gray-1);margin-top:6px}
+.targets-line b{color:var(--brand-2)}
+
+/* Reset button — themed */
+.reset-area{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.reset-area .hint{font-size:12px;color:var(--gray-1);max-width:60%}
+.btn-reset{position:relative;border:0;cursor:pointer;padding:13px 28px 13px 22px;border-radius:999px;color:#fff;font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(120deg,var(--brand-1) 0%,var(--brand-2) 55%,var(--brand-3) 100%);box-shadow:0 6px 18px rgba(11,51,120,.28),inset 0 0 0 1px rgba(255,255,255,.12);overflow:hidden;transition:transform .15s ease,box-shadow .15s ease;display:inline-flex;align-items:center;gap:10px}
+.btn-reset::after{content:"";position:absolute;top:0;left:-150%;width:60%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .9s ease}
+.btn-reset:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(11,51,120,.36),inset 0 0 0 1px rgba(255,255,255,.18)}
+.btn-reset:hover::after{left:150%}
+.btn-reset:active{transform:translateY(0)}
+.btn-reset svg{width:16px;height:16px}
+.btn-reset.master{padding:16px 34px 16px 26px;font-size:14px;border-radius:14px;background:linear-gradient(120deg,#06224f,var(--brand-1) 35%,var(--brand-2) 75%,var(--brand-3));box-shadow:0 8px 24px rgba(11,51,120,.34),inset 0 0 0 1px rgba(255,255,255,.14)}
+.btn-reset.master::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff;opacity:.85;box-shadow:0 0 0 4px rgba(255,255,255,.22)}
+
+.btn-ghost{background:#fff;border:1px solid var(--line);color:var(--brand-1);padding:9px 14px;border-radius:10px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:.02em;transition:all .15s ease}
+.btn-ghost:hover{border-color:var(--brand-3);background:#f6f9ff}
+
+footer{padding:30px 36px 50px;color:var(--gray-1);font-size:12px;text-align:center;border-top:1px solid var(--line);margin-top:30px}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,30px);background:var(--brand-1);color:#fff;padding:10px 18px;border-radius:999px;font-size:12.5px;letter-spacing:.04em;box-shadow:0 8px 24px rgba(11,51,120,.32);opacity:0;pointer-events:none;transition:all .25s ease;z-index:99}
+#toast.show{transform:translate(-50%,0);opacity:1}
+
+/* ========= STICKY EXECUTIVE TICKER ========= */
+.ticker{
+  position:sticky; top:0; z-index:50;
+  background:linear-gradient(180deg, rgba(255,255,255,.97), rgba(244,246,251,.94));
+  backdrop-filter:saturate(140%) blur(10px);
+  -webkit-backdrop-filter:saturate(140%) blur(10px);
+  border-bottom:1px solid rgba(11,51,120,.10);
+  box-shadow:0 6px 18px rgba(11,51,120,.06);
+  padding:10px 28px;
+}
+.ticker-row{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:18px; max-width:100%}
+.ticker-brand{display:flex; align-items:center; gap:10px; min-width:0}
+.ticker-brand .dotmark{width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,var(--brand-1),var(--brand-3));box-shadow:0 0 0 3px rgba(65,140,192,.18)}
+.ticker-brand strong{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand-1);font-weight:700;white-space:nowrap}
+.ticker-brand small{font-size:10.5px;color:var(--gray-1);letter-spacing:.06em;white-space:nowrap}
+
+.ticker-kpis{display:grid; grid-template-columns:repeat(5,1fr); gap:12px; min-width:0}
+.tkpi{display:flex;flex-direction:column;gap:1px;padding:0 10px;border-left:1px solid rgba(11,51,120,.10);min-width:0}
+.tkpi:first-child{border-left:0}
+.tkpi .lbl{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gray-1);font-weight:600;white-space:nowrap}
+.tkpi .val{font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1.05;white-space:nowrap}
+.tkpi .val small{font-size:10px;color:var(--ink-soft);font-weight:500;margin-left:3px}
+.tkpi .delta{font-size:10px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink-soft);white-space:nowrap;line-height:1.2}
+.tkpi .delta.good{color:var(--good)}
+.tkpi .delta.bad{color:var(--bad)}
+
+.tkpi.release{background:linear-gradient(135deg,var(--brand-1),var(--brand-2));color:#fff;border-radius:10px;padding:6px 12px;border:0;box-shadow:0 4px 14px rgba(11,51,120,.22)}
+.tkpi.release .lbl{color:rgba(255,255,255,.78)}
+.tkpi.release .val{color:#fff}
+.tkpi.release .val small{color:rgba(255,255,255,.72)}
+.tkpi.release .delta{color:rgba(255,255,255,.92)}
+.tkpi.release .delta.good{color:#a8f0c8}
+.tkpi.release .delta.bad{color:#ffc4be}
+
+.ticker-actions{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
+.jump-pill{background:#fff;border:1px solid var(--line);color:var(--brand-1);padding:7px 12px;border-radius:999px;cursor:pointer;font-weight:600;font-size:11px;letter-spacing:.04em;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease;white-space:nowrap}
+.jump-pill:hover{border-color:var(--brand-3);background:#f0f6fd;color:var(--brand-1)}
+.jump-pill svg{width:12px;height:12px}
+
+@media (max-width:1180px){
+  .ticker-kpis{grid-template-columns:repeat(3,1fr)}
+  .tkpi:nth-child(4),.tkpi:nth-child(5){display:none}
+}
+@media (max-width:820px){
+  .ticker-row{grid-template-columns:1fr; gap:8px}
+  .ticker-kpis{grid-template-columns:repeat(2,1fr)}
+  .tkpi:nth-child(3){display:none}
+}
+
+/* ========= HERO IMPACT BLOCK ========= */
+.hero-impact{
+  margin:18px 0 4px;
+  background:linear-gradient(125deg,#06224f 0%,var(--brand-1) 35%,var(--brand-2) 75%,var(--brand-3) 100%);
+  color:#fff; border-radius:20px; padding:26px 30px;
+  box-shadow:0 16px 40px rgba(11,51,120,.22), inset 0 0 0 1px rgba(255,255,255,.10);
+  position:relative; overflow:hidden;
+  display:grid; grid-template-columns:auto 1fr; gap:32px; align-items:center;
+}
+.hero-impact::before{content:"";position:absolute;right:-80px;top:-80px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.10),transparent 70%)}
+.hero-impact::after{content:"";position:absolute;left:30%;bottom:-100px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 70%)}
+.hero-impact .impact-left{position:relative; z-index:1}
+.hero-impact .impact-tag{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;opacity:.78;font-weight:600;margin-bottom:6px}
+.hero-impact .impact-num{font-family:'DM Serif Display',Georgia,serif;font-size:78px;line-height:1;letter-spacing:-.02em;font-weight:400;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:10px}
+.hero-impact .impact-num .currency{font-size:30px;opacity:.7;font-family:'Inter',sans-serif;font-weight:600;letter-spacing:.04em}
+.hero-impact .impact-num .unit{font-size:32px;opacity:.78;font-family:'Inter',sans-serif;font-weight:500}
+.hero-impact .impact-sub{margin-top:8px;font-size:14px;opacity:.92}
+.hero-impact .impact-sub b{font-weight:700;color:#fff}
+.hero-impact .impact-bar{margin-top:14px;height:6px;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden;max-width:480px}
+.hero-impact .impact-bar-fill{height:100%;background:linear-gradient(90deg,#a8f0c8,#fff);border-radius:999px;transition:width .35s ease}
+.hero-impact .impact-bar-cap{font-size:10.5px;opacity:.78;letter-spacing:.12em;text-transform:uppercase;margin-top:6px;font-weight:600}
+
+.hero-impact .impact-right{position:relative; z-index:1; display:flex; flex-direction:column; gap:10px; min-width:280px}
+.hero-impact .impact-right .lbl{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;opacity:.78;font-weight:600;margin-bottom:4px}
+.scenario-row{display:flex;flex-wrap:wrap;gap:8px}
+.preset{
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);
+  color:#fff;padding:9px 14px;border-radius:999px;cursor:pointer;
+  font-weight:600;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+  transition:all .18s ease;backdrop-filter:blur(6px);
+  display:inline-flex;align-items:center;gap:7px;
+}
+.preset:hover{background:rgba(255,255,255,.20);border-color:rgba(255,255,255,.42);transform:translateY(-1px)}
+.preset.active{background:#fff;color:var(--brand-1);border-color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.22)}
+.preset .pct{font-size:10px;opacity:.7;font-weight:500}
+.preset.active .pct{opacity:.55}
+
+.scenario-help{font-size:11px;opacity:.78;margin-top:4px;line-height:1.5}
+
+@media (max-width:980px){
+  .hero-impact{grid-template-columns:1fr;gap:20px}
+  .hero-impact .impact-num{font-size:58px}
+  .hero-impact .impact-right{min-width:0}
+}
+
+/* Pulse ring around chart cards when sliders move */
+.pulsing{animation:pulseRing .6s ease}
+@keyframes pulseRing{
+  0%{box-shadow:0 0 0 0 rgba(65,140,192,.45), var(--shadow)}
+  60%{box-shadow:0 0 0 12px rgba(65,140,192,0), var(--shadow)}
+  100%{box-shadow:0 0 0 0 rgba(65,140,192,0), var(--shadow)}
+}
+
+/* Subtle sparkbars inside ticker */
+.spark{display:inline-flex;align-items:flex-end;gap:1.5px;height:14px;margin-left:6px;vertical-align:middle}
+.spark span{width:3px;background:var(--brand-3);border-radius:1px;display:block;transition:height .25s ease, background .25s ease}
+.spark span.over{background:#c98a2b}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 26 L12 6 L20 22 L28 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="28" cy="26" r="2" fill="#fff"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <strong>Abunayyan Holding</strong>
+      <small>Group Finance · Working Capital Office</small>
+    </div>
+  </div>
+  <div class="right">FY-2023 → FY-2025 · Interactive Brief</div>
+</header>
+
+<!-- STICKY EXECUTIVE TICKER (always visible) -->
+<div class="ticker" id="ticker">
+  <div class="ticker-row">
+    <div class="ticker-brand">
+      <span class="dotmark"></span>
+      <strong>Live Group Impact</strong>
+      <small>· FY-2025 baseline</small>
+    </div>
+    <div class="ticker-kpis">
+      <div class="tkpi">
+        <div class="lbl">Revenue</div>
+        <div class="val" id="tk-rev">—</div>
+        <div class="delta">FY-2025</div>
+      </div>
+      <div class="tkpi">
+        <div class="lbl">Operating NWC</div>
+        <div class="val" id="tk-nwc">—</div>
+        <div class="delta" id="tk-nwc-d">—</div>
+      </div>
+      <div class="tkpi">
+        <div class="lbl">NWC / Revenue</div>
+        <div class="val" id="tk-pct">—</div>
+        <div class="delta" id="tk-pct-d">—</div>
+      </div>
+      <div class="tkpi">
+        <div class="lbl">Group CCC</div>
+        <div class="val" id="tk-ccc">—</div>
+        <div class="delta" id="tk-ccc-d">—</div>
+      </div>
+      <div class="tkpi release">
+        <div class="lbl">Cash Released</div>
+        <div class="val" id="tk-rel">—</div>
+        <div class="delta" id="tk-rel-d">—</div>
+      </div>
+    </div>
+    <div class="ticker-actions">
+      <button class="jump-pill" id="jumpDash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M13 6l6 6-6 6"/></svg>
+        Full dashboard
+      </button>
+      <button class="jump-pill" id="jumpSbu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        SBU panel
+      </button>
+    </div>
+  </div>
+</div>
+
+<section class="hero">
+  <h1 class="serif">Working Capital &amp; Cash Conversion Cycle — what changes if you change the levers?</h1>
+  <p>FY-2025 actuals are loaded as the baseline. Drag any slider — Inventory, AR, Contract Assets, AP, or DIO/DSO/DPO — and the entire model recalculates: SBU-level NWC and CCC, group totals, charts, and identified cash release.</p>
+
+  <!-- HERO IMPACT — animated headline number -->
+  <div class="hero-impact">
+    <div class="impact-left">
+      <div class="impact-tag">If you applied these levers right now</div>
+      <div class="impact-num">
+        <span class="currency">SAR</span>
+        <span id="impactNum">0</span>
+        <span class="unit">m freed</span>
+      </div>
+      <div class="impact-sub">
+        <b id="impactPctRev">0.0%</b> of group revenue · <b id="impactPctCcc">0d</b> CCC compression · <b id="impactNwcPct">21.2%</b> NWC / Revenue
+      </div>
+      <div class="impact-bar"><div class="impact-bar-fill" id="impactBar" style="width:0%"></div></div>
+      <div class="impact-bar-cap">progress vs SAR 540m operational target</div>
+    </div>
+
+    <div class="impact-right">
+      <div class="lbl">Scenario presets</div>
+      <div class="scenario-row" id="presetRow">
+        <button class="preset active" data-preset="0">Base <span class="pct">FY-25</span></button>
+        <button class="preset" data-preset="0.35">Conservative <span class="pct">35%</span></button>
+        <button class="preset" data-preset="0.7">Aggressive <span class="pct">70%</span></button>
+        <button class="preset" data-preset="1">Hit All Targets <span class="pct">100%</span></button>
+      </div>
+      <div class="scenario-help">Each preset interpolates every SBU slider between the FY-2025 actual and its 12-month operational target. You can still drag any slider afterwards to fine-tune.</div>
+    </div>
+  </div>
+
+  <div class="hero-meta">
+    <span class="chip"><span class="dot"></span>Operating NWC = <b>Inv + AR + CA − AP</b></span>
+    <span class="chip"><span class="dot"></span>CCC = <b>DIO + DSO − DPO</b></span>
+    <span class="chip"><span class="dot"></span>10 active SBUs · 1 group view</span>
+    <span class="chip"><span class="dot"></span>Source: Group BS &amp; P&amp;L workbook</span>
+  </div>
+</section>
+
+<!-- GROUP DASHBOARD -->
+<section class="section">
+  <div class="section-title">
+    <h2>Group dashboard</h2>
+    <span class="sub">Aggregated across all SBUs · live recalculation</span>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi">
+      <h3>Group Revenue</h3>
+      <div class="v" id="kRev">—</div>
+      <div class="baseline" id="kRevBase">baseline FY-2025</div>
+    </div>
+    <div class="kpi">
+      <h3>Operating NWC</h3>
+      <div class="v" id="kNwc">—</div>
+      <div class="delta" id="kNwcDelta">—</div>
+    </div>
+    <div class="kpi">
+      <h3>NWC / Revenue</h3>
+      <div class="v" id="kNwcPct">—</div>
+      <div class="delta" id="kNwcPctDelta">—</div>
+    </div>
+    <div class="kpi">
+      <h3>Group CCC</h3>
+      <div class="v" id="kCcc">—</div>
+      <div class="delta" id="kCccDelta">—</div>
+    </div>
+    <div class="kpi">
+      <h3>Cash Released</h3>
+      <div class="v" id="kRelease">—</div>
+      <div class="delta" id="kReleaseDelta">vs FY-2025 baseline</div>
+    </div>
+  </div>
+
+  <div class="dual-grid">
+    <div class="panel">
+      <h3>NWC contribution by SBU</h3>
+      <div class="sub">Stacked components — current vs adjusted</div>
+      <div class="chart-wrap big"><canvas id="groupNwcChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>CCC by SBU (days)</h3>
+      <div class="sub">Baseline vs adjusted, sorted</div>
+      <div class="chart-wrap big"><canvas id="groupCccChart"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- SBU SECTION -->
+<section class="section">
+  <div class="section-title">
+    <h2>SBU action panel</h2>
+    <span class="sub">Select an SBU and drag the levers</span>
+  </div>
+
+  <div class="sbu-tabs" id="sbuTabs"></div>
+  <div id="sbuPanels"></div>
+
+  <div class="reset-area">
+    <div class="hint">Restore every SBU to its FY-2025 actual position. Group totals, sliders and charts will all snap back together.</div>
+    <button class="btn-reset master" id="btnResetAll">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      Reset to FY-2025 baseline
+    </button>
+  </div>
+</section>
+
+<footer>
+  Abunayyan Holding · Working Capital &amp; CCC Interactive Model · figures in SAR millions unless otherwise stated · operating NWC excludes cash &amp; short-term debt (not in source workbook)
+</footer>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   SBU DATA — FY-2025 baseline + 12-month operational targets
+   Values in SAR millions unless noted. CCC components in days.
+   COGS / Revenue derived from the BS lines using the standard
+   identities so that sliders stay internally consistent.
+   ========================================================= */
+const SBUS = [
+  {key:"ATC", name:"ATC", share:"20% of revenue", posture:"Optimise — within band, trajectory wrong",
+   inv:183, ar:243, ca:59, ap:368,
+   dio:100, dso:140, dpo:201,
+   t_inv:80,  t_ar:203, t_ca:59,  t_ap:368, t_dio:44,  t_dso:117, t_dpo:201,
+   notes:[
+     "DIO 100 vs group median 23 — inventory built 25% on 9% revenue growth.",
+     "DSO jumped 23 days in FY-2025; SAR 49m newly trapped in receivables.",
+     "DPO 201 — strongest supplier leverage in the portfolio. Hold, do not stretch.",
+     "Lever: ML demand forecasting + collection AI. Identified release ≈ SAR 151m."
+   ]},
+  {key:"Wetico", name:"Wetico", share:"42% of revenue", posture:"Stabilise volatility, not reduce position",
+   inv:18, ar:348, ca:195, ap:392,
+   dio:5, dso:123, dpo:109,
+   t_inv:18, t_ar:348, t_ca:195, t_ap:450, t_dio:5, t_dso:123, t_dpo:125,
+   notes:[
+     "Best CCC of any large SBU (19 days); NWC at 10% of revenue.",
+     "DPO swung 168 → 48 → 109 — supplier terms unstable by project cycle.",
+     "AR fell SAR 375m in FY-2025; reclassification suspected — forensic audit required.",
+     "Lever: Master Service Agreements at 120 days to stop the swings."
+   ]},
+  {key:"Citiscape", name:"Citiscape", share:"10.5% of revenue", posture:"Restructure billing discipline",
+   inv:4, ar:70, ca:196, ap:92,
+   dio:5, dso:238, dpo:105,
+   t_inv:4, t_ar:70, t_ca:65, t_ap:115, t_dio:5, t_dso:130, t_dpo:130,
+   notes:[
+     "Contract Assets at 48% of revenue — half of annual sales unbilled.",
+     "AR fell 32m while Unbilled rose 131m — billing milestones lag revenue recognition.",
+     "Gross margin collapsed 1,010 bps in FY-2025 — investigate separately.",
+     "Lever: contract intelligence platform, halve unbilled. Identified release ≈ SAR 152m."
+   ]},
+  {key:"AQ", name:"AQ", share:"5.3% of revenue", posture:"Restructure billing + margin investigation",
+   inv:3, ar:60, ca:101, ap:76,
+   dio:6, dso:286, dpo:164,
+   t_inv:3, t_ar:60, t_ca:50, t_ap:76, t_dio:6, t_dso:145, t_dpo:164,
+   notes:[
+     "Fastest CAGR in portfolio (+42%); no slowdown.",
+     "Contract Assets at 49% of revenue — chronic three-year pattern.",
+     "Gross margin collapsed 1,300 bps in FY-2025 on 37% revenue growth.",
+     "Lever: shared contract intelligence platform with Citiscape. Release ≈ SAR 80m."
+   ]},
+  {key:"MEAC", name:"MEAC", share:"3.0% of revenue", posture:"Restore supplier terms",
+   inv:22, ar:31, ca:0, ap:16,
+   dio:90, dso:96, dpo:68,
+   t_inv:15, t_ar:31, t_ca:0, t_ap:31, t_dio:60, t_dso:96, t_dpo:127,
+   notes:[
+     "Revenue plateaued at SAR 118–120m — mature niche.",
+     "DPO dropped 59 days over two years (127 → 68); SAR 14m of WC cost.",
+     "DIO actively reduced 147 → 90 — best-in-class operational management.",
+     "Lever: restore FY-2023 supplier terms. Release ≈ SAR 21m."
+   ]},
+  {key:"Eaton-KSA", name:"Eaton-KSA", share:"4.3% of revenue", posture:"Tighten billing milestones",
+   inv:15, ar:40, ca:54, ap:48,
+   dio:41, dso:206, dpo:128,
+   t_inv:11, t_ar:40, t_ca:25, t_ap:51, t_dio:30, t_dso:150, t_dpo:140,
+   notes:[
+     "CCC improved 33 days over three years.",
+     "Unbilled grew from 12% to 32% of revenue — real DSO drift masked.",
+     "Gross margin volatile (22.9% / 31.7% / 18.6%) — project-mix driven.",
+     "Lever: shared contract intelligence platform. Release ≈ SAR 30m."
+   ]},
+  {key:"SMC", name:"SMC", share:"7.8% of revenue", posture:"Forensic restoration",
+   inv:61, ar:35, ca:0, ap:48,
+   dio:96, dso:43, dpo:75,
+   t_inv:38, t_ar:35, t_ca:0, t_ap:116, t_dio:60, t_dso:43, t_dpo:182,
+   notes:[
+     "FY-2024 was best-in-class: CCC −8 days, suppliers fully financing operations.",
+     "DPO collapsed 182 → 75 in FY-2025 — largest single-metric deterioration.",
+     "Lost financing worth ~SAR 68m of working capital.",
+     "Lever: diagnose supplier rupture, restore DPO. Release ≈ SAR 91m."
+   ]},
+  {key:"KSB", name:"KSB", share:"6.4% of revenue", posture:"Aggressive optimisation",
+   inv:79, ar:110, ca:0, ap:26,
+   dio:154, dso:161, dpo:50,
+   t_inv:46, t_ar:89, t_ca:0, t_ap:61, t_dio:90, t_dso:130, t_dpo:120,
+   notes:[
+     "CCC 265 days — longest in portfolio. NWC at 65% of revenue, 2.6× benchmark.",
+     "KSB pays suppliers in <2 months while collecting in 5 months.",
+     "Lever: group-level supplier renegotiation (DPO 50→120) — biggest single move.",
+     "Identified release ≈ SAR 90m."
+   ]},
+  {key:"STCL", name:"STCL", share:"<1% of revenue", posture:"Portfolio decision required",
+   inv:0, ar:65, ca:1, ap:23,
+   dio:0, dso:1947, dpo:676,
+   t_inv:0, t_ar:30, t_ca:0, t_ap:23, t_dio:0, t_dso:600, t_dpo:676,
+   notes:[
+     "Revenue collapsed 84% in FY-2025; AR represents 5.3 years of sales.",
+     "Gross margin fell 28% → 1%; structurally distressed.",
+     "Lever: provision uncollectable AR, aggressive collection.",
+     "Strategic decision: wind-down, merge or divest."
+   ]},
+  {key:"IICS", name:"IICS", share:"<1% of revenue", posture:"Portfolio decision required",
+   inv:0, ar:7, ca:7, ap:4,
+   dio:3, dso:409, dpo:102,
+   t_inv:0, t_ar:4, t_ca:4, t_ap:4, t_dio:3, t_dso:200, t_dpo:102,
+   notes:[
+     "Revenue collapsed 78% in FY-2025; sub-scale and structurally unprofitable.",
+     "Gross margin flipped to −25%.",
+     "Lever: collect or write off stranded balance.",
+     "Combined with STCL/ABCI: ~SAR 60m of WC tied up across <1% of revenue."
+   ]}
+];
+
+/* Derive daily COGS and daily Revenue from the identities so
+   sliders stay internally consistent.
+     COGS_d = Inv / DIO  (SAR m / day);  fallback to AP / DPO when DIO=0
+     Rev_d  = (AR + CA) / DSO;  fallback to small floor when DSO=0
+*/
+SBUS.forEach(s=>{
+  s.cogs_d = s.dio > 0 ? s.inv / s.dio : (s.dpo > 0 ? s.ap / s.dpo : 0.05);
+  s.rev_d  = s.dso > 0 ? (s.ar + s.ca) / s.dso : 0.05;
+  // Stash baseline copies
+  s.base = {inv:s.inv, ar:s.ar, ca:s.ca, ap:s.ap, dio:s.dio, dso:s.dso, dpo:s.dpo};
+  s.base.nwc = nwcOf(s.base);
+  s.base.ccc = cccOf(s.base);
+  // Live state mirrors current baseline at start
+  s.cur = {...s.base};
+});
+
+function nwcOf(o){return o.inv + o.ar + o.ca - o.ap}
+function cccOf(o){return o.dio + o.dso - o.dpo}
+
+const fmtM = v => (v>=0?"":"−") + Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}) + "m";
+const fmtPct = v => (v>=0?"":"−") + Math.abs(v).toFixed(1) + "%";
+const fmtD = v => Math.round(v).toLocaleString() + "d";
+const sign = v => v>0?"+":(v<0?"−":"");
+
+/* ============== SLIDER + UI WIRING ============== */
+const sbuTabs = document.getElementById("sbuTabs");
+const sbuPanels = document.getElementById("sbuPanels");
+let activeSbu = SBUS[0].key;
+
+SBUS.forEach((s,i)=>{
+  // Tab
+  const t = document.createElement("button");
+  t.className = "tab" + (i===0?" active":"");
+  t.dataset.key = s.key;
+  t.innerHTML = `${s.name} <span class="pill">${fmtD(s.base.ccc)}</span>`;
+  t.onclick = ()=>{
+    activeSbu = s.key;
+    document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.key===s.key));
+    document.querySelectorAll(".sbu-card").forEach(x=>x.classList.toggle("active",x.dataset.key===s.key));
+  };
+  sbuTabs.appendChild(t);
+
+  // Card
+  const c = document.createElement("div");
+  c.className = "sbu-card" + (i===0?" active":"");
+  c.dataset.key = s.key;
+  c.innerHTML = `
+    <div class="sbu-head">
+      <div>
+        <h3>${s.name}</h3>
+        <p><b>${s.share}</b> · ${s.posture}</p>
+        <div class="targets-line">Each slider shows an <b>amber marker</b> at its 12-month operational sweet spot. Hit it and the row turns green.</div>
+      </div>
+    </div>
+
+    <div class="sbu-split">
+      <!-- LEFT: sticky sliders pane -->
+      <div class="sliders-pane">
+        <div class="sticky-summary">
+          <div class="row">
+            <div class="cell">
+              <div class="lbl">Operating NWC</div>
+              <div class="val" id="${s.key}-nwc-val">—</div>
+              <div class="delta" id="${s.key}-nwc-delta">—</div>
+            </div>
+            <div class="cell" style="text-align:right">
+              <div class="lbl">CCC (days)</div>
+              <div class="val" id="${s.key}-ccc-val">—</div>
+              <div class="delta" id="${s.key}-ccc-delta">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lever">
+          <h4>NWC components</h4>
+          <div class="descr">Drag balance-sheet line items (SAR m). DIO / DSO / DPO follow.</div>
+          <span class="formula">NWC = Inv + AR + CA − AP</span>
+          ${sliderRow(s,"inv","Inventory","SAR m")}
+          ${sliderRow(s,"ar","Trade Receivables","SAR m")}
+          ${sliderRow(s,"ca","Contract Assets","SAR m")}
+          ${sliderRow(s,"ap","Accounts Payable","SAR m")}
+        </div>
+
+        <div class="lever">
+          <h4>CCC components</h4>
+          <div class="descr">Drag the day-counts. Inventory / AR+CA / AP follow.</div>
+          <span class="formula">CCC = DIO + DSO − DPO</span>
+          ${sliderRow(s,"dio","Days Inventory Outst.","days")}
+          ${sliderRow(s,"dso","Days Sales Outst.","days")}
+          ${sliderRow(s,"dpo","Days Payable Outst.","days")}
+        </div>
+
+        <div class="reset-area" style="margin-top:0;padding-top:14px">
+          <div class="hint" style="max-width:55%">Reset this SBU to its FY-2025 actual.</div>
+          <button class="btn-reset" data-resetsbu="${s.key}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            Reset ${s.name}
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT: scrollable content -->
+      <div class="scroll-pane">
+        <div class="charts-row">
+          <div class="mini-chart">
+            <h5>NWC composition · current vs adjusted</h5>
+            <div class="sub">SAR millions · amber dotted line marks each component's target</div>
+            <div class="canvas-box"><canvas id="${s.key}-chart-nwc"></canvas></div>
+          </div>
+          <div class="mini-chart">
+            <h5>CCC components · current vs adjusted</h5>
+            <div class="sub">days · amber dotted line marks each component's target</div>
+            <div class="canvas-box"><canvas id="${s.key}-chart-ccc"></canvas></div>
+          </div>
+        </div>
+
+        <div class="observations">
+          <h5>Observations &amp; identified levers</h5>
+          <ul>${s.notes.map(n=>`<li>${n}</li>`).join("")}</ul>
+        </div>
+      </div>
+    </div>
+  `;
+  sbuPanels.appendChild(c);
+});
+
+function sliderRow(s, key, label, unit){
+  const v = s.base[key];
+  const target = s["t_"+key];
+  // Slider range: ensure both baseline and target are comfortably inside.
+  let max;
+  if (v === 0 && target === 0) max = ["dio","dso","dpo"].includes(key) ? 60 : 30;
+  else {
+    const refMax = Math.max(v, target);
+    max = Math.max(Math.ceil(refMax*1.6/5)*5, refMax+20);
+  }
+  // Keep STCL day-counts sane
+  if (s.key==="STCL" && key==="dso") max = 2200;
+  if (s.key==="STCL" && key==="dpo") max = 800;
+  // Sweet-spot position as % of track
+  const targetPct = max>0 ? (target/max)*100 : 0;
+  const targetTxt = unit==='days' ? Math.round(target)+'d' : Math.round(target)+'m';
+  return `
+    <div class="slider-row" data-key="${key}" data-sbu="${s.key}">
+      <div class="lab">${label}<span class="unit">${unit}</span></div>
+      <div class="slider-wrap">
+        <div class="sweet-spot" style="left:${targetPct.toFixed(2)}%"></div>
+        <div class="sweet-label" style="left:${targetPct.toFixed(2)}%">▼ target ${targetTxt}</div>
+        <input type="range" min="0" max="${max}" step="1" value="${v}"
+               data-sbu="${s.key}" data-field="${key}" data-base="${v}" data-target="${target}" data-max="${max}" />
+      </div>
+      <div class="vals">
+        <span id="${s.key}-${key}-cur">${unit==='days'?fmtD(v):fmtM(v)}</span>
+        <span class="target-line" id="${s.key}-${key}-tline">target ${targetTxt}</span>
+        <span class="delta" id="${s.key}-${key}-delta">·</span>
+      </div>
+    </div>
+  `;
+}
+
+/* ============== CROSS-LINKED SLIDER LOGIC ============== */
+document.addEventListener("input",(e)=>{
+  const inp = e.target;
+  if(inp.tagName!=="INPUT" || inp.type!=="range") return;
+  const sbuKey = inp.dataset.sbu;
+  const field = inp.dataset.field;
+  const sbu = SBUS.find(x=>x.key===sbuKey);
+  if(!sbu) return;
+  const v = parseFloat(inp.value);
+
+  // Apply primary change and propagate to the linked counterpart.
+  if(field==="inv"){
+    sbu.cur.inv = v;
+    sbu.cur.dio = sbu.cogs_d > 0 ? v / sbu.cogs_d : 0;
+  } else if(field==="ap"){
+    sbu.cur.ap = v;
+    sbu.cur.dpo = sbu.cogs_d > 0 ? v / sbu.cogs_d : 0;
+  } else if(field==="ar"){
+    sbu.cur.ar = v;
+    sbu.cur.dso = sbu.rev_d > 0 ? (sbu.cur.ar + sbu.cur.ca) / sbu.rev_d : 0;
+  } else if(field==="ca"){
+    sbu.cur.ca = v;
+    sbu.cur.dso = sbu.rev_d > 0 ? (sbu.cur.ar + sbu.cur.ca) / sbu.rev_d : 0;
+  } else if(field==="dio"){
+    sbu.cur.dio = v;
+    sbu.cur.inv = v * sbu.cogs_d;
+  } else if(field==="dpo"){
+    sbu.cur.dpo = v;
+    sbu.cur.ap = v * sbu.cogs_d;
+  } else if(field==="dso"){
+    // Scale AR and CA proportionally to preserve their split
+    const baseSum = sbu.base.ar + sbu.base.ca || 1;
+    const arShare = sbu.base.ar / baseSum;
+    const newSum = v * sbu.rev_d;
+    sbu.cur.dso = v;
+    sbu.cur.ar = newSum * arShare;
+    sbu.cur.ca = newSum * (1 - arShare);
+  }
+
+  // Recompute mirrored fields to stay perfectly consistent
+  if(["inv","dio"].includes(field)){
+    sbu.cur.dio = sbu.cogs_d > 0 ? sbu.cur.inv / sbu.cogs_d : 0;
+  }
+  if(["ap","dpo"].includes(field)){
+    sbu.cur.dpo = sbu.cogs_d > 0 ? sbu.cur.ap / sbu.cogs_d : 0;
+  }
+  if(["ar","ca","dso"].includes(field)){
+    sbu.cur.dso = sbu.rev_d > 0 ? (sbu.cur.ar + sbu.cur.ca) / sbu.rev_d : 0;
+  }
+
+  syncSbuSliders(sbu);
+  refreshSbu(sbu);
+  refreshGroup();
+  // Manual drag → no longer matches a preset
+  document.querySelectorAll(".preset").forEach(b=>b.classList.remove("active"));
+  pulseDashboard();
+});
+
+function syncSbuSliders(s){
+  const card = document.querySelector(`.sbu-card[data-key="${s.key}"]`);
+  if(!card) return;
+  ["inv","ar","ca","ap","dio","dso","dpo"].forEach(k=>{
+    const inp = card.querySelector(`input[data-field="${k}"]`);
+    if(!inp) return;
+    inp.value = s.cur[k];
+    const max = parseFloat(inp.max);
+    inp.style.setProperty("--pct", Math.min(100, Math.max(0, (s.cur[k]/max)*100)).toFixed(1) + "%");
+  });
+}
+
+function refreshSbu(s){
+  const card = document.querySelector(`.sbu-card[data-key="${s.key}"]`);
+  if(!card) return;
+
+  const updateRow = (k, isDays) => {
+    const cur = card.querySelector(`#${s.key}-${k}-cur`);
+    const del = card.querySelector(`#${s.key}-${k}-delta`);
+    const row = card.querySelector(`.slider-row[data-sbu="${s.key}"][data-key="${k}"]`);
+    if(!cur||!del) return;
+    cur.textContent = isDays ? fmtD(s.cur[k]) : fmtM(s.cur[k]);
+    const d = s.cur[k] - s.base[k];
+    if(Math.abs(d) < 0.5){
+      del.textContent = "·"; del.className = "delta";
+    } else {
+      del.textContent = sign(d) + (isDays ? Math.abs(Math.round(d))+"d" : fmtM(Math.abs(d)).replace("−",""));
+      const goodDir = (k==="ap" || k==="dpo") ? (d>0) : (d<0);
+      del.className = "delta " + (goodDir ? "good" : "bad");
+    }
+    // On-target detection: within 3% of slider max, or within 1 unit
+    const target = s["t_"+k];
+    const inp = card.querySelector(`input[data-field="${k}"][data-sbu="${s.key}"]`);
+    const max = inp ? parseFloat(inp.dataset.max||inp.max) : 100;
+    const tolerance = Math.max(1, max * 0.03);
+    const onTarget = Math.abs(s.cur[k] - target) <= tolerance;
+    if(row) row.classList.toggle("on-target", onTarget);
+  };
+  ["inv","ar","ca","ap"].forEach(k => updateRow(k, false));
+  ["dio","dso","dpo"].forEach(k => updateRow(k, true));
+
+  const nwcNow = nwcOf(s.cur), cccNow = cccOf(s.cur);
+  card.querySelector(`#${s.key}-nwc-val`).innerHTML = Math.round(nwcNow) + " <small>SAR m</small>";
+  card.querySelector(`#${s.key}-ccc-val`).innerHTML = Math.round(cccNow) + " <small>days</small>";
+  const dN = nwcNow - s.base.nwc, dC = cccNow - s.base.ccc;
+  const nDel = card.querySelector(`#${s.key}-nwc-delta`);
+  const cDel = card.querySelector(`#${s.key}-ccc-delta`);
+  nDel.innerHTML = Math.abs(dN)<0.5 ? "at FY-2025 baseline" : `<b>${sign(dN)}${Math.abs(dN).toFixed(0)}m</b> vs base`;
+  cDel.innerHTML = Math.abs(dC)<0.5 ? "at FY-2025 baseline" : `<b>${sign(dC)}${Math.abs(Math.round(dC))}d</b> vs base`;
+  nDel.className = "delta " + (Math.abs(dN)<0.5 ? "" : (dN<0 ? "good" : "bad"));
+  cDel.className = "delta " + (Math.abs(dC)<0.5 ? "" : (dC<0 ? "good" : "bad"));
+
+  drawSbuCharts(s);
+}
+
+/* ============== ANIMATED COUNTER HELPER ============== */
+const _anim = new Map();
+function animateNumber(el, to, opts={}){
+  if(!el) return;
+  const duration = opts.duration ?? 380;
+  const decimals = opts.decimals ?? 0;
+  const prefix = opts.prefix ?? "";
+  const suffix = opts.suffix ?? "";
+  const sign = opts.sign ?? false;
+  const fromTxt = el.dataset.cur != null ? parseFloat(el.dataset.cur) : 0;
+  const from = isNaN(fromTxt) ? 0 : fromTxt;
+  if(_anim.has(el)) cancelAnimationFrame(_anim.get(el));
+  const t0 = performance.now();
+  function step(now){
+    const t = Math.min(1, (now - t0)/duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const v = from + (to - from) * eased;
+    const s = sign && v>0 ? "+" : (sign && v<0 ? "−" : "");
+    const abs = Math.abs(v);
+    el.textContent = prefix + s + abs.toLocaleString(undefined,{minimumFractionDigits:decimals,maximumFractionDigits:decimals}) + suffix;
+    if(t < 1) _anim.set(el, requestAnimationFrame(step));
+    else { el.dataset.cur = to; _anim.delete(el); }
+  }
+  _anim.set(el, requestAnimationFrame(step));
+}
+
+/* ============== SCENARIO PRESETS ============== */
+function applyScenario(factor){
+  // Lerp every editable field for every SBU between baseline and target
+  SBUS.forEach(s=>{
+    ["inv","ar","ca","ap","dio","dso","dpo"].forEach(k=>{
+      const base = s.base[k];
+      const target = s["t_"+k];
+      s.cur[k] = base + (target - base) * factor;
+    });
+    syncSbuSliders(s);
+    refreshSbu(s);
+  });
+  refreshGroup();
+}
+document.addEventListener("click",(e)=>{
+  const p = e.target.closest("[data-preset]");
+  if(!p) return;
+  document.querySelectorAll(".preset").forEach(b=>b.classList.toggle("active", b===p));
+  applyScenario(parseFloat(p.dataset.preset));
+  pulseDashboard();
+});
+
+/* ============== JUMP PILLS ============== */
+document.getElementById("jumpDash").addEventListener("click",()=>{
+  document.querySelector("#kpiGrid").scrollIntoView({behavior:"smooth", block:"start"});
+});
+document.getElementById("jumpSbu").addEventListener("click",()=>{
+  document.querySelector("#sbuTabs").scrollIntoView({behavior:"smooth", block:"start"});
+});
+
+/* ============== TICKER + CHART PULSE ============== */
+function pulseDashboard(){
+  ["groupNwcChart","groupCccChart"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const card = el.closest(".panel");
+    if(!card) return;
+    card.classList.remove("pulsing"); void card.offsetWidth; card.classList.add("pulsing");
+  });
+}
+
+/* ============== GROUP DASHBOARD REFRESH ============== */
+function refreshGroup(){
+  const totRev = SBUS.reduce((a,s)=>a + s.rev_d * 365, 0);
+  const totNwcCur = SBUS.reduce((a,s)=>a + nwcOf(s.cur), 0);
+  const totNwcBase = SBUS.reduce((a,s)=>a + s.base.nwc, 0);
+  const totCogs = SBUS.reduce((a,s)=>a + s.cogs_d * 365, 0);
+  const totInvCur = SBUS.reduce((a,s)=>a + s.cur.inv, 0);
+  const totArCaCur = SBUS.reduce((a,s)=>a + s.cur.ar + s.cur.ca, 0);
+  const totApCur = SBUS.reduce((a,s)=>a + s.cur.ap, 0);
+  const totInvBase = SBUS.reduce((a,s)=>a + s.base.inv, 0);
+  const totArCaBase = SBUS.reduce((a,s)=>a + s.base.ar + s.base.ca, 0);
+  const totApBase = SBUS.reduce((a,s)=>a + s.base.ap, 0);
+
+  const dioG_cur = totInvCur/totCogs*365, dsoG_cur = totArCaCur/totRev*365, dpoG_cur = totApCur/totCogs*365;
+  const dioG_b = totInvBase/totCogs*365,  dsoG_b = totArCaBase/totRev*365,  dpoG_b = totApBase/totCogs*365;
+  const cccCur = dioG_cur + dsoG_cur - dpoG_cur;
+  const cccBase = dioG_b + dsoG_b - dpoG_b;
+
+  // ----- Group dashboard KPI cards (animated) -----
+  const kRev = document.getElementById("kRev");
+  kRev.innerHTML = `<span class="num"></span> <small>SAR B</small>`;
+  animateNumber(kRev.querySelector(".num"), totRev/1000, {decimals:2});
+  document.getElementById("kRevBase").textContent = "FY-2025 baseline · derived from BS";
+
+  const kNwc = document.getElementById("kNwc");
+  kNwc.innerHTML = `<span class="num"></span> <small>SAR m</small>`;
+  animateNumber(kNwc.querySelector(".num"), totNwcCur, {decimals:0});
+  setDelta("kNwcDelta", totNwcCur - totNwcBase, fmtM, true);
+
+  const pctCur = totNwcCur/totRev*100, pctBase = totNwcBase/totRev*100;
+  const kPct = document.getElementById("kNwcPct");
+  kPct.innerHTML = `<span class="num"></span><small>%</small>`;
+  animateNumber(kPct.querySelector(".num"), pctCur, {decimals:1});
+  setDelta("kNwcPctDelta", pctCur - pctBase, v=>fmtPct(v), true);
+
+  const kCcc = document.getElementById("kCcc");
+  kCcc.innerHTML = `<span class="num"></span> <small>days</small>`;
+  animateNumber(kCcc.querySelector(".num"), cccCur, {decimals:0});
+  setDelta("kCccDelta", cccCur - cccBase, v=>(sign(v)+Math.abs(Math.round(v))+"d"), true);
+
+  const release = totNwcBase - totNwcCur;
+  const kRel = document.getElementById("kRelease");
+  kRel.innerHTML = `<span class="num"></span> <small>SAR m</small>`;
+  animateNumber(kRel.querySelector(".num"), release, {decimals:0, sign:true});
+  const r = document.getElementById("kReleaseDelta");
+  r.innerHTML = release>=0
+    ? `<b>${(release/totRev*100).toFixed(1)}%</b> of group revenue freed`
+    : `<b>${(Math.abs(release)/totRev*100).toFixed(1)}%</b> of revenue absorbed`;
+  r.className = "delta " + (release>=0?"good":"bad");
+
+  // ----- Sticky ticker -----
+  const tkRev = document.getElementById("tk-rev");
+  tkRev.innerHTML = `<span class="num"></span> <small>SAR B</small>`;
+  animateNumber(tkRev.querySelector(".num"), totRev/1000, {decimals:2});
+
+  const tkNwc = document.getElementById("tk-nwc");
+  tkNwc.innerHTML = `<span class="num"></span> <small>m</small>`;
+  animateNumber(tkNwc.querySelector(".num"), totNwcCur, {decimals:0});
+  setTickerDelta("tk-nwc-d", totNwcCur - totNwcBase, v=>(sign(v)+Math.abs(v).toFixed(0)+"m"), true);
+
+  const tkPct = document.getElementById("tk-pct");
+  tkPct.innerHTML = `<span class="num"></span><small>%</small>`;
+  animateNumber(tkPct.querySelector(".num"), pctCur, {decimals:1});
+  setTickerDelta("tk-pct-d", pctCur - pctBase, v=>(sign(v)+Math.abs(v).toFixed(1)+"%"), true);
+
+  const tkCcc = document.getElementById("tk-ccc");
+  tkCcc.innerHTML = `<span class="num"></span> <small>d</small>`;
+  animateNumber(tkCcc.querySelector(".num"), cccCur, {decimals:0});
+  setTickerDelta("tk-ccc-d", cccCur - cccBase, v=>(sign(v)+Math.abs(Math.round(v))+"d"), true);
+
+  const tkRel = document.getElementById("tk-rel");
+  tkRel.innerHTML = `<span class="num"></span> <small>m</small>`;
+  animateNumber(tkRel.querySelector(".num"), release, {decimals:0, sign:true});
+  const tkRelD = document.getElementById("tk-rel-d");
+  tkRelD.innerHTML = release>=0
+    ? `<b>${(release/totRev*100).toFixed(1)}%</b> of revenue`
+    : `<b>${(Math.abs(release)/totRev*100).toFixed(1)}%</b> absorbed`;
+  tkRelD.className = "delta " + (release>=0?"good":"bad");
+
+  // ----- Hero impact (massive animated headline) -----
+  const impactNum = document.getElementById("impactNum");
+  animateNumber(impactNum, release, {decimals:0, sign:true});
+  document.getElementById("impactPctRev").textContent = (release/totRev*100).toFixed(1) + "%";
+  document.getElementById("impactPctCcc").textContent = (cccCur - cccBase >= 0 ? "+" : "−") + Math.abs(Math.round(cccCur - cccBase)) + "d";
+  document.getElementById("impactNwcPct").textContent = pctCur.toFixed(1) + "%";
+  // Progress bar — capped at 100% of the SAR 540m operational target
+  const tgt540 = 540;
+  const pct = Math.max(0, Math.min(100, (release / tgt540) * 100));
+  document.getElementById("impactBar").style.width = pct.toFixed(1) + "%";
+
+  drawGroupCharts();
+}
+
+function setTickerDelta(id, v, fmt, isCost){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(Math.abs(v)<0.05){ el.textContent = "at FY-2025"; el.className = "delta"; return; }
+  const isGood = isCost ? v<0 : v>0;
+  el.innerHTML = `<b>${fmt(v)}</b>`;
+  el.className = "delta " + (isGood?"good":"bad");
+}
+
+function setDelta(id, v, fmt, isCost){
+  const el = document.getElementById(id);
+  if(Math.abs(v)<0.05){ el.innerHTML = "no change vs FY-2025"; el.className = "delta"; return; }
+  const isGood = isCost ? v<0 : v>0;
+  el.innerHTML = `<b>${sign(v)}${fmt(Math.abs(v))}</b> vs FY-2025`;
+  el.className = "delta " + (isGood?"good":"bad");
+}
+
+/* ============== CHARTS ============== */
+let groupNwcChart, groupCccChart;
+const sbuCharts = {};
+
+function brandColors(n){
+  const palette = ["#0B3378","#2964A9","#418CC0","#79b1d8","#a8c9e3","#7F7F7F","#595959","#22557d","#3a76b3","#5a9fcb"];
+  return Array.from({length:n}, (_,i)=> palette[i%palette.length]);
+}
+
+function drawGroupCharts(){
+  const labels = SBUS.map(s=>s.name);
+  const invD = SBUS.map(s=>s.cur.inv);
+  const arcaD = SBUS.map(s=>s.cur.ar + s.cur.ca);
+  const apD = SBUS.map(s=> -s.cur.ap);
+  const baseNwc = SBUS.map(s=>s.base.nwc);
+  const curNwc = SBUS.map(s=>nwcOf(s.cur));
+  const baseCcc = SBUS.map(s=>s.base.ccc);
+  const curCcc = SBUS.map(s=>cccOf(s.cur));
+
+  if(!groupNwcChart){
+    groupNwcChart = new Chart(document.getElementById("groupNwcChart"),{
+      type:"bar",
+      data:{
+        labels,
+        datasets:[
+          {label:"Inventory",       data:invD,  backgroundColor:"#0B3378", stack:"cur", borderRadius:4},
+          {label:"AR + Contract",   data:arcaD, backgroundColor:"#2964A9", stack:"cur", borderRadius:4},
+          {label:"Payables (−)",    data:apD,   backgroundColor:"#7F7F7F", stack:"cur", borderRadius:4},
+          {label:"NWC (current)",   type:"line", data:curNwc,  borderColor:"#418CC0", backgroundColor:"#418CC0", borderWidth:2.5, pointRadius:4, pointHoverRadius:6, tension:.25, yAxisID:"y"},
+          {label:"NWC (baseline)",  type:"line", data:baseNwc, borderColor:"#c98a2b", backgroundColor:"#c98a2b", borderWidth:1.6, borderDash:[4,4], pointRadius:3, pointStyle:"rectRot", tension:.25, yAxisID:"y"}
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        interaction:{mode:"index",intersect:false},
+        plugins:{
+          legend:{position:"bottom",labels:{boxWidth:10,boxHeight:10,padding:14,font:{size:11}}},
+          tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString()} SAR m`}}
+        },
+        scales:{
+          x:{stacked:true, grid:{display:false}, ticks:{font:{size:11}}},
+          y:{stacked:true, grid:{color:"#eef2f7"}, ticks:{font:{size:11},callback:v=>v+"m"}}
+        }
+      }
+    });
+  } else {
+    groupNwcChart.data.datasets[0].data = invD;
+    groupNwcChart.data.datasets[1].data = arcaD;
+    groupNwcChart.data.datasets[2].data = apD;
+    groupNwcChart.data.datasets[3].data = curNwc;
+    groupNwcChart.data.datasets[4].data = baseNwc;
+    groupNwcChart.update("none");
+  }
+
+  if(!groupCccChart){
+    groupCccChart = new Chart(document.getElementById("groupCccChart"),{
+      type:"bar",
+      data:{
+        labels,
+        datasets:[
+          {label:"CCC (baseline)", data:baseCcc, backgroundColor:"#dde6f3", borderRadius:4},
+          {label:"CCC (current)",  data:curCcc,  backgroundColor:"#0B3378", borderRadius:4}
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{position:"bottom",labels:{boxWidth:10,boxHeight:10,padding:14,font:{size:11}}},
+          tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${Math.round(ctx.raw)} days`}}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{font:{size:11}}},
+          y:{grid:{color:"#eef2f7"},ticks:{font:{size:11},callback:v=>v+"d"}}
+        }
+      }
+    });
+  } else {
+    groupCccChart.data.datasets[0].data = baseCcc;
+    groupCccChart.data.datasets[1].data = curCcc;
+    groupCccChart.update("none");
+  }
+}
+
+function drawSbuCharts(s){
+  // ----- NWC mini chart -----
+  const labels = ["Inventory","AR","Contract Assets","Payables","NWC"];
+  const baseVals = [s.base.inv, s.base.ar, s.base.ca, s.base.ap, s.base.nwc];
+  const curVals  = [s.cur.inv,  s.cur.ar,  s.cur.ca,  s.cur.ap,  nwcOf(s.cur)];
+  const targetNwc = s.t_inv + s.t_ar + s.t_ca - s.t_ap;
+  const targetVals = [s.t_inv, s.t_ar, s.t_ca, s.t_ap, targetNwc];
+
+  let nwcId = `${s.key}-chart-nwc`;
+  if(!sbuCharts[nwcId]){
+    sbuCharts[nwcId] = new Chart(document.getElementById(nwcId),{
+      type:"bar",
+      data:{
+        labels,
+        datasets:[
+          {label:"Baseline FY-2025", data:baseVals, backgroundColor:"#dde6f3", borderRadius:4, order:3},
+          {label:"Adjusted",         data:curVals,  backgroundColor:"#0B3378", borderRadius:4, order:2},
+          {label:"Sweet spot (target)", type:"line", data:targetVals,
+            borderColor:"#c98a2b", backgroundColor:"#c98a2b",
+            borderWidth:0, borderDash:[4,4],
+            pointRadius:7, pointHoverRadius:9,
+            pointStyle:"triangle", pointRotation:180,
+            showLine:false, order:1}
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false, animation:{duration:280},
+        plugins:{
+          legend:{position:"bottom",labels:{boxWidth:10,boxHeight:10,padding:12,font:{size:10.5},usePointStyle:true}},
+          tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${Math.round(ctx.raw).toLocaleString()} SAR m`}}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{font:{size:10.5}}},
+          y:{grid:{color:"#eef2f7"},ticks:{font:{size:10.5},callback:v=>v+"m"}}
+        }
+      }
+    });
+  } else {
+    const ch = sbuCharts[nwcId];
+    ch.data.datasets[0].data = baseVals;
+    ch.data.datasets[1].data = curVals;
+    ch.data.datasets[2].data = targetVals;
+    ch.update("none");
+  }
+
+  // ----- CCC mini chart -----
+  let cccId = `${s.key}-chart-ccc`;
+  const cLabels = ["DIO","DSO","DPO","CCC"];
+  const cBase = [s.base.dio, s.base.dso, s.base.dpo, s.base.ccc];
+  const cCur  = [s.cur.dio,  s.cur.dso,  s.cur.dpo,  cccOf(s.cur)];
+  const cTargetCcc = s.t_dio + s.t_dso - s.t_dpo;
+  const cTarget = [s.t_dio, s.t_dso, s.t_dpo, cTargetCcc];
+
+  if(!sbuCharts[cccId]){
+    sbuCharts[cccId] = new Chart(document.getElementById(cccId),{
+      type:"bar",
+      data:{
+        labels:cLabels,
+        datasets:[
+          {label:"Baseline FY-2025", data:cBase, backgroundColor:"#dde6f3", borderRadius:4, order:3},
+          {label:"Adjusted",         data:cCur,  backgroundColor:"#2964A9", borderRadius:4, order:2},
+          {label:"Sweet spot (target)", type:"line", data:cTarget,
+            borderColor:"#c98a2b", backgroundColor:"#c98a2b",
+            borderWidth:0, pointRadius:7, pointHoverRadius:9,
+            pointStyle:"triangle", pointRotation:180,
+            showLine:false, order:1}
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false, animation:{duration:280},
+        plugins:{
+          legend:{position:"bottom",labels:{boxWidth:10,boxHeight:10,padding:12,font:{size:10.5},usePointStyle:true}},
+          tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${Math.round(ctx.raw)} days`}}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{font:{size:10.5}}},
+          y:{grid:{color:"#eef2f7"},ticks:{font:{size:10.5},callback:v=>v+"d"}}
+        }
+      }
+    });
+  } else {
+    const ch = sbuCharts[cccId];
+    ch.data.datasets[0].data = cBase;
+    ch.data.datasets[1].data = cCur;
+    ch.data.datasets[2].data = cTarget;
+    ch.update("none");
+  }
+}
+
+/* ============== RESET ============== */
+function resetSbu(s, silent){
+  s.cur = {...s.base};
+  syncSbuSliders(s);
+  refreshSbu(s);
+  if(!silent){ toast(`${s.name} reset to FY-2025 baseline`); refreshGroup(); }
+}
+document.addEventListener("click",(e)=>{
+  const r = e.target.closest("[data-resetsbu]");
+  if(r){
+    const k = r.dataset.resetsbu;
+    const s = SBUS.find(x=>x.key===k);
+    if(s) resetSbu(s, false);
+  }
+});
+document.getElementById("btnResetAll").addEventListener("click",()=>{
+  SBUS.forEach(s=>resetSbu(s, true));
+  refreshGroup();
+  document.querySelectorAll(".preset").forEach(b=>b.classList.toggle("active", b.dataset.preset==="0"));
+  pulseDashboard();
+  toast("All SBUs reset to FY-2025 baseline");
+});
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._tm);
+  t._tm = setTimeout(()=>t.classList.remove("show"), 2000);
+}
+
+/* ============== Initial render ============== */
+SBUS.forEach(s=>{
+  syncSbuSliders(s);
+  refreshSbu(s);
+});
+refreshGroup();
+
+/* slider gradient init */
+document.querySelectorAll('input[type="range"]').forEach(inp=>{
+  const max = parseFloat(inp.max);
+  const v = parseFloat(inp.value);
+  inp.style.setProperty("--pct", Math.min(100,Math.max(0,v/max*100)).toFixed(1)+"%");
+});
+</script>
+</body>
+</html>

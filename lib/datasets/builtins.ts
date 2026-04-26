@@ -22,6 +22,14 @@ export const BUILTIN_CARDS: Record<string, BuiltinCard> = {
     route: "sbu-performance-atlas",
     chatbotSlug: "atlas-analyst",
   },
+  "working-capital-ccc": {
+    key: "working-capital-ccc",
+    title: "Working Capital & CCC — Interactive Brief",
+    description:
+      "FY-2023 → FY-2025 working capital and cash conversion cycle model. Drag sliders for Inventory, AR, Contract Assets, AP and DIO/DSO/DPO across 10 SBUs to see live group impact and identified cash release.",
+    route: "working-capital-ccc",
+    chatbotSlug: "atlas-analyst",
+  },
 };
 
 export function getBuiltinByKey(key: string | null | undefined): BuiltinCard | null {
