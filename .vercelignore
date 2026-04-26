@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+
+.git
+.claude
+.next
+node_modules
+
+tests
+test-results
+playwright-report
+.email-export
