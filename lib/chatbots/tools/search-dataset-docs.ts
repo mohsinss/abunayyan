@@ -9,6 +9,15 @@ const description =
   "Search this dataset card's indexed documents by semantic similarity. " +
   "Returns top-k chunks scoped to the card, never other cards' data.";
 
+// Strips internal-metadata prefixes (e.g. "[wc-chunk:slot:hash]\n") that
+// some retrain pipelines stamp at the head of stored content for diff
+// tracking. The model should never see these — they look like prompt
+// injection markers and burn tool-call cycles trying to "use" them.
+const SENTINEL_LINE = /^\[[\w.-]+(?::[\w.-]+)+\]\n/;
+function stripSentinel(content: string): string {
+  return content.replace(SENTINEL_LINE, "");
+}
+
 export const searchDatasetDocs: ToolDefinition = {
   id: "searchDatasetDocs",
   description,
@@ -31,7 +40,11 @@ export const searchDatasetDocs: ToolDefinition = {
         const embedding = await embedText(query);
         const rows = await searchDocumentsByDatasetEmbedding(ctx.datasetId, embedding, limit);
         return {
-          results: rows.map((r) => ({ id: r.id, content: r.content, score: 1 - r.distance })),
+          results: rows.map((r) => ({
+            id: r.id,
+            content: stripSentinel(r.content),
+            score: 1 - r.distance,
+          })),
         };
       },
     }),
