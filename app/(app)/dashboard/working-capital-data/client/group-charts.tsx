@@ -1,26 +1,66 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { nwcOf, type SbuShape } from "@/lib/working-capital-data/derive";
 import type { SbuRow } from "../types";
 import styles from "../styles.module.css";
 import { useChart } from "./use-chart";
+import { setShowNwcTrendlinesAction } from "../actions";
 
 export function GroupCharts({
   sbus,
   cur,
   baselines,
+  initialShowTrendlines,
 }: {
   sbus: SbuRow[];
   cur: Record<string, SbuShape>;
   baselines: Record<string, SbuShape>;
+  initialShowTrendlines: boolean;
 }) {
+  // Optimistic state — we flip the local toggle immediately, then fire
+  // the server action that persists the choice on users.prefs. The
+  // page is force-dynamic + revalidatePath after the action, so a
+  // fresh load reads the new value.
+  const [showTrendlines, setShowTrendlines] = useState(initialShowTrendlines);
+  const [pending, start] = useTransition();
+
+  function onToggle(next: boolean) {
+    setShowTrendlines(next);
+    start(async () => {
+      await setShowNwcTrendlinesAction(next);
+    });
+  }
+
   return (
     <div className={styles.dualGrid}>
       <div className={styles.panel}>
-        <h3>NWC contribution by SBU</h3>
-        <div className="sub">Stacked components — current vs adjusted</div>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3>NWC contribution by SBU</h3>
+            <div className="sub">Stacked components — current vs adjusted</div>
+          </div>
+          <label
+            className="flex shrink-0 cursor-pointer select-none items-center gap-2 text-[11px] font-medium text-[color:var(--ink-soft)]"
+            title="Overlay solid current-NWC line + dashed baseline-NWC trend"
+          >
+            <input
+              type="checkbox"
+              checked={showTrendlines}
+              disabled={pending}
+              onChange={(e) => onToggle(e.target.checked)}
+              className="size-3.5 cursor-pointer accent-[#0b3378]"
+            />
+            Trend lines
+          </label>
+        </div>
         <div className={styles.chartWrapBig}>
-          <GroupNwcChart sbus={sbus} cur={cur} />
+          <GroupNwcChart
+            sbus={sbus}
+            cur={cur}
+            baselines={baselines}
+            showTrendlines={showTrendlines}
+          />
         </div>
       </div>
       <div className={styles.panel}>
@@ -34,33 +74,120 @@ export function GroupCharts({
   );
 }
 
-// Stacked bar: per-SBU Inv / AR / CA / -AP. The HTML renders this with
-// adjusted values; we keep it simple and show the current (cur) snapshot
-// stacked, with NWC label totals via tooltip.
-function GroupNwcChart({ sbus, cur }: { sbus: SbuRow[]; cur: Record<string, SbuShape> }) {
+// Stacked bar of NWC components (Inv / AR+Contract / Payables-) plus
+// two optional overlay line series:
+//   - NWC (current)  — solid medium-blue, follows the live `cur` state
+//   - NWC (baseline) — dashed gold with diamond markers, follows
+//                       FY-2025 baseline
+// Lines are drawn on top of the bars by setting their `order` lower
+// than the bar datasets'. Toggle controlled by the parent panel.
+function GroupNwcChart({
+  sbus,
+  cur,
+  baselines,
+  showTrendlines,
+}: {
+  sbus: SbuRow[];
+  cur: Record<string, SbuShape>;
+  baselines: Record<string, SbuShape>;
+  showTrendlines: boolean;
+}) {
   const labels = sbus.map((s) => s.name);
-  const get = (k: keyof SbuShape) => sbus.map((s) => (cur[s.key]?.[k] ?? s[k]) as number);
+  const inv = sbus.map((s) => (cur[s.key]?.inv ?? s.inv) as number);
+  const arPlusCa = sbus.map(
+    (s) => ((cur[s.key]?.ar ?? s.ar) + (cur[s.key]?.ca ?? s.ca)) as number,
+  );
+  const payablesNeg = sbus.map((s) => -((cur[s.key]?.ap ?? s.ap) as number));
+  const nwcCur = sbus.map((s) => {
+    const c = cur[s.key];
+    return c
+      ? nwcOf(c)
+      : nwcOf({ inv: s.inv, ar: s.ar, ca: s.ca, ap: s.ap, dio: 0, dso: 0, dpo: 0 });
+  });
+  const nwcBase = sbus.map((s) => {
+    const b = baselines[s.key];
+    return b ? nwcOf(b) : nwcOf({ inv: s.inv, ar: s.ar, ca: s.ca, ap: s.ap, dio: 0, dso: 0, dpo: 0 });
+  });
+
+  // Loose dataset type — Chart.js's ChartDataset is a deeply-nested
+  // discriminated union that doesn't accept mixed bar+line via the
+  // strict types. Using `unknown` here and casting at the use site is
+  // safer than fighting the types for a chart we know is valid.
+  type DS = Record<string, unknown> & { data: number[] };
+  const datasets: DS[] = [
+    {
+      type: "bar" as const,
+      label: "Inventory",
+      data: inv,
+      backgroundColor: "#0b3378",
+      stack: "nwc",
+      order: 3,
+    },
+    {
+      type: "bar" as const,
+      label: "AR + Contract",
+      data: arPlusCa,
+      backgroundColor: "#418cc0",
+      stack: "nwc",
+      order: 3,
+    },
+    {
+      type: "bar" as const,
+      label: "Payables (–)",
+      data: payablesNeg,
+      backgroundColor: "#7f7f7f",
+      stack: "nwc",
+      order: 3,
+    },
+  ];
+
+  if (showTrendlines) {
+    datasets.push(
+      {
+        type: "line" as const,
+        label: "NWC (current)",
+        data: nwcCur,
+        borderColor: "#2964a9",
+        backgroundColor: "#2964a9",
+        borderWidth: 2,
+        tension: 0.35,
+        pointRadius: 3,
+        pointBackgroundColor: "#2964a9",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 1,
+        // Lines should NOT be stacked with the bars, and should sit on
+        // top — order < bar order means rendered later in Chart.js.
+        order: 0,
+      } as DS,
+      {
+        type: "line" as const,
+        label: "NWC (baseline)",
+        data: nwcBase,
+        borderColor: "#c98a2b",
+        backgroundColor: "#c98a2b",
+        borderWidth: 2,
+        borderDash: [6, 4],
+        tension: 0.35,
+        pointStyle: "rectRot",
+        pointRadius: 5,
+        pointBackgroundColor: "#c98a2b",
+        pointBorderColor: "#c98a2b",
+        order: 1,
+      } as DS,
+    );
+  }
+
   const ref = useChart({
     type: "bar",
-    data: {
-      labels,
-      datasets: [
-        { label: "Inventory", data: get("inv"), backgroundColor: "#0b3378", stack: "nwc" },
-        { label: "AR", data: get("ar"), backgroundColor: "#2964a9", stack: "nwc" },
-        { label: "Contract Assets", data: get("ca"), backgroundColor: "#418cc0", stack: "nwc" },
-        {
-          label: "AP (negative)",
-          data: get("ap").map((v) => -v),
-          backgroundColor: "#c98a2b",
-          stack: "nwc",
-        },
-      ],
-    },
+    data: { labels, datasets: datasets as unknown as never },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: "top", labels: { boxWidth: 10, font: { size: 11 } } },
+        legend: {
+          position: "top",
+          labels: { boxWidth: 10, font: { size: 11 }, usePointStyle: false },
+        },
         tooltip: {
           callbacks: {
             label: (ctx) =>

@@ -48,10 +48,12 @@ export function InteractiveBrief({
   group,
   sbus,
   narrative,
+  initialShowNwcTrendlines,
 }: {
   group: GroupRow;
   sbus: SbuRow[];
   narrative: NarrativeRow[];
+  initialShowNwcTrendlines: boolean;
 }) {
   // Baseline copies — used to compute "vs base" deltas, never mutated.
   const baselines = useMemo<Cur>(() => {
@@ -375,7 +377,12 @@ export function InteractiveBrief({
           />
         </div>
 
-        <GroupCharts sbus={sbus} cur={cur} baselines={baselines} />
+        <GroupCharts
+          sbus={sbus}
+          cur={cur}
+          baselines={baselines}
+          initialShowTrendlines={initialShowNwcTrendlines}
+        />
       </section>
 
       {/* SBU section */}

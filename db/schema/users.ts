@@ -1,7 +1,12 @@
-import { boolean, index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const USER_ROLES = ["owner", "admin", "manager", "member", "viewer"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
+
+// Loose, per-user view-state bag. Values are scoped by string key (e.g.
+// "wcShowNwcTrendlines") so we don't need a new column for every UI
+// toggle. Read/write via lib/auth/prefs.ts.
+export type UserPrefs = Record<string, unknown>;
 
 // Schema per @auth/drizzle-adapter + Auth.js v5 expectations.
 // `role` + `disabled` added to support RBAC for the admin console.
@@ -17,6 +22,7 @@ export const users = pgTable(
     image: text("image"),
     role: varchar("role", { length: 32, enum: USER_ROLES }).default("member").notNull(),
     disabled: boolean("disabled").default(false).notNull(),
+    prefs: jsonb("prefs").$type<UserPrefs>().default({}).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },

@@ -1,10 +1,12 @@
 import { requireUser } from "@/lib/auth/session";
+import { getUserPref } from "@/lib/auth/prefs";
 import {
   getWorkingCapitalGroup,
   listActiveNarrative,
   listActiveSbus,
 } from "@/lib/db/queries/working-capital";
 import { InteractiveBrief } from "./client/interactive-brief";
+import { WC_PREF_KEYS } from "./actions";
 import type { SbuRow } from "./types";
 
 export const metadata = {
@@ -13,12 +15,13 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function WorkingCapitalDataPage() {
-  await requireUser();
+  const user = await requireUser();
 
-  const [group, sbuRows, narrative] = await Promise.all([
+  const [group, sbuRows, narrative, showNwcTrendlines] = await Promise.all([
     getWorkingCapitalGroup(),
     listActiveSbus(),
     listActiveNarrative(),
+    getUserPref<boolean>(user.id, WC_PREF_KEYS.showNwcTrendlines, true),
   ]);
 
   if (!group || sbuRows.length === 0) {
@@ -52,6 +55,7 @@ export default async function WorkingCapitalDataPage() {
         title: n.title ?? "",
         body: n.body,
       }))}
+      initialShowNwcTrendlines={showNwcTrendlines}
     />
   );
 }

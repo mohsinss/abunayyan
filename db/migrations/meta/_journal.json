@@ -43,6 +43,13 @@
       "when": 1777291103823,
       "tag": "0005_useful_shard",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777317223674,
+      "tag": "0006_early_korath",
+      "breakpoints": true
     }
   ]
 }
