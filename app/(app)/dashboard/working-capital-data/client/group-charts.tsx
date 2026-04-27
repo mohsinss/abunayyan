@@ -183,25 +183,23 @@ function GroupNwcChart({
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      // mode "index" + intersect=false snaps the tooltip to the
+      // hovered SBU's column so the user gets every series at once
+      // (Inventory, AR + Contract, Payables, and the two trend lines)
+      // instead of just the one dataset directly under the cursor.
+      interaction: { mode: "index" as const, intersect: false },
       plugins: {
         legend: {
           position: "top",
           labels: { boxWidth: 10, font: { size: 11 }, usePointStyle: false },
         },
         tooltip: {
+          mode: "index" as const,
+          intersect: false,
           callbacks: {
+            // Preserve sign so Payables reads "-392 SAR m" not "392".
             label: (ctx) =>
-              ` ${ctx.dataset.label ?? ""}: ${Math.round(Math.abs(ctx.parsed.y as number))} SAR m`,
-            afterTitle: (items) => {
-              const i = items[0]?.dataIndex ?? 0;
-              const s = sbus[i];
-              if (!s) return "";
-              const c = cur[s.key] ?? {
-                inv: s.inv, ar: s.ar, ca: s.ca, ap: s.ap,
-                dio: s.dio, dso: s.dso, dpo: s.dpo,
-              };
-              return `NWC ${Math.round(nwcOf(c))} SAR m`;
-            },
+              ` ${ctx.dataset.label ?? ""}: ${Math.round(ctx.parsed.y as number)} SAR m`,
           },
         },
       },
