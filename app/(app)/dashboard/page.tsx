@@ -1,6 +1,6 @@
 import { hasRole } from "@/lib/auth/rbac";
 import { requireUser } from "@/lib/auth/session";
-import { CardTile, CreateCardTile } from "@/components/dashboard/card-tile";
+import { CardTile, CreateCardTile, type CardAccent } from "@/components/dashboard/card-tile";
 import { HashRedirect } from "@/components/dashboard/hash-redirect";
 import { BUILTIN_CARDS, getBuiltinByKey } from "@/lib/datasets/builtins";
 import { listDatasets } from "@/lib/db/queries/datasets";
@@ -13,7 +13,17 @@ type Tile = {
   description: string | null;
   href: string;
   meta: string;
+  accent?: CardAccent;
+  badge?: string;
 };
+
+// Per-route visual treatment. Routes not listed fall back to default.
+function accentForRoute(route: string): { accent: CardAccent; badge?: string } {
+  if (route === "working-capital-data") return { accent: "navy", badge: "Live · DB" };
+  if (route === "sbu-performance-atlas") return { accent: "atlas", badge: "FY-2026" };
+  if (route === "working-capital-ccc") return { accent: "default", badge: "Static" };
+  return { accent: "default" };
+}
 
 export default async function DashboardGalleryPage() {
   const user = await requireUser();
@@ -22,11 +32,13 @@ export default async function DashboardGalleryPage() {
 
   const tiles: Tile[] = rows.map((ds) => {
     const builtin = ds.kind === "builtin" ? getBuiltinByKey(ds.config?.builtinKey) : null;
+    const route = builtin ? builtin.route : ds.slug;
+    const a = accentForRoute(route);
     return {
       id: ds.id,
       title: ds.title,
       description: ds.description,
-      href: builtin ? `/dashboard/${builtin.route}` : `/dashboard/${ds.slug}`,
+      href: `/dashboard/${route}`,
       meta:
         ds.kind === "builtin"
           ? "Builtin"
@@ -35,6 +47,8 @@ export default async function DashboardGalleryPage() {
               day: "numeric",
               year: "numeric",
             }),
+      accent: a.accent,
+      badge: a.badge,
     };
   });
 
@@ -48,12 +62,15 @@ export default async function DashboardGalleryPage() {
   );
   for (const card of Object.values(BUILTIN_CARDS)) {
     if (seededRoutes.has(card.route)) continue;
-    tiles.unshift({
+    const a = accentForRoute(card.route);
+    tiles.push({
       id: `builtin-${card.key}`,
       title: card.title,
       description: card.description,
       href: `/dashboard/${card.route}`,
       meta: "Builtin",
+      accent: a.accent,
+      badge: a.badge,
     });
   }
 
@@ -79,6 +96,8 @@ export default async function DashboardGalleryPage() {
               description={t.description}
               href={t.href}
               meta={t.meta}
+              accent={t.accent}
+              badge={t.badge}
             />
           ))}
           {isAdmin ? <CreateCardTile href="/dashboard/new" /> : null}

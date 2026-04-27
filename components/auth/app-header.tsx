@@ -24,6 +24,12 @@ const BRANDED_ROUTES: { match: RegExp; shareSlug: string }[] = [
     match: /^\/dashboard\/working-capital-ccc(\/|$)/,
     shareSlug: "working-capital-ccc",
   },
+  {
+    // The DB-backed twin shares the same gradient header so the two
+    // routes feel like sibling views of one brief.
+    match: /^\/dashboard\/working-capital-data(\/|$)/,
+    shareSlug: "working-capital-data",
+  },
 ];
 
 export function AppHeader({ user }: { user: SessionUser }) {
