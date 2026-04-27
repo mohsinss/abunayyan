@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   applyPreset,
   cashReleased,
@@ -70,6 +70,28 @@ export function InteractiveBrief({
 
   const dashRef = useRef<HTMLDivElement | null>(null);
   const sbuRef = useRef<HTMLDivElement | null>(null);
+
+  // Land on the SBU action panel on every (re)load. The hero + group
+  // dashboard stay above as background; the user can scroll up to see
+  // them, but the primary working surface is the levers below.
+  // Two rAF ticks let the Chart.js instances size before we measure
+  // sbuRef's offset, otherwise the scroll lands ~80px short on cold
+  // load. If the user has navigated here with a real fragment in the
+  // URL we let the browser's native handling win.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash) return;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        sbuRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+    };
+  }, []);
 
   // Derived totals + cash release for ticker / hero / KPI grid.
   const baselineList = useMemo(
