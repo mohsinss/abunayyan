@@ -212,17 +212,22 @@ export function InteractiveBrief({
             <button
               type="button"
               onClick={() => dashRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              className={styles.tab}
-              style={{ borderRadius: 999 }}
+              className={styles.jumpPill}
             >
-              Full dashboard →
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}>
+                <path d="M3 12h18" />
+                <path d="M13 6l6 6-6 6" />
+              </svg>
+              Full dashboard
             </button>
             <button
               type="button"
               onClick={() => sbuRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              className={styles.tab}
-              style={{ borderRadius: 999 }}
+              className={styles.jumpPill}
             >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}>
+                <path d="M4 6h16M4 12h16M4 18h10" />
+              </svg>
               SBU panel
             </button>
           </div>
@@ -394,6 +399,10 @@ export function InteractiveBrief({
             onClick={onResetAll}
             className={`${styles.btnReset} ${styles.btnResetMaster}`}
           >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 0 3-6.7" />
+              <path d="M3 4v5h5" />
+            </svg>
             Reset to {group.fiscalYear} baseline
           </button>
         </div>
@@ -409,9 +418,7 @@ export function InteractiveBrief({
             {narrative.map((n) => (
               <div key={n.slot} className={styles.observations}>
                 <h5>{n.title || n.slot}</h5>
-                <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-soft)", lineHeight: 1.6 }}>
-                  {n.body}
-                </p>
+                <p>{n.body}</p>
               </div>
             ))}
           </div>

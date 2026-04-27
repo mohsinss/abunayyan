@@ -1,8 +1,9 @@
 /* Ported verbatim from /public/dashboards/working-capital-ccc.html.
-   Scoped via CSS modules so the brand-1/2/3 tokens, slider styling, and
-   ticker animations don't leak into the rest of the app. Class names
-   are kept identical to the source so the React markup and original
-   HTML can be diffed easily. */
+   Top-level component classes are CSS-module-scoped (.root, .ticker,
+   .kpi, .sliderRow, etc.); shared inner descendants used as plain
+   className strings in React (.lab, .unit, .lbl, .val, .delta, .sub,
+   .pct, .pill, .hint, .descr, .formula, .v, .baseline, .vals,
+   .targetLine) are wrapped in :global() so they match without hashing. */
 
 .root {
   --brand-1: #0b3378;
@@ -32,7 +33,7 @@
 .root *::after {
   box-sizing: border-box;
 }
-.root .serif {
+.root :global(.serif) {
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -101,7 +102,7 @@
   margin: 0;
   font-weight: 700;
 }
-.sectionTitle .sub {
+.sectionTitle :global(.sub) {
   color: var(--gray-1);
   font-size: 12px;
 }
@@ -137,20 +138,20 @@
   color: var(--gray-1);
   font-weight: 600;
 }
-.kpi .v {
+.kpi :global(.v) {
   font-size: 26px;
   font-weight: 700;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
-.kpi .v small {
+.kpi :global(.v small) {
   font-size: 13px;
   color: var(--ink-soft);
   font-weight: 500;
   margin-left: 4px;
 }
-.kpi .delta {
+.kpi :global(.delta) {
   margin-top: 6px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -159,16 +160,16 @@
   align-items: center;
   gap: 6px;
 }
-.kpi .delta b {
+.kpi :global(.delta b) {
   font-weight: 600;
 }
-.deltaGood b {
+.deltaGood :global(b) {
   color: var(--good);
 }
-.deltaBad b {
+.deltaBad :global(b) {
   color: var(--bad);
 }
-.kpi .baseline {
+.kpi :global(.baseline) {
   font-size: 11px;
   color: var(--gray-1);
   margin-top: 2px;
@@ -195,7 +196,7 @@
   margin: 0 0 4px;
   font-weight: 700;
 }
-.panel .sub {
+.panel :global(.sub) {
   color: var(--gray-1);
   font-size: 12px;
   margin-bottom: 12px;
@@ -241,14 +242,14 @@
   border-color: transparent;
   box-shadow: 0 4px 12px rgba(11, 51, 120, 0.22);
 }
-.tab .pill {
+.tab :global(.pill) {
   font-size: 10.5px;
   background: rgba(0, 0, 0, 0.06);
   padding: 1px 7px;
   border-radius: 999px;
   color: inherit;
 }
-.tabActive .pill {
+.tabActive :global(.pill) {
   background: rgba(255, 255, 255, 0.22);
 }
 
@@ -282,6 +283,10 @@
   color: var(--ink-soft);
   font-size: 13px;
   max-width: 560px;
+}
+.sbuHead p b {
+  color: var(--brand-2);
+  font-weight: 600;
 }
 
 .sbuSplit {
@@ -367,10 +372,10 @@
 .summaryDelta b {
   font-weight: 700;
 }
-.summaryDelta.good b {
+.summaryDeltaGood b {
   color: #a8f0c8;
 }
-.summaryDelta.bad b {
+.summaryDeltaBad b {
   color: #ffc4be;
 }
 
@@ -395,12 +400,12 @@
   color: var(--brand-1);
   font-weight: 700;
 }
-.lever .descr {
+.lever :global(.descr) {
   color: var(--gray-1);
   font-size: 11px;
   margin-bottom: 10px;
 }
-.lever .formula {
+.lever :global(.formula) {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 10.5px;
   color: var(--brand-2);
@@ -423,13 +428,13 @@
 .sliderRow:first-of-type {
   border-top: 0;
 }
-.sliderRow .lab {
+.sliderRow :global(.lab) {
   font-size: 11.5px;
   font-weight: 600;
   color: var(--ink);
   letter-spacing: 0.02em;
 }
-.sliderRow .lab .unit {
+.sliderRow :global(.lab .unit) {
   display: block;
   font-size: 10px;
   color: var(--gray-1);
@@ -437,14 +442,14 @@
   letter-spacing: 0.04em;
   margin-top: 1px;
 }
-.sliderRow .vals {
+.sliderRow :global(.vals) {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-size: 13px;
   font-weight: 700;
   color: var(--brand-1);
 }
-.sliderRow .vals .targetLine {
+.sliderRow :global(.vals .targetLine) {
   display: block;
   font-size: 9.5px;
   color: #c98a2b;
@@ -452,19 +457,19 @@
   margin-top: 2px;
   letter-spacing: 0.02em;
 }
-.sliderRow .vals .delta {
+.sliderRow :global(.vals .delta) {
   display: block;
   font-size: 10px;
   font-weight: 600;
   margin-top: 1px;
 }
-.sliderRow .vals .delta.good {
+.sliderRow :global(.vals .delta.good) {
   color: var(--good);
 }
-.sliderRow .vals .delta.bad {
+.sliderRow :global(.vals .delta.bad) {
   color: var(--bad);
 }
-.sliderRow.onTarget .vals .targetLine {
+.sliderRow.onTarget :global(.vals .targetLine) {
   color: var(--good);
 }
 .sliderRow.onTarget .sweetSpot {
@@ -582,7 +587,7 @@
   color: var(--brand-1);
   font-weight: 700;
 }
-.miniChart .sub {
+.miniChart :global(.sub) {
   font-size: 11px;
   color: var(--gray-1);
   margin-bottom: 8px;
@@ -626,6 +631,12 @@
 .observations li {
   margin: 4px 0;
 }
+.observations p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
 
 .targetsLine {
   font-size: 11px;
@@ -645,7 +656,7 @@
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
-.resetArea .hint {
+.resetArea :global(.hint) {
   font-size: 12px;
   color: var(--gray-1);
   max-width: 60%;
@@ -779,7 +790,7 @@
 .tkpi:first-child {
   border-left: 0;
 }
-.tkpi .lbl {
+.tkpi :global(.lbl) {
   font-size: 9.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -787,7 +798,7 @@
   font-weight: 600;
   white-space: nowrap;
 }
-.tkpi .val {
+.tkpi :global(.val) {
   font-size: 18px;
   font-weight: 700;
   color: var(--ink);
@@ -796,13 +807,13 @@
   line-height: 1.05;
   white-space: nowrap;
 }
-.tkpi .val small {
+.tkpi :global(.val small) {
   font-size: 10px;
   color: var(--ink-soft);
   font-weight: 500;
   margin-left: 3px;
 }
-.tkpi .delta {
+.tkpi :global(.delta) {
   font-size: 10px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -810,10 +821,10 @@
   white-space: nowrap;
   line-height: 1.2;
 }
-.tkpi .delta.good {
+.tkpi :global(.delta.good) {
   color: var(--good);
 }
-.tkpi .delta.bad {
+.tkpi :global(.delta.bad) {
   color: var(--bad);
 }
 
@@ -825,23 +836,45 @@
   border: 0;
   box-shadow: 0 4px 14px rgba(11, 51, 120, 0.22);
 }
-.tkpiRelease .lbl {
+.tkpiRelease :global(.lbl) {
   color: rgba(255, 255, 255, 0.78);
 }
-.tkpiRelease .val {
+.tkpiRelease :global(.val) {
   color: #fff;
 }
-.tkpiRelease .val small {
+.tkpiRelease :global(.val small) {
   color: rgba(255, 255, 255, 0.72);
 }
-.tkpiRelease .delta {
+.tkpiRelease :global(.delta) {
   color: rgba(255, 255, 255, 0.92);
 }
-.tkpiRelease .delta.good {
+.tkpiRelease :global(.delta.good) {
   color: #a8f0c8;
 }
-.tkpiRelease .delta.bad {
+.tkpiRelease :global(.delta.bad) {
   color: #ffc4be;
+}
+
+.jumpPill {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--brand-1);
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.jumpPill:hover {
+  border-color: var(--brand-3);
+  background: #f0f6fd;
+  color: var(--brand-1);
 }
 
 @media (max-width: 1180px) {
@@ -975,7 +1008,7 @@
   gap: 10px;
   min-width: 280px;
 }
-.impactRight .lbl {
+.impactRight :global(.lbl) {
   font-size: 10.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1016,12 +1049,12 @@
   border-color: #fff;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
 }
-.preset .pct {
+.preset :global(.pct) {
   font-size: 10px;
   opacity: 0.7;
   font-weight: 500;
 }
-.presetActive .pct {
+.presetActive :global(.pct) {
   opacity: 0.55;
 }
 .scenarioHelp {
