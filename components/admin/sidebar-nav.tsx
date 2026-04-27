@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, Bot, ScrollText, Settings, LayoutGrid } from "lucide-react";
+import { Users, Bot, ScrollText, Settings, LayoutGrid, Wallet } from "lucide-react";
 
 type NavItem = {
   href: string;
@@ -15,6 +15,7 @@ const ITEMS: readonly NavItem[] = [
   { href: "/admin", label: "Overview", Icon: LayoutGrid, exact: true },
   { href: "/admin/users", label: "Users", Icon: Users },
   { href: "/admin/chatbots", label: "Chatbots", Icon: Bot },
+  { href: "/admin/working-capital", label: "Working Capital", Icon: Wallet },
   { href: "/admin/audit", label: "Audit", Icon: ScrollText },
   { href: "/admin/settings", label: "Settings", Icon: Settings },
 ];

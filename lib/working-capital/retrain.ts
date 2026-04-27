@@ -11,7 +11,11 @@ import {
 } from "@/db";
 import { backfillDatasetEmbeddings } from "@/lib/datasets/embed-backfill";
 import { getPlatformSettings } from "@/lib/chatbots/settings";
+import { buildWorkingCapitalChunksFromTables } from "@/lib/working-capital-data/build-chunks";
 import { WORKING_CAPITAL_CHUNKS } from "./knowledge";
+
+export type RetrainSource = "static" | "tables";
+const DEFAULT_SOURCE: RetrainSource = "static";
 
 const DATASET_SLUG = "working-capital-ccc";
 const BOT_SLUG = "working-capital-analyst";
@@ -72,15 +76,26 @@ export type RetrainResult = {
   deleted: number;
   unchanged: number;
   embedded: number;
+  source: RetrainSource;
 };
 
 export async function retrainWorkingCapitalKnowledge(
   actorUserId: string,
+  source: RetrainSource = DEFAULT_SOURCE,
 ): Promise<RetrainResult> {
   const settings = await getPlatformSettings();
 
   const bot = await ensureBot(actorUserId, settings);
   const dataset = await ensureDataset(actorUserId, bot.id);
+
+  // Resolve the chunk set. Falls back to the static knowledge.ts file
+  // if the tables haven't been seeded yet, so a fresh deploy never
+  // wipes the bot's KB on the first retrain.
+  let chunks = WORKING_CAPITAL_CHUNKS;
+  if (source === "tables") {
+    const fromTables = await buildWorkingCapitalChunksFromTables();
+    if (fromTables.length > 0) chunks = fromTables;
+  }
 
   // Existing chunks for this dataset.
   const existing = await db
@@ -106,7 +121,7 @@ export async function retrainWorkingCapitalKnowledge(
   let unchanged = 0;
 
   const desiredIds = new Set<string>();
-  for (const chunk of WORKING_CAPITAL_CHUNKS) {
+  for (const chunk of chunks) {
     desiredIds.add(chunk.id);
     const hash = chunkHash(chunk.content);
     const prior = existingByChunkId.get(chunk.id);
@@ -154,6 +169,7 @@ export async function retrainWorkingCapitalKnowledge(
     deleted: toDeleteDocIds.length,
     unchanged,
     embedded,
+    source: chunks === WORKING_CAPITAL_CHUNKS ? "static" : "tables",
   };
 }
 

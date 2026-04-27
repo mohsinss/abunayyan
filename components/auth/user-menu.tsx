@@ -30,17 +30,19 @@ export function UserMenu({ user }: { user: SessionUser }) {
   const isAdmin = !!user.role && ADMIN_ROLES.includes(user.role);
   const [retraining, setRetraining] = useState(false);
 
-  async function retrainWorkingCapital(e: Event) {
+  async function retrainWorkingCapital(e: Event, source: "static" | "tables") {
     // Prevent the dropdown from closing while the request is in-flight, so
     // the spinning state stays visible.
     e.preventDefault();
     if (retraining) return;
     setRetraining(true);
-    const t = toast.loading("Retraining Working Capital knowledge base…");
+    const label = source === "tables" ? "live tables" : "static knowledge file";
+    const t = toast.loading(`Retraining Working Capital KB from ${label}…`);
     try {
-      const res = await fetch("/api/v1/admin/working-capital/retrain", {
-        method: "POST",
-      });
+      const res = await fetch(
+        `/api/v1/admin/working-capital/retrain?source=${source}`,
+        { method: "POST" },
+      );
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `Retrain failed (${res.status})`);
@@ -50,9 +52,10 @@ export function UserMenu({ user }: { user: SessionUser }) {
         deleted: number;
         unchanged: number;
         embedded: number;
+        source: string;
       };
       toast.success(
-        `Retrained: ${json.inserted} new, ${json.deleted} removed, ${json.unchanged} unchanged, ${json.embedded} embedded.`,
+        `Retrained from ${json.source}: ${json.inserted} new, ${json.deleted} removed, ${json.unchanged} unchanged, ${json.embedded} embedded.`,
         { id: t },
       );
     } catch (err) {
@@ -96,13 +99,22 @@ export function UserMenu({ user }: { user: SessionUser }) {
               Admin
             </DropdownMenuLabel>
             <DropdownMenuItem
-              onSelect={retrainWorkingCapital}
+              onSelect={(e) => retrainWorkingCapital(e, "static")}
               disabled={retraining}
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${retraining ? "animate-spin" : ""}`}
               />
-              {retraining ? "Retraining…" : "Retrain Working Capital KB"}
+              {retraining ? "Retraining…" : "Retrain WC KB · static"}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={(e) => retrainWorkingCapital(e, "tables")}
+              disabled={retraining}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${retraining ? "animate-spin" : ""}`}
+              />
+              {retraining ? "Retraining…" : "Retrain WC KB · live tables"}
             </DropdownMenuItem>
           </>
         )}

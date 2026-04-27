@@ -37,6 +37,9 @@ export const AUDIT_EVENTS = [
   "dataset.share_rotated",
 
   "working_capital.retrained",
+  "working_capital_data.group_updated",
+  "working_capital_data.sbu_updated",
+  "working_capital_data.narrative_updated",
 
   "persistence_failed",
 ] as const;

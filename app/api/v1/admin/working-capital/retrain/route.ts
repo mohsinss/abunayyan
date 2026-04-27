@@ -4,6 +4,7 @@ import { captureError } from "@/lib/logger";
 import {
   getWorkingCapitalKbStatus,
   retrainWorkingCapitalKnowledge,
+  type RetrainSource,
 } from "@/lib/working-capital/retrain";
 
 export const runtime = "nodejs";
@@ -13,8 +14,15 @@ export async function POST(req: Request) {
   const guard = await requireAdminApi(req);
   if (!guard.ok) return guard.response;
 
+  // ?source=tables → DB-templated chunks; default ?source=static keeps
+  // the legacy behaviour. The orchestrator falls back to static if the
+  // wc_* tables are empty.
+  const url = new URL(req.url);
+  const sourceParam = url.searchParams.get("source");
+  const source: RetrainSource = sourceParam === "tables" ? "tables" : "static";
+
   try {
-    const result = await retrainWorkingCapitalKnowledge(guard.user.id);
+    const result = await retrainWorkingCapitalKnowledge(guard.user.id, source);
     await writeAudit({
       actorId: guard.user.id,
       botId: result.botId,
@@ -25,6 +33,7 @@ export async function POST(req: Request) {
         deleted: result.deleted,
         unchanged: result.unchanged,
         embedded: result.embedded,
+        source: result.source,
       },
     });
     return Response.json({ ok: true, ...result });
