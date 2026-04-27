@@ -88,6 +88,7 @@ function parseChatbotForm(formData: FormData) {
     description: String(formData.get("description") ?? "") || undefined,
     provider: String(formData.get("provider") ?? ""),
     modelId: String(formData.get("modelId") ?? ""),
+    engine: String(formData.get("engine") ?? "ai_sdk"),
     temperature: Number(formData.get("temperature") ?? 0.3),
     maxTokens: maxTokensStr ? Number(maxTokensStr) : null,
     maxSteps: Number(formData.get("maxSteps") ?? 3),

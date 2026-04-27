@@ -45,6 +45,16 @@ export const TOOL_IDS = [
 ] as const;
 export type ToolId = (typeof TOOL_IDS)[number];
 
+// Which runtime drives this bot's chat turns. The default `ai_sdk` uses
+// the Vercel AI SDK + provider plugin abstractions (existing behaviour).
+// `anthropic_direct` and `openai_direct` bypass the AI SDK and call the
+// official provider SDKs directly, with a hand-rolled multi-step tool
+// loop. Direct engines unlock provider-specific features (Anthropic
+// prompt caching breakpoints, OpenAI Responses API) that the abstraction
+// doesn't expose cleanly.
+export const ENGINES = ["ai_sdk", "anthropic_direct", "openai_direct"] as const;
+export type Engine = (typeof ENGINES)[number];
+
 export const chatbots = pgTable(
   "chatbots",
   {
@@ -54,6 +64,7 @@ export const chatbots = pgTable(
     description: text("description"),
     provider: varchar("provider", { length: 16, enum: AI_PROVIDERS }).notNull(),
     modelId: varchar("model_id", { length: 64, enum: MODEL_IDS }).notNull(),
+    engine: varchar("engine", { length: 24, enum: ENGINES }).default("ai_sdk").notNull(),
     temperature: real("temperature").default(0.3).notNull(),
     maxTokens: integer("max_tokens"),
     maxSteps: integer("max_steps").default(3).notNull(),

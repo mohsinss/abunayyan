@@ -1,0 +1,1 @@
+ALTER TABLE "chatbots" ADD COLUMN "engine" varchar(24) DEFAULT 'ai_sdk' NOT NULL;

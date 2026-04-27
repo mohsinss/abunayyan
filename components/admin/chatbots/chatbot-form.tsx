@@ -4,9 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   AI_PROVIDERS,
+  ENGINES,
   MODEL_IDS,
   TOOL_IDS,
   type AiProvider,
+  type Engine,
   type ModelId,
 } from "@/db/schema/chatbots";
 import { USER_ROLES } from "@/db/schema/users";
@@ -49,10 +51,27 @@ export function ChatbotForm({ mode, bot, availableProviders }: Props) {
   const [modelId, setModelId] = useState<ModelId>(
     bot?.modelId ?? MODEL_BY_PROVIDER[bot?.provider ?? "anthropic"][0]!,
   );
+  const [engine, setEngine] = useState<Engine>(bot?.engine ?? "ai_sdk");
 
   function onProviderChange(next: AiProvider) {
     setProvider(next);
     setModelId(MODEL_BY_PROVIDER[next][0]!);
+    // Direct engines lock provider; if the user picks google/xai while
+    // engine=anthropic_direct, snap engine back to ai_sdk.
+    if (engine === "anthropic_direct" && next !== "anthropic") setEngine("ai_sdk");
+    if (engine === "openai_direct" && next !== "openai") setEngine("ai_sdk");
+  }
+
+  function onEngineChange(next: Engine) {
+    setEngine(next);
+    if (next === "anthropic_direct" && provider !== "anthropic") {
+      setProvider("anthropic");
+      setModelId(MODEL_BY_PROVIDER.anthropic[0]!);
+    }
+    if (next === "openai_direct" && provider !== "openai") {
+      setProvider("openai");
+      setModelId(MODEL_BY_PROVIDER.openai[0]!);
+    }
   }
 
   const isEdit = mode === "edit";
@@ -64,6 +83,7 @@ export function ChatbotForm({ mode, bot, availableProviders }: Props) {
         setError(null);
         fd.set("provider", provider);
         fd.set("modelId", modelId);
+        fd.set("engine", engine);
         if (isEdit && bot) fd.set("id", bot.id);
         start(async () => {
           const action = isEdit ? updateChatbotAction : createChatbotAction;
@@ -105,12 +125,34 @@ export function ChatbotForm({ mode, bot, availableProviders }: Props) {
         />
       </Field>
 
+      <Field
+        label="Engine"
+        hint="ai_sdk = Vercel AI SDK abstraction (current default). Direct engines bypass the SDK and call the official provider SDK; provider locks to match."
+      >
+        <select
+          value={engine}
+          onChange={(e) => onEngineChange(e.target.value as Engine)}
+          className="input"
+        >
+          {ENGINES.map((e) => (
+            <option key={e} value={e}>
+              {e === "ai_sdk"
+                ? "ai_sdk · Vercel AI SDK (default)"
+                : e === "anthropic_direct"
+                  ? "anthropic_direct · @anthropic-ai/sdk"
+                  : "openai_direct · openai SDK"}
+            </option>
+          ))}
+        </select>
+      </Field>
+
       <div className="grid gap-6 md:grid-cols-2">
         <Field label="Provider">
           <select
             value={provider}
             onChange={(e) => onProviderChange(e.target.value as AiProvider)}
             className="input"
+            disabled={engine === "anthropic_direct" || engine === "openai_direct"}
           >
             {AI_PROVIDERS.map((p) => {
               const configured = availableProviders.includes(p);

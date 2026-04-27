@@ -1,18 +1,20 @@
 import "server-only";
-import { streamText, convertToCoreMessages, type StreamTextResult, type UIMessage } from "ai";
+import { type UIMessage } from "ai";
 import type { Chatbot } from "@/db/schema/chatbots";
 import type { UserRole } from "@/db/schema/users";
-import { resolveModel } from "./providers";
-import { getToolsForBot } from "./tools";
 import { appendMessage, autoTitleIfNeeded, getOrCreateThread } from "./persistence";
 import { ratelimit, budget } from "./rate-limit";
 import { canUserAccessBot } from "./authz";
 import { writeAudit } from "./audit";
-import { estimateCostUsd } from "./cost";
 import { getPlatformSettings } from "./settings";
-import { capture, EVENTS } from "@/lib/analytics/posthog";
-import { captureError } from "@/lib/logger";
-import { env } from "@/lib/env";
+import { streamViaAiSdk } from "./runtime-ai-sdk";
+import { streamViaAnthropicDirect } from "./runtime-anthropic";
+import type { RuntimeStream } from "./runtime-shared";
+
+// Top-level entry point used by the chat route handler. Owns all the
+// engine-agnostic concerns (auth, rate limit, budget cap, thread
+// resolution, user-message persistence) and then dispatches to the
+// engine-specific stream implementation based on bot.engine.
 
 export type RunError =
   | { kind: "unauthorized" }
@@ -35,7 +37,7 @@ export type RunInput = {
 export type RunSuccess = {
   ok: true;
   threadId: string;
-  result: StreamTextResult<Record<string, never>, never>;
+  result: RuntimeStream;
 };
 
 export type RunResult = RunSuccess | { ok: false; error: RunError };
@@ -107,90 +109,34 @@ export async function runBotStream(input: RunInput): Promise<RunResult> {
     await autoTitleIfNeeded(thread.id, userMsg.content);
   }
 
-  const model = resolveModel(bot.provider, bot.modelId);
-  const tools = getToolsForBot(bot, user, thread.id, datasetId ?? null);
-
-  const result = streamText({
-    model,
-    system: bot.systemPrompt,
-    messages: convertToCoreMessages(messages),
-    tools,
-    maxSteps: bot.maxSteps,
-    temperature: bot.temperature,
-    maxTokens: bot.maxTokens ?? undefined,
-    experimental_telemetry: {
-      isEnabled: env.NODE_ENV !== "production" || env.ENABLE_AI_TRACES === "1",
-      functionId: `bot.${bot.slug}`,
-    },
-    onError: ({ error }) => {
-      captureError(error, {
-        route: "runtime.streamText",
-        slug: bot.slug,
-        botId: bot.id,
-        userId: user.id,
-        threadId: thread.id,
-        provider: bot.provider,
-        modelId: bot.modelId,
-      });
-    },
-    onFinish: async ({ text, toolCalls, usage, finishReason }) => {
-      try {
-        const costUsd = estimateCostUsd(bot.provider, bot.modelId, usage);
-        await appendMessage({
-          threadId: thread.id,
-          role: "assistant",
-          content: text,
-          toolCalls: toolCalls as unknown as unknown[],
-          tokensIn: usage.promptTokens,
-          tokensOut: usage.completionTokens,
-          costUsd,
-          finishReason,
-          modelId: bot.modelId,
-          promptVersion: bot.systemPromptVersion,
-          status: finishReason === "error" ? "errored" : "complete",
-        });
-        await budget.record(bot, user.id, costUsd);
-        await writeAudit({
-          actorId: user.id,
-          botId: bot.id,
-          threadId: thread.id,
-          event: finishReason === "error" ? "bot.turn_errored" : "bot.turn_completed",
-          payload: {
-            tokensIn: usage.promptTokens,
-            tokensOut: usage.completionTokens,
-            costUsd,
-            finishReason,
-            modelId: bot.modelId,
-            provider: bot.provider,
-          },
-        });
-        await capture({
-          distinctId: user.id,
-          event: EVENTS.ai_completion,
-          properties: {
-            bot: bot.slug,
-            provider: bot.provider,
-            model: bot.modelId,
-            input_tokens: usage.promptTokens,
-            output_tokens: usage.completionTokens,
-            cost_usd: costUsd,
-            finish_reason: finishReason,
-            thread_id: thread.id,
-          },
-        }).catch(() => {});
-      } catch (err) {
-        captureError(err, {
-          route: "runtime.onFinish",
-          slug: bot.slug,
-          botId: bot.id,
-          userId: user.id,
-          threadId: thread.id,
-          provider: bot.provider,
-          modelId: bot.modelId,
-        });
+  // Dispatch to the engine. Default `ai_sdk` keeps the original
+  // streamText() pipeline; the direct engines bypass the AI SDK and
+  // call provider SDKs directly while still emitting the same
+  // DataStream wire format the client consumes.
+  switch (bot.engine) {
+    case "anthropic_direct": {
+      if (bot.provider !== "anthropic") {
+        return { ok: false, error: { kind: "bot_disabled" } };
       }
-    },
-  });
-
-  return { ok: true, threadId: thread.id, result };
+      const result = streamViaAnthropicDirect({
+        bot,
+        user,
+        threadId: thread.id,
+        messages,
+        datasetId: datasetId ?? null,
+      });
+      return { ok: true, threadId: thread.id, result };
+    }
+    case "ai_sdk":
+    default: {
+      const result = streamViaAiSdk({
+        bot,
+        user,
+        threadId: thread.id,
+        messages,
+        datasetId: datasetId ?? null,
+      });
+      return { ok: true, threadId: thread.id, result };
+    }
+  }
 }

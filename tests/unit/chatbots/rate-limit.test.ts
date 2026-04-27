@@ -13,6 +13,7 @@ function bot(overrides: Partial<Chatbot> = {}): Chatbot {
     temperature: 0.3,
     maxTokens: null,
     maxSteps: 3,
+    engine: "ai_sdk",
     systemPrompt: "",
     systemPromptVersion: 1,
     tools: [],
