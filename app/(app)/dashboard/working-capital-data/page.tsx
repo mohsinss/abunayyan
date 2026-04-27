@@ -6,7 +6,7 @@ import {
   listActiveSbus,
 } from "@/lib/db/queries/working-capital";
 import { InteractiveBrief } from "./client/interactive-brief";
-import { WC_PREF_KEYS } from "./actions";
+import { WC_PREF_KEYS } from "./pref-keys";
 import type { SbuRow } from "./types";
 
 export const metadata = {

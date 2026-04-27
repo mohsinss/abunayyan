@@ -1,19 +1,18 @@
 "use server";
-import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { setUserPref } from "@/lib/auth/prefs";
+// Constants must live in a separate module — a "use server" file is
+// restricted to exporting async functions only.
+import { WC_PREF_KEYS } from "./pref-keys";
 
-// Pref keys live in one place so the page (server) and the client
-// island stay in sync. Add more as new view toggles land.
-export const WC_PREF_KEYS = {
-  showNwcTrendlines: "wcShowNwcTrendlines",
-} as const;
-
+// One UPDATE on users.prefs and we're done. NO revalidatePath here:
+// the client island already flipped its local state optimistically,
+// and the next full page load will read the fresh pref naturally.
+// revalidatePath would re-run the entire server page (group + sbus +
+// narrative + prefs queries + chart serialisation), which made the
+// checkbox feel ~2.5s slow on every click.
 export async function setShowNwcTrendlinesAction(value: boolean) {
   const user = await requireUser();
   await setUserPref(user.id, WC_PREF_KEYS.showNwcTrendlines, !!value);
-  // Cheap revalidate so a server-rendered re-fetch picks up the new
-  // pref if the user reloads. The client also updates optimistically.
-  revalidatePath("/dashboard/working-capital-data");
   return { ok: true as const };
 }
