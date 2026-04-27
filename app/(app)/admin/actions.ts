@@ -98,7 +98,19 @@ function parseChatbotForm(formData: FormData) {
     rateLimitTokens: Number(formData.get("rateLimitTokens") ?? 20),
     rateLimitWindow: String(formData.get("rateLimitWindow") ?? "1 h"),
     dailyCostCapUsd: Number(formData.get("dailyCostCapUsd") ?? 0),
-    enabled: formData.get("enabled") === "on" || formData.get("enabled") === "true",
+    // The form ships a hidden "enabled=false" + a checkbox
+    // "enabled=true". Read all values; the checkbox-supplied "true"
+    // wins when checked, otherwise only the hidden "false" is present.
+    // Falls back to "on" so this stays compatible with any callers
+    // (or older form caches) that still post a single checkbox.
+    enabled: (() => {
+      const all = formData.getAll("enabled").map(String);
+      if (all.includes("true") || all.includes("on")) return true;
+      if (all.includes("false")) return false;
+      // No marker at all → default to true (form didn't render the
+      // checkbox path). Safer than silently disabling a bot.
+      return true;
+    })(),
   };
 }
 

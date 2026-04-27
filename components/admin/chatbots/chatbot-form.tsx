@@ -317,8 +317,21 @@ export function ChatbotForm({ mode, bot, availableProviders }: Props) {
         </Field>
       </div>
 
+      {/* Hidden + checkbox pattern: unchecked browsers omit the
+          checkbox entirely from FormData, so the server can't tell
+          "user unchecked it" from "field never rendered" — and a
+          stale form save would silently disable the bot. The hidden
+          field always submits "false"; the checkbox (when checked)
+          submits "true" with the same name. The action picks the
+          last value. */}
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="enabled" defaultChecked={bot?.enabled ?? true} />
+        <input type="hidden" name="enabled" value="false" />
+        <input
+          type="checkbox"
+          name="enabled"
+          value="true"
+          defaultChecked={bot?.enabled ?? true}
+        />
         Enabled
       </label>
 
