@@ -30,6 +30,17 @@ export const BUILTIN_CARDS: Record<string, BuiltinCard> = {
     route: "working-capital-ccc",
     chatbotSlug: "atlas-analyst",
   },
+  "working-capital-data": {
+    key: "working-capital-data",
+    title: "Working Capital & CCC — Live Brief (DB-backed)",
+    description:
+      "Same interactive working-capital model, but every figure is sourced from Postgres (wc_groups / wc_sbus / wc_narrative) so admins can edit numbers in /admin/working-capital and the chatbot's vector knowledge base re-syncs on the next retrain. The static brief stays available alongside.",
+    route: "working-capital-data",
+    // Empty slug → seed leaves chatbot_id NULL on this dataset row, so
+    // the existing dataset-by-chatbot lookup keeps resolving to the
+    // working-capital-ccc dataset (the one with embedded chunks).
+    chatbotSlug: "",
+  },
 };
 
 export function getBuiltinByKey(key: string | null | undefined): BuiltinCard | null {
