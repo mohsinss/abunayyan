@@ -326,23 +326,29 @@ export function ChatbotForm({ mode, bot, availableProviders }: Props) {
         </button>
 
         {isEdit && bot && (
-          <form
-            action={(fd) => {
-              fd.set("id", bot.id);
+          // Plain button (NOT a nested form — React 19 throws a
+          // hydration error on form-in-form). We construct FormData
+          // ourselves and invoke the server action via the click
+          // handler so the outer save form stays the only <form>.
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => {
               if (!window.confirm(`Delete "${bot.name}"? This soft-deletes the bot.`)) return;
-              start(() => {
-                void deleteChatbotAction(fd);
+              const fd = new FormData();
+              fd.set("id", bot.id);
+              start(async () => {
+                const res = (await deleteChatbotAction(fd)) as
+                  | { ok?: true; error?: string }
+                  | undefined;
+                if (res && "error" in res && res.error) setError(res.error);
+                else router.push("/admin/chatbots");
               });
             }}
+            className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
           >
-            <button
-              type="submit"
-              disabled={pending}
-              className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-            >
-              Delete
-            </button>
-          </form>
+            Delete
+          </button>
         )}
       </div>
 

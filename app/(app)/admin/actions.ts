@@ -107,7 +107,14 @@ export async function createChatbotAction(formData: FormData) {
   const raw = parseChatbotForm(formData);
   const parsed = ChatbotUpsertSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: "Validation failed", fields: parsed.error.flatten().fieldErrors };
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    const summary = Object.entries(fieldErrors)
+      .map(([field, msgs]) => `${field}: ${(msgs ?? []).join(", ")}`)
+      .join("; ");
+    return {
+      error: summary ? `Validation failed — ${summary}` : "Validation failed",
+      fields: fieldErrors,
+    };
   }
   try {
     resolveModel(parsed.data.provider, parsed.data.modelId);
@@ -146,7 +153,14 @@ export async function updateChatbotAction(formData: FormData) {
   const raw = parseChatbotForm(formData);
   const parsed = ChatbotPatchSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: "Validation failed", fields: parsed.error.flatten().fieldErrors };
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    const summary = Object.entries(fieldErrors)
+      .map(([field, msgs]) => `${field}: ${(msgs ?? []).join(", ")}`)
+      .join("; ");
+    return {
+      error: summary ? `Validation failed — ${summary}` : "Validation failed",
+      fields: fieldErrors,
+    };
   }
   const patch = parsed.data;
 
