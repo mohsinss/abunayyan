@@ -11,6 +11,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           name: user.name,
           email: user.email,
           image: user.image,
+          role: user.role,
         }}
       />
       <main className="flex-1">{children}</main>

@@ -1,6 +1,8 @@
 "use client";
+import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, RefreshCw, User as UserIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,16 +13,55 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { UserRole } from "@/db/schema/users";
 
 type SessionUser = {
   id?: string;
   name?: string | null;
   email?: string | null;
   image?: string | null;
+  role?: UserRole;
 };
+
+const ADMIN_ROLES: UserRole[] = ["admin", "owner"];
 
 export function UserMenu({ user }: { user: SessionUser }) {
   const initial = (user.name ?? user.email ?? "?").charAt(0).toUpperCase();
+  const isAdmin = !!user.role && ADMIN_ROLES.includes(user.role);
+  const [retraining, setRetraining] = useState(false);
+
+  async function retrainWorkingCapital(e: Event) {
+    // Prevent the dropdown from closing while the request is in-flight, so
+    // the spinning state stays visible.
+    e.preventDefault();
+    if (retraining) return;
+    setRetraining(true);
+    const t = toast.loading("Retraining Working Capital knowledge base…");
+    try {
+      const res = await fetch("/api/v1/admin/working-capital/retrain", {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Retrain failed (${res.status})`);
+      }
+      const json = (await res.json()) as {
+        inserted: number;
+        deleted: number;
+        unchanged: number;
+        embedded: number;
+      };
+      toast.success(
+        `Retrained: ${json.inserted} new, ${json.deleted} removed, ${json.unchanged} unchanged, ${json.embedded} embedded.`,
+        { id: t },
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Retrain failed", { id: t });
+    } finally {
+      setRetraining(false);
+    }
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -33,7 +74,7 @@ export function UserMenu({ user }: { user: SessionUser }) {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel>
           <div className="flex flex-col">
             <span className="text-sm font-medium">{user.name ?? "Account"}</span>
@@ -48,6 +89,23 @@ export function UserMenu({ user }: { user: SessionUser }) {
             <UserIcon className="mr-2 h-4 w-4" /> Settings
           </a>
         </DropdownMenuItem>
+        {isAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Admin
+            </DropdownMenuLabel>
+            <DropdownMenuItem
+              onSelect={retrainWorkingCapital}
+              disabled={retraining}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${retraining ? "animate-spin" : ""}`}
+              />
+              {retraining ? "Retraining…" : "Retrain Working Capital KB"}
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
           <LogOut className="mr-2 h-4 w-4" /> Sign out

@@ -36,6 +36,8 @@ export const AUDIT_EVENTS = [
   "dataset.share_disabled",
   "dataset.share_rotated",
 
+  "working_capital.retrained",
+
   "persistence_failed",
 ] as const;
 export type AuditEvent = (typeof AUDIT_EVENTS)[number];

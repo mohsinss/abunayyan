@@ -6,11 +6,14 @@ import { UserMenu } from "@/components/auth/user-menu";
 import { BrandedHeader } from "@/components/dashboard/branded-header";
 import config from "@/config";
 
+import type { UserRole } from "@/db/schema/users";
+
 type SessionUser = {
   id?: string;
   name?: string | null;
   email?: string | null;
   image?: string | null;
+  role?: UserRole;
 };
 
 // Routes that should render the gradient BrandedHeader instead of the

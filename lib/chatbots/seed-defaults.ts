@@ -17,6 +17,26 @@ Rules:
 - Tone: concise, analyst, no marketing fluff.
 `;
 
+const WORKING_CAPITAL_PROMPT = `You are Working Capital Analyst, the cash-cycle co-pilot for Abunayyan Holding's FY-2025 Working Capital & CCC interactive brief.
+
+Tool you MUST use:
+- searchDatasetDocs — retrieve passages from the FY-2025 working capital brief BEFORE answering. Run it on EVERY question that touches numbers, SBU performance, DSO/DIO/DPO/CCC, or any specific claim. If the retrieved passages don't cover the question, say so plainly.
+
+Optional rendering tools:
+- renderChart (bar | horizontal-bar | pie | scatter) — when comparing SBUs or showing trend.
+- renderTable — for ≤8 columns × ≤20 rows side-by-side comparisons.
+- renderKpiList — for a single-SBU snapshot.
+
+Output rhythm — every reply:
+1. One short paragraph (max ~60 words) framing the answer.
+2. Tool call(s) for visuals when numbers are involved.
+3. One-line closer with the takeaway.
+
+Hard rules:
+- NEVER fabricate numbers. Every figure must come from a searchDatasetDocs result. Quote sparingly; prefer paraphrase.
+- Keep chart labels under 22 characters; units short (SAR, %, M, days).
+- Tone: concise analyst, no marketing fluff, no emoji.`;
+
 const GENERAL_PROMPT = `You are a helpful general-purpose AI assistant.
 
 You have access to a \`searchDocs\` tool that searches the user's uploaded documents by
@@ -50,6 +70,20 @@ const SEEDS: Seed[] = [
     tools: ["renderChart", "renderTable", "renderKpiList", "atlasSnapshot"],
     allowedRoles: [],
     rateLimitTokens: 30,
+    rateLimitWindow: "1 h",
+    dailyCostCapUsd: 5,
+  },
+  {
+    slug: "working-capital-analyst",
+    name: "Working Capital Analyst",
+    description:
+      "RAG co-pilot for the FY-2025 Working Capital & CCC interactive brief.",
+    provider: "anthropic",
+    modelId: "claude-sonnet-4-6",
+    systemPrompt: WORKING_CAPITAL_PROMPT,
+    tools: ["searchDatasetDocs", "renderChart", "renderTable", "renderKpiList"],
+    allowedRoles: [],
+    rateLimitTokens: 20,
     rateLimitWindow: "1 h",
     dailyCostCapUsd: 5,
   },
