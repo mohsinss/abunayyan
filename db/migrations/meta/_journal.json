@@ -29,6 +29,13 @@
       "when": 1777053666480,
       "tag": "0003_early_bug",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777285930500,
+      "tag": "0004_complete_machine_man",
+      "breakpoints": true
     }
   ]
 }

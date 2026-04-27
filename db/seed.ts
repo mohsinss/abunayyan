@@ -3,6 +3,11 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { and, eq, isNull } from "drizzle-orm";
 import * as schema from "./schema";
 import { BUILTIN_CARDS } from "../lib/datasets/builtins";
+import {
+  GROUP_SEED,
+  NARRATIVE_SEEDS,
+  SBU_SEEDS,
+} from "../lib/working-capital-data/seed-data";
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL required for seeding");
@@ -73,6 +78,58 @@ async function main() {
         .where(and(eq(schema.datasets.slug, card.route), isNull(schema.datasets.chatbotId)));
     }
   }
+
+  await seedWorkingCapital();
+}
+
+// Idempotent: re-running on existing rows is a no-op. Admin edits are
+// preserved — we only insert when a row is missing.
+async function seedWorkingCapital() {
+  await db
+    .insert(schema.wcGroups)
+    .values({
+      id: 1,
+      fiscalYear: GROUP_SEED.fiscalYear,
+      groupRevenue: GROUP_SEED.groupRevenue,
+      nwcTargetRelease: GROUP_SEED.nwcTargetRelease,
+      notes: GROUP_SEED.notes,
+    })
+    .onConflictDoNothing({ target: schema.wcGroups.id });
+  console.log("✓ wc_groups singleton");
+
+  for (let i = 0; i < SBU_SEEDS.length; i++) {
+    const s = SBU_SEEDS[i];
+    if (!s) continue;
+    await db
+      .insert(schema.wcSbus)
+      .values({
+        key: s.key,
+        name: s.name,
+        shareText: s.shareText,
+        posture: s.posture,
+        displayOrder: i,
+        inv: s.inv, ar: s.ar, ca: s.ca, ap: s.ap,
+        dio: s.dio, dso: s.dso, dpo: s.dpo,
+        tInv: s.tInv, tAr: s.tAr, tCa: s.tCa, tAp: s.tAp,
+        tDio: s.tDio, tDso: s.tDso, tDpo: s.tDpo,
+        notes: s.notes,
+      })
+      .onConflictDoNothing({ target: schema.wcSbus.key });
+  }
+  console.log(`✓ wc_sbus rows (${SBU_SEEDS.length} entries)`);
+
+  for (const n of NARRATIVE_SEEDS) {
+    await db
+      .insert(schema.wcNarrative)
+      .values({
+        slot: n.slot,
+        title: n.title,
+        body: n.body,
+        displayOrder: n.displayOrder,
+      })
+      .onConflictDoNothing({ target: schema.wcNarrative.slot });
+  }
+  console.log(`✓ wc_narrative rows (${NARRATIVE_SEEDS.length} slots)`);
 }
 
 main()

@@ -12,3 +12,4 @@ export * from "./messages";
 export * from "./messages-archive";
 export * from "./audit-log";
 export * from "./platform-settings";
+export * from "./working-capital";
