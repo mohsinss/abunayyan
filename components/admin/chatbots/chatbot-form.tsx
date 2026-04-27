@@ -84,7 +84,13 @@ export function ChatbotForm({ mode, bot, availableProviders }: Props) {
         fd.set("provider", provider);
         fd.set("modelId", modelId);
         fd.set("engine", engine);
-        if (isEdit && bot) fd.set("id", bot.id);
+        if (isEdit && bot) {
+          fd.set("id", bot.id);
+          // The slug input is disabled in edit mode; disabled inputs
+          // never appear in FormData, so re-inject it here from the
+          // bot row so the patch schema's slug regex passes.
+          fd.set("slug", bot.slug);
+        }
         start(async () => {
           const action = isEdit ? updateChatbotAction : createChatbotAction;
           const result = (await action(fd)) as { error?: string; ok?: true } | undefined;
