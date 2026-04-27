@@ -1,9 +1,15 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { type Message } from "ai";
 import { ChatChart, type ChartArgs } from "./chat-chart";
 import { ChatTable, type TableArgs } from "./chat-table";
 import { ChatKpi, type KpiArgs } from "./chat-kpi";
+
+// Tool names whose results we render visually inside the bubble.
+// Anything else (searchDatasetDocs, atlasSnapshot, queryDatasetRows
+// raw output) is consumed silently by the model.
+const VISIBLE_TOOL_NAMES = new Set(["renderChart", "renderTable", "renderKpiList"]);
 
 // Minimal markdown rendering — bold + inline code + line breaks. No full
 // markdown parser needed; responses are intentionally terse.
@@ -61,6 +67,16 @@ function Prose({ text }: { text: string }) {
 export function ChatMessage({ message }: { message: Message }) {
   const isUser = message.role === "user";
 
+  // Has the assistant produced anything visible yet? While the model is
+  // mid-turn, the bubble might already exist with only an invisible
+  // tool call (e.g. searchDatasetDocs) and no text — that used to
+  // render as a blank white box. Detect it and show a retrieving
+  // placeholder instead.
+  const invocations = !isUser ? (message.toolInvocations ?? []) : [];
+  const hasVisibleTool = invocations.some((inv) => VISIBLE_TOOL_NAMES.has(inv.toolName));
+  const hasText = !!(message.content && message.content.length > 0);
+  const showRetrieving = !isUser && !hasText && !hasVisibleTool && invocations.length > 0;
+
   return (
     <div className={`flex gap-2 ${isUser ? "justify-end" : "justify-start"}`}>
       <div
@@ -70,6 +86,17 @@ export function ChatMessage({ message }: { message: Message }) {
             : "border-atlas-line bg-atlas-bg-2 text-atlas-ink"
         }`}
       >
+        {/* Retrieving placeholder — shown while a silent tool (search /
+            snapshot / queryRows) is in flight and no text has streamed
+            yet. Hides as soon as text deltas or a visible tool call
+            arrive. */}
+        {showRetrieving && (
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[1.5px] text-atlas-ink-3">
+            <Loader2 className="size-3 animate-spin" />
+            Retrieving from brief…
+          </div>
+        )}
+
         {/* Text content */}
         {message.content && (
           <div className={isUser ? "text-[13px] leading-relaxed" : ""}>
