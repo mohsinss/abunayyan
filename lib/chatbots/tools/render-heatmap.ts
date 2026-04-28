@@ -23,7 +23,11 @@ const HeatmapSchema = z.object({
     .object({
       min: z.number().optional(),
       max: z.number().optional(),
-      palette: z.enum(["navy", "diverging", "warm"]).optional(),
+      // ONLY two palettes — both brand-aligned. `navy` is the default
+      // light-to-dark brand-3 → brand-1 ramp used for non-negative
+      // values; `diverging` is for matrices where values genuinely
+      // cross zero (red→white→green). No off-brand warm/gold ramp.
+      palette: z.enum(["navy", "diverging"]).optional(),
     })
     .optional(),
 });
@@ -32,8 +36,9 @@ const description =
   "Render a dense 2-D heatmap (grid of coloured cells) inline. Use for matrices " +
   "like SLA × SBU allocations, metric × period grids, or any value-by-two-categories " +
   "comparison. xLabels / yLabels define the axes; each cell carries an integer x, y " +
-  "(indices into those arrays) and a numeric value. Pick palette='diverging' when " +
-  "values span positive and negative.";
+  "(indices into those arrays) and a numeric value. ALWAYS use palette='navy' " +
+  "(the default) unless values genuinely span positive AND negative — in that case " +
+  "use palette='diverging'. Never invent a warm/gold/sepia ramp.";
 
 export const renderHeatmap: ToolDefinition = {
   id: "renderHeatmap",

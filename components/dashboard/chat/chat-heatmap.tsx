@@ -5,13 +5,14 @@ import type { HeatmapArgs } from "@/lib/chatbots/tools/render-heatmap";
 
 export type { HeatmapArgs };
 
-// Three palettes. Each is a 5-stop ramp; we lerp between adjacent stops
-// based on normalised value. Diverging maps -1..0..1 across the whole
-// strip with white at the midpoint. Navy + warm both map 0..1.
+// Two brand-aligned palettes. `navy` is a 5-stop light-to-dark ramp
+// of the dashboard's brand blues — used for any non-negative metric.
+// `diverging` (red ↔ white ↔ green) only kicks in when values cross
+// zero. The previous off-brand `warm` palette is gone; the heatmap
+// tool's schema no longer accepts it.
 const PALETTES = {
   navy: ["#f0f6fd", "#cfe0f3", "#7fb0d4", "#418cc0", "#0b3378"],
   diverging: ["#c8463a", "#e89e8b", "#fafafa", "#9bcdb6", "#0e8a5f"],
-  warm: ["#fff7e9", "#ffe0a8", "#f5b95a", "#c98a2b", "#7a4f10"],
 } as const;
 
 function lerpColour(a: string, b: string, t: number): string {
