@@ -8,10 +8,13 @@ export interface TableArgs {
   emphasis?: Array<{ rowIndex: number; tone: "positive" | "negative" | "neutral" }>;
 }
 
-const toneClass: Record<NonNullable<TableArgs["emphasis"]>[0]["tone"], string> = {
-  positive: "bg-atlas-ok-soft/60",
-  negative: "bg-atlas-alert-soft/60",
-  neutral: "bg-atlas-gold-soft/60",
+// Subtle row tints aligned with the dashboard brand palette. Low-alpha
+// fills of the semantic colours keep the table scannable on white
+// without bleeding the gold/cream Atlas tints into navy contexts.
+const TONE_BG: Record<NonNullable<TableArgs["emphasis"]>[0]["tone"], string> = {
+  positive: "rgba(14, 138, 95, 0.08)",
+  negative: "rgba(200, 70, 58, 0.08)",
+  neutral: "rgba(11, 51, 120, 0.05)",
 };
 
 export function ChatTable({ args }: { args: TableArgs }) {
@@ -46,7 +49,10 @@ export function ChatTable({ args }: { args: TableArgs }) {
             {args.rows.map((row, rIdx) => {
               const tone = emphasisMap.get(rIdx);
               return (
-                <tr key={rIdx} className={tone ? toneClass[tone] : ""}>
+                <tr
+                  key={rIdx}
+                  style={tone ? { backgroundColor: TONE_BG[tone] } : undefined}
+                >
                   {row.map((cell, cIdx) => (
                     <td
                       key={cIdx}

@@ -11,10 +11,13 @@ export interface KpiArgs {
   }>;
 }
 
+// Dashboard brand palette — keep semantic tones (good/bad) brand-aligned
+// and the neutral default on the deep navy primary instead of the
+// generic ink token (which renders gold/cream in the Atlas theme).
 const toneColor: Record<NonNullable<KpiArgs["items"][0]["tone"]>, string> = {
-  positive: "var(--atlas-ok)",
-  negative: "var(--atlas-alert)",
-  neutral: "var(--atlas-ink)",
+  positive: "#0e8a5f",
+  negative: "#c8463a",
+  neutral: "#0b3378",
 };
 
 export function ChatKpi({ args }: { args: KpiArgs }) {

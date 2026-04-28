@@ -30,21 +30,23 @@ export interface ChartArgs {
   }>;
 }
 
+// Brand palette. Tones map to the dashboard's semantic colours
+// (--good, --bad, --warn) and the default (neutral / unranked) sits on
+// the brand-3 navy. The rank ramp is a 5-stop navy gradient — no more
+// rainbow hsl() drift through green/yellow/red.
+const NAVY_RAMP = ["#0b3378", "#2964a9", "#418cc0", "#7fb0d4", "#cfe0f3"] as const;
 const toneColor: Record<NonNullable<ChartArgs["data"][0]["tone"]>, string> = {
-  positive: "var(--atlas-ok)",
-  neutral: "var(--atlas-gold)",
-  warn: "var(--atlas-warn)",
-  negative: "var(--atlas-alert)",
+  positive: "#0e8a5f",
+  neutral: "#418cc0",
+  warn: "#c98a2b",
+  negative: "#c8463a",
 };
 
-function hsl(t: number): string {
+function rampColor(t: number): string {
   const k = Math.max(0, Math.min(1, t));
-  if (k <= 0.5) {
-    const a = k * 2;
-    return `hsl(${110 - a * 60}, ${55 + a * 25}%, ${48 - a * 5}%)`;
-  }
-  const a = (k - 0.5) * 2;
-  return `hsl(${50 - a * 45}, ${80 + a * 10}%, ${48 - a * 10}%)`;
+  const segs = NAVY_RAMP.length - 1;
+  const idx = Math.min(segs, Math.floor(k * segs));
+  return NAVY_RAMP[idx]!;
 }
 
 // If the model ships a verbose "unit" (> MAX_UNIT_LEN) we drop it from
@@ -137,8 +139,8 @@ function BottomCategoryTick(props: {
 
 function rankColor(i: number, total: number, tone?: ChartArgs["data"][0]["tone"]): string {
   if (tone) return toneColor[tone];
-  if (total <= 1) return hsl(0);
-  return hsl(i / (total - 1));
+  if (total <= 1) return NAVY_RAMP[0]!;
+  return rampColor(i / (total - 1));
 }
 
 const tooltipStyle = {
@@ -336,7 +338,7 @@ export function ChatChart({ args }: { args: ChartArgs }) {
                 data={data}
                 shape={(props: unknown) => {
                   const p = props as { cx: number; cy: number; payload: ChartArgs["data"][0] };
-                  const fill = p.payload.tone ? toneColor[p.payload.tone] : "var(--atlas-gold)";
+                  const fill = p.payload.tone ? toneColor[p.payload.tone] : "#418cc0";
                   return (
                     <g>
                       <circle cx={p.cx} cy={p.cy} r={6} fill={fill} stroke="white" strokeWidth={1.5} />
