@@ -30,24 +30,23 @@ export interface ChartArgs {
   }>;
 }
 
-// Brand palette. Tones map to the dashboard's semantic colours
-// (--good, --bad, --warn) and the default (neutral / unranked) sits on
-// the brand-3 navy. The rank ramp is a 5-stop navy gradient — no more
-// rainbow hsl() drift through green/yellow/red.
-const NAVY_RAMP = ["#0b3378", "#2964a9", "#418cc0", "#7fb0d4", "#cfe0f3"] as const;
+// Brand palette mirrored from /dashboard/working-capital-data. The
+// dashboard's bar charts use ONE colour per series (e.g. every
+// "Adjusted" bar is brand-1, every "Baseline" bar is brand-3). When
+// the chat ranks N items into one series we follow the same rule —
+// every bar gets the dashboard's primary fill (brand-1) — instead of
+// inventing a 5-stop gradient that drifts off-brand. The cycle below
+// is for the rare case the model emits multiple categorical tones
+// without explicit `tone` values; it mirrors the GroupNwcChart's
+// stacked-component palette (navy-1 / navy-3 / gray / amber / navy-2).
+const BRAND_PRIMARY = "#0b3378";
+const BRAND_CYCLE = ["#0b3378", "#418cc0", "#7f7f7f", "#c98a2b", "#2964a9"] as const;
 const toneColor: Record<NonNullable<ChartArgs["data"][0]["tone"]>, string> = {
   positive: "#0e8a5f",
   neutral: "#418cc0",
   warn: "#c98a2b",
   negative: "#c8463a",
 };
-
-function rampColor(t: number): string {
-  const k = Math.max(0, Math.min(1, t));
-  const segs = NAVY_RAMP.length - 1;
-  const idx = Math.min(segs, Math.floor(k * segs));
-  return NAVY_RAMP[idx]!;
-}
 
 // If the model ships a verbose "unit" (> MAX_UNIT_LEN) we drop it from
 // inline labels so the bar text stays readable. The full unit still
@@ -137,10 +136,18 @@ function BottomCategoryTick(props: {
   );
 }
 
-function rankColor(i: number, total: number, tone?: ChartArgs["data"][0]["tone"]): string {
+// For bar charts: single brand colour for every bar (matches the
+// dashboard convention). The model can override per-bar via `tone`.
+function rankColor(_i: number, _total: number, tone?: ChartArgs["data"][0]["tone"]): string {
   if (tone) return toneColor[tone];
-  if (total <= 1) return NAVY_RAMP[0]!;
-  return rampColor(i / (total - 1));
+  return BRAND_PRIMARY;
+}
+
+// For pie slices: each slice IS a distinct category, so we cycle the
+// dashboard's component palette instead of repeating one colour.
+function pieColor(i: number, tone?: ChartArgs["data"][0]["tone"]): string {
+  if (tone) return toneColor[tone];
+  return BRAND_CYCLE[i % BRAND_CYCLE.length]!;
 }
 
 const tooltipStyle = {
@@ -283,7 +290,7 @@ export function ChatChart({ args }: { args: ChartArgs }) {
                 }}
               >
                 {data.map((d, i) => (
-                  <Cell key={d.label} fill={rankColor(i, data.length, d.tone)} stroke="white" />
+                  <Cell key={d.label} fill={pieColor(i, d.tone)} stroke="white" />
                 ))}
               </Pie>
             </PieChart>
