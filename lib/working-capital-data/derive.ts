@@ -143,3 +143,28 @@ export function cashReleased(
   }
   return release;
 }
+
+// Apply per-SBU lever overrides on top of an existing adjusted state.
+// Used by `wcScenarioCalc` so the model can stack a preset (e.g.
+// "Conservative 35%") with selective per-SBU edits ("but KSB hits its
+// DPO target"). Unknown SBU keys silently no-op so the model can pass
+// human-typed names without aborting the whole call.
+export type LeverOverride = {
+  sbuKey: string;
+  field: SbuField;
+  value: number;
+};
+
+export function applyOverrides(
+  shapesByKey: Map<string, SbuShape>,
+  overrides: LeverOverride[],
+): Map<string, SbuShape> {
+  if (overrides.length === 0) return shapesByKey;
+  const out = new Map(shapesByKey);
+  for (const ov of overrides) {
+    const cur = out.get(ov.sbuKey);
+    if (!cur) continue;
+    out.set(ov.sbuKey, { ...cur, [ov.field]: ov.value });
+  }
+  return out;
+}

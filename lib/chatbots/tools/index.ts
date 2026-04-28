@@ -5,20 +5,34 @@ import { USER_ROLES, type UserRole } from "@/db/schema/users";
 import { renderChart } from "./render-chart";
 import { renderTable } from "./render-table";
 import { renderKpiList } from "./render-kpi";
+import { renderDelta } from "./render-delta";
+import { renderSparkline } from "./render-sparkline";
+import { renderHeatmap } from "./render-heatmap";
+import { renderQuadrant } from "./render-quadrant";
+import { renderTimeline } from "./render-timeline";
 import { searchDocs } from "./search-docs";
 import { searchDatasetDocs } from "./search-dataset-docs";
 import { queryDatasetRows } from "./query-dataset-rows";
 import { atlasSnapshot } from "./atlas-snapshot";
+import { wcSnapshot } from "./wc-snapshot";
+import { wcScenarioCalc } from "./wc-scenario-calc";
 import type { ToolContext, ToolDefinition } from "./types";
 
 const ALL_TOOLS: Record<ToolId, ToolDefinition> = {
   renderChart,
   renderTable,
   renderKpiList,
+  renderDelta,
+  renderSparkline,
+  renderHeatmap,
+  renderQuadrant,
+  renderTimeline,
   searchDocs,
   searchDatasetDocs,
   queryDatasetRows,
   atlasSnapshot,
+  wcSnapshot,
+  wcScenarioCalc,
 };
 
 const RANK: Record<UserRole, number> = {

@@ -25,6 +25,31 @@ export const TOOL_METADATA: readonly ToolMetadata[] = [
     costClass: "free",
   },
   {
+    id: "renderDelta",
+    description: "Render a 'before → after' big-number delta with sign + tone.",
+    costClass: "free",
+  },
+  {
+    id: "renderSparkline",
+    description: "Render a tiny inline trend chart for a sequence of values.",
+    costClass: "free",
+  },
+  {
+    id: "renderHeatmap",
+    description: "Render a 2-D grid of coloured cells (matrix view).",
+    costClass: "free",
+  },
+  {
+    id: "renderQuadrant",
+    description: "Render a 2-axis scatter with labeled quadrants.",
+    costClass: "free",
+  },
+  {
+    id: "renderTimeline",
+    description: "Render events on a horizontal time axis, optionally grouped.",
+    costClass: "free",
+  },
+  {
     id: "searchDocs",
     description: "Search the user's uploaded documents by semantic similarity.",
     costClass: "cheap",
@@ -32,6 +57,16 @@ export const TOOL_METADATA: readonly ToolMetadata[] = [
   {
     id: "atlasSnapshot",
     description: "Return the FY2026 Atlas snapshot (entities, departments, matrix).",
+    costClass: "free",
+  },
+  {
+    id: "wcSnapshot",
+    description: "Read the working-capital tables (group / SBU / narrative) directly.",
+    costClass: "free",
+  },
+  {
+    id: "wcScenarioCalc",
+    description: "Run a working-capital what-if scenario (preset + per-SBU overrides).",
     costClass: "free",
   },
 ];

@@ -5,11 +5,26 @@ import { type Message } from "ai";
 import { ChatChart, type ChartArgs } from "./chat-chart";
 import { ChatTable, type TableArgs } from "./chat-table";
 import { ChatKpi, type KpiArgs } from "./chat-kpi";
+import { ChatDelta, type DeltaArgs } from "./chat-delta";
+import { ChatSparkline, type SparklineArgs } from "./chat-sparkline";
+import { ChatHeatmap, type HeatmapArgs } from "./chat-heatmap";
+import { ChatQuadrant, type QuadrantArgs } from "./chat-quadrant";
+import { ChatTimeline, type TimelineArgs } from "./chat-timeline";
 
 // Tool names whose results we render visually inside the bubble.
-// Anything else (searchDatasetDocs, atlasSnapshot, queryDatasetRows
-// raw output) is consumed silently by the model.
-const VISIBLE_TOOL_NAMES = new Set(["renderChart", "renderTable", "renderKpiList"]);
+// Anything else (searchDatasetDocs, atlasSnapshot, wcSnapshot,
+// wcScenarioCalc, queryDatasetRows raw output) is consumed silently
+// by the model.
+const VISIBLE_TOOL_NAMES = new Set([
+  "renderChart",
+  "renderTable",
+  "renderKpiList",
+  "renderDelta",
+  "renderSparkline",
+  "renderHeatmap",
+  "renderQuadrant",
+  "renderTimeline",
+]);
 
 // Minimal markdown rendering — bold + inline code + line breaks. No full
 // markdown parser needed; responses are intentionally terse.
@@ -119,6 +134,21 @@ export function ChatMessage({ message }: { message: Message }) {
             }
             if (inv.toolName === "renderKpiList") {
               return <ChatKpi key={inv.toolCallId} args={args as KpiArgs} />;
+            }
+            if (inv.toolName === "renderDelta") {
+              return <ChatDelta key={inv.toolCallId} args={args as DeltaArgs} />;
+            }
+            if (inv.toolName === "renderSparkline") {
+              return <ChatSparkline key={inv.toolCallId} args={args as SparklineArgs} />;
+            }
+            if (inv.toolName === "renderHeatmap") {
+              return <ChatHeatmap key={inv.toolCallId} args={args as HeatmapArgs} />;
+            }
+            if (inv.toolName === "renderQuadrant") {
+              return <ChatQuadrant key={inv.toolCallId} args={args as QuadrantArgs} />;
+            }
+            if (inv.toolName === "renderTimeline") {
+              return <ChatTimeline key={inv.toolCallId} args={args as TimelineArgs} />;
             }
             return null;
           })}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   annualRevenue,
+  applyOverrides,
   applyPreset,
   cashReleased,
   cccOf,
@@ -8,6 +9,7 @@ import {
   groupTotalsOf,
   nwcOf,
   revPerDay,
+  type SbuShape,
 } from "@/lib/working-capital-data/derive";
 import { GROUP_SEED, SBU_SEEDS } from "@/lib/working-capital-data/seed-data";
 
@@ -157,5 +159,52 @@ describe("cashReleased", () => {
     // SBUs are in scope.
     expect(release).toBeGreaterThan(400);
     expect(release).toBeLessThan(700);
+  });
+});
+
+describe("applyOverrides", () => {
+  function shapeMap(): Map<string, SbuShape> {
+    const m = new Map<string, SbuShape>();
+    for (const s of SBU_SEEDS) {
+      m.set(s.key, {
+        inv: s.inv, ar: s.ar, ca: s.ca, ap: s.ap,
+        dio: s.dio, dso: s.dso, dpo: s.dpo,
+      });
+    }
+    return m;
+  }
+
+  it("returns the same map (no copy) when overrides is empty", () => {
+    const m = shapeMap();
+    const out = applyOverrides(m, []);
+    expect(out).toBe(m);
+  });
+
+  it("sets a single field on a single SBU", () => {
+    const out = applyOverrides(shapeMap(), [
+      { sbuKey: "KSB", field: "dpo", value: 120 },
+    ]);
+    expect(out.get("KSB")!.dpo).toBe(120);
+    // Other KSB fields untouched
+    expect(out.get("KSB")!.inv).toBe(SBU_SEEDS.find((s) => s.key === "KSB")!.inv);
+    // Other SBUs untouched
+    expect(out.get("Wetico")!.dpo).toBe(SBU_SEEDS.find((s) => s.key === "Wetico")!.dpo);
+  });
+
+  it("silently ignores unknown SBU keys", () => {
+    const out = applyOverrides(shapeMap(), [
+      { sbuKey: "DOES-NOT-EXIST", field: "dso", value: 1 },
+    ]);
+    expect(out.size).toBe(SBU_SEEDS.length);
+  });
+
+  it("stacks multiple overrides on the same SBU (last wins per field)", () => {
+    const out = applyOverrides(shapeMap(), [
+      { sbuKey: "KSB", field: "dpo", value: 90 },
+      { sbuKey: "KSB", field: "dpo", value: 120 },
+      { sbuKey: "KSB", field: "dso", value: 130 },
+    ]);
+    expect(out.get("KSB")!.dpo).toBe(120);
+    expect(out.get("KSB")!.dso).toBe(130);
   });
 });

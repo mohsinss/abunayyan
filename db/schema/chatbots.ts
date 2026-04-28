@@ -38,10 +38,17 @@ export const TOOL_IDS = [
   "renderChart",
   "renderTable",
   "renderKpiList",
+  "renderDelta",
+  "renderSparkline",
+  "renderHeatmap",
+  "renderQuadrant",
+  "renderTimeline",
   "searchDocs",
   "searchDatasetDocs",
   "queryDatasetRows",
   "atlasSnapshot",
+  "wcSnapshot",
+  "wcScenarioCalc",
 ] as const;
 export type ToolId = (typeof TOOL_IDS)[number];
 
