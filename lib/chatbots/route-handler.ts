@@ -12,9 +12,8 @@ const BodySchema = z.object({
 });
 
 /**
- * Shared chat-request handler used by the canonical `/api/v1/chatbots/[slug]/chat`
- * route AND by the deprecated `/api/v1/ai/chat` / `/api/v1/ai/atlas-chat` proxy
- * routes. One place to audit, one place to patch.
+ * Shared chat-request handler behind the canonical
+ * `/api/v1/chatbots/[slug]/chat` route. One place to audit, one place to patch.
  */
 export async function handleChatRequest(req: Request, slug: string): Promise<Response> {
   const session = await auth();

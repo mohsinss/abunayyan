@@ -4,6 +4,11 @@ import type { Session } from "next-auth";
 import { auth } from "@/lib/auth";
 import { ratelimit } from "@/lib/ratelimit";
 import { USER_ROLES, type UserRole } from "@/db/schema/users";
+import { requireUser } from "./session";
+
+// Canonical session guards live in ./session; re-exported here so existing
+// `@/lib/auth/rbac` importers keep one source of truth.
+export { requireUser };
 
 const RANK: Record<UserRole, number> = {
   viewer: 0,
@@ -16,13 +21,6 @@ const RANK: Record<UserRole, number> = {
 export function hasRole(role: UserRole | undefined, min: UserRole) {
   if (!role) return false;
   return RANK[role] >= RANK[min];
-}
-
-export async function requireUser() {
-  const session = await auth();
-  if (!session?.user) redirect("/sign-in");
-  if (session.user.disabled) redirect("/sign-in?error=AccountDisabled");
-  return session.user;
 }
 
 export async function requireRole(min: UserRole) {

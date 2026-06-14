@@ -59,7 +59,6 @@ export function ChatbotForm({ mode, bot, availableProviders }: Props) {
     // Direct engines lock provider; if the user picks google/xai while
     // engine=anthropic_direct, snap engine back to ai_sdk.
     if (engine === "anthropic_direct" && next !== "anthropic") setEngine("ai_sdk");
-    if (engine === "openai_direct" && next !== "openai") setEngine("ai_sdk");
   }
 
   function onEngineChange(next: Engine) {
@@ -67,10 +66,6 @@ export function ChatbotForm({ mode, bot, availableProviders }: Props) {
     if (next === "anthropic_direct" && provider !== "anthropic") {
       setProvider("anthropic");
       setModelId(MODEL_BY_PROVIDER.anthropic[0]!);
-    }
-    if (next === "openai_direct" && provider !== "openai") {
-      setProvider("openai");
-      setModelId(MODEL_BY_PROVIDER.openai[0]!);
     }
   }
 
@@ -144,9 +139,7 @@ export function ChatbotForm({ mode, bot, availableProviders }: Props) {
             <option key={e} value={e}>
               {e === "ai_sdk"
                 ? "ai_sdk · Vercel AI SDK (default)"
-                : e === "anthropic_direct"
-                  ? "anthropic_direct · @anthropic-ai/sdk"
-                  : "openai_direct · openai SDK"}
+                : "anthropic_direct · @anthropic-ai/sdk"}
             </option>
           ))}
         </select>
@@ -158,7 +151,7 @@ export function ChatbotForm({ mode, bot, availableProviders }: Props) {
             value={provider}
             onChange={(e) => onProviderChange(e.target.value as AiProvider)}
             className="input"
-            disabled={engine === "anthropic_direct" || engine === "openai_direct"}
+            disabled={engine === "anthropic_direct"}
           >
             {AI_PROVIDERS.map((p) => {
               const configured = availableProviders.includes(p);

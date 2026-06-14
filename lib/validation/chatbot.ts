@@ -26,10 +26,6 @@ export const ChatbotUpsertSchema = z.object({
   (v) =>
     v.engine !== "anthropic_direct" || v.provider === "anthropic",
   { message: "anthropic_direct engine requires provider=anthropic", path: ["engine"] },
-).refine(
-  (v) =>
-    v.engine !== "openai_direct" || v.provider === "openai",
-  { message: "openai_direct engine requires provider=openai", path: ["engine"] },
 );
 
 // Patch needs to be derived BEFORE the .refine() chain because refined

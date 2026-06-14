@@ -38,7 +38,7 @@ Migrations are guarded by a custom verifier (`scripts/verify-migrations.ts`); `d
 
 Next.js 15 App Router + React 19 + TypeScript. Auth.js v5 (NextAuth), Drizzle + Neon Postgres (+ pgvector for RAG), Vercel AI SDK with Anthropic Claude, shadcn/ui + Tailwind, Stripe, Resend, Upstash (Redis ratelimit + QStash jobs), Sentry + PostHog.
 
-> Note: `docs/architecture.md` describes the original template's idealized layout and references **Clerk** for auth. The actual app uses **Auth.js v5 / NextAuth** (`lib/auth.ts`, database session strategy, Google OAuth, Drizzle adapter). Trust the code over that doc for auth, but its **module boundaries, naming, and data-flow invariants still hold** (see below).
+> Note: the actual app uses **Auth.js v5 / NextAuth** (`lib/auth.ts`, database session strategy, Google OAuth, Drizzle adapter) — not Clerk. The original template's idealized layout has been kept in sync in `docs/architecture.md`; the **module boundaries, naming, and data-flow invariants there still hold** (see below).
 
 ### Route groups (`app/`)
 - `(marketing)/` — public pages, no auth.
@@ -48,8 +48,12 @@ Next.js 15 App Router + React 19 + TypeScript. Auth.js v5 (NextAuth), Drizzle + 
 
 `middleware.ts` enforces auth on protected path prefixes and RBAC on `/admin` + `/api/v1/admin` (role must be `admin` or `owner`). API paths return 401/403; page paths redirect to `/sign-in`.
 
-### API route handlers — `createHandler` (`lib/api/handler.ts`)
-All API routes should be built with `createHandler({ schema, auth, rateLimit, handler })`. It wraps Zod input validation (query params for GET/DELETE, JSON body otherwise), Auth.js session resolution (`auth: "required" | "optional" | "none"`), Upstash rate-limit buckets, and error normalization (`lib/api/errors.ts`). Do not hand-roll auth/validation in routes.
+### API route handlers
+There is no single route wrapper; routes follow one of three patterns by kind. Match the neighbours when adding a route:
+- **Admin routes** (`api/v1/admin/*`, `api/v1/wcx/*`) call `requireAdminApi(req)` from `lib/auth/rbac.ts` at the top — it enforces admin+ role and a per-method Upstash rate limit, returning a `{ ok, response }` guard.
+- **Chat** goes through `handleChatRequest(req, slug)` in `lib/chatbots/route-handler.ts`, which delegates to the chatbots runtime (auth → kill switch → rate limit → budget → persistence → audit).
+- **Other routes** resolve the session inline via `auth()` and validate input with a Zod schema from `lib/validation/*`.
+Error responses are inconsistent across these (plain-text `Response` vs `Response.json({ error })`); `lib/api/errors.ts` provides a normalizer used by the Stripe routes. Unifying this is a known cleanup.
 
 ### Chatbots platform (`lib/chatbots/`) — the core of this app
 Database-backed, multi-tenant AI chatbots with per-bot tool grants and RBAC. `lib/chatbots/index.ts` is the public surface.
