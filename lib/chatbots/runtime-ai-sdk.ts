@@ -1,6 +1,7 @@
 import "server-only";
 import {
   streamText,
+  smoothStream,
   convertToCoreMessages,
   type CoreMessage,
   type StreamTextResult,
@@ -50,6 +51,10 @@ export function streamViaAiSdk(args: {
     model,
     messages: [systemMessage, ...convertToCoreMessages(messages)],
     tools,
+    // Even out the model's bursty token chunks into a steady word-by-word
+    // cadence before they hit the wire, so the UI reveals text fluidly
+    // instead of in lumps. Pairs with the client-side render throttle.
+    experimental_transform: smoothStream({ chunking: "word", delayInMs: 15 }),
     maxSteps: bot.maxSteps,
     temperature: bot.temperature,
     maxTokens: bot.maxTokens ?? undefined,

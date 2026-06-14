@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Message } from "ai";
 import { ChatMessage } from "./chat-message";
+import { useStickToBottom } from "./use-stick-to-bottom";
 import { useBot } from "@/components/chatbots/use-bot";
 
 const BOT_SLUG = "wc-intelligence-analyst";
@@ -128,13 +129,9 @@ export function WcxChat() {
     resetThread();
   };
 
-  const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, open]);
+  // Sticks to the bottom while streaming, releases when the user scrolls up.
+  const { ref: scrollRef } = useStickToBottom(messages, open);
 
   // Click-away closes the panel. The chart modal lives inside the panel's
   // DOM tree, so interacting with it never counts as outside.
@@ -354,8 +351,12 @@ export function WcxChat() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {messages.map((m) => (
-                  <ChatMessage key={m.id} message={m} />
+                {messages.map((m, i) => (
+                  <ChatMessage
+                    key={m.id}
+                    message={m}
+                    streaming={isLoading && i === messages.length - 1 && m.role === "assistant"}
+                  />
                 ))}
                 {isLoading && messages[messages.length - 1]?.role === "user" && (
                   <div

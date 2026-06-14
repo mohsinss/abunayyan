@@ -51,7 +51,17 @@ function renderInline(text: string): React.ReactNode {
   return parts;
 }
 
-function Prose({ text }: { text: string }) {
+// Blinking caret that trails the streaming text for a live "typing" feel.
+function Caret() {
+  return (
+    <span
+      aria-hidden
+      className="ml-0.5 inline-block h-[0.95em] w-[2px] translate-y-[2px] animate-pulse rounded-sm bg-atlas-ink/70 align-text-bottom"
+    />
+  );
+}
+
+function Prose({ text, caret = false }: { text: string; caret?: boolean }) {
   // Recomputed only when `text` changes. During streaming the last
   // message's text grows each throttle tick; memoizing keeps the split +
   // per-line regex from re-running on unrelated re-renders.
@@ -59,6 +69,7 @@ function Prose({ text }: { text: string }) {
   return (
     <>
       {blocks.map((block, bi) => {
+        const isLast = bi === blocks.length - 1;
         const lines = block.split("\n");
         const isList = lines.every((l) => /^\s*[-•]\s+/.test(l));
         if (isList) {
@@ -67,6 +78,11 @@ function Prose({ text }: { text: string }) {
               {lines.map((l, li) => (
                 <li key={li}>{renderInline(l.replace(/^\s*[-•]\s+/, ""))}</li>
               ))}
+              {caret && isLast && (
+                <span className="ml-1 list-none">
+                  <Caret />
+                </span>
+              )}
             </ul>
           );
         }
@@ -78,6 +94,7 @@ function Prose({ text }: { text: string }) {
                 {li < lines.length - 1 && <br />}
               </span>
             ))}
+            {caret && isLast && <Caret />}
           </p>
         );
       })}
@@ -85,7 +102,7 @@ function Prose({ text }: { text: string }) {
   );
 }
 
-function ChatMessageImpl({ message }: { message: Message }) {
+function ChatMessageImpl({ message, streaming = false }: { message: Message; streaming?: boolean }) {
   const isUser = message.role === "user";
 
   // Has the assistant produced anything visible yet? While the model is
@@ -121,7 +138,7 @@ function ChatMessageImpl({ message }: { message: Message }) {
         {/* Text content */}
         {message.content && (
           <div className={isUser ? "text-[13px] leading-relaxed" : ""}>
-            {isUser ? message.content : <Prose text={message.content} />}
+            {isUser ? message.content : <Prose text={message.content} caret={streaming} />}
           </div>
         )}
 
@@ -183,6 +200,7 @@ function sameInvocations(a: Message, b: Message): boolean {
 export const ChatMessage = memo(
   ChatMessageImpl,
   (prev, next) =>
+    prev.streaming === next.streaming &&
     prev.message.id === next.message.id &&
     prev.message.role === next.message.role &&
     prev.message.content === next.message.content &&

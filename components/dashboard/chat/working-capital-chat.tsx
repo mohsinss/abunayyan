@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ArrowUp, Loader2, MessageSquareText, Sparkles, Trash2, X } from "lucide-react";
 import { ChatMessage } from "./chat-message";
+import { useStickToBottom } from "./use-stick-to-bottom";
 import { useBot } from "@/components/chatbots/use-bot";
 
 const SUGGESTIONS = [
@@ -39,12 +40,8 @@ export function WorkingCapitalChat() {
     onError: (err) => console.error("Working Capital chat error:", err),
   });
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, open]);
+  // Sticks to the bottom while streaming, releases when the user scrolls up.
+  const { ref: scrollRef } = useStickToBottom(messages, open);
 
   const submitSuggestion = (text: string) => {
     setInput(text);
@@ -234,8 +231,12 @@ export function WorkingCapitalChat() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {messages.map((m) => (
-                  <ChatMessage key={m.id} message={m} />
+                {messages.map((m, i) => (
+                  <ChatMessage
+                    key={m.id}
+                    message={m}
+                    streaming={isLoading && i === messages.length - 1 && m.role === "assistant"}
+                  />
                 ))}
                 {isLoading && messages[messages.length - 1]?.role === "user" && (
                   <div
