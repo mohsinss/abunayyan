@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { Loader2 } from "lucide-react";
 import { type Message } from "ai";
 import { ChatChart, type ChartArgs } from "./chat-chart";
@@ -51,7 +52,10 @@ function renderInline(text: string): React.ReactNode {
 }
 
 function Prose({ text }: { text: string }) {
-  const blocks = text.split(/\n{2,}/).filter(Boolean);
+  // Recomputed only when `text` changes. During streaming the last
+  // message's text grows each throttle tick; memoizing keeps the split +
+  // per-line regex from re-running on unrelated re-renders.
+  const blocks = useMemo(() => text.split(/\n{2,}/).filter(Boolean), [text]);
   return (
     <>
       {blocks.map((block, bi) => {
@@ -81,7 +85,7 @@ function Prose({ text }: { text: string }) {
   );
 }
 
-export function ChatMessage({ message }: { message: Message }) {
+function ChatMessageImpl({ message }: { message: Message }) {
   const isUser = message.role === "user";
 
   // Has the assistant produced anything visible yet? While the model is
@@ -161,3 +165,26 @@ export function ChatMessage({ message }: { message: Message }) {
     </div>
   );
 }
+
+// During a stream the messages array is rebuilt every throttle tick, but
+// only the in-flight assistant message actually changes. Memoizing on the
+// fields we render means the stable (already-finished) bubbles skip
+// re-rendering — and skip re-parsing their markdown — while tokens stream.
+function sameInvocations(a: Message, b: Message): boolean {
+  const ia = a.toolInvocations ?? [];
+  const ib = b.toolInvocations ?? [];
+  if (ia.length !== ib.length) return false;
+  for (let i = 0; i < ia.length; i++) {
+    if (ia[i].toolCallId !== ib[i].toolCallId || ia[i].state !== ib[i].state) return false;
+  }
+  return true;
+}
+
+export const ChatMessage = memo(
+  ChatMessageImpl,
+  (prev, next) =>
+    prev.message.id === next.message.id &&
+    prev.message.role === next.message.role &&
+    prev.message.content === next.message.content &&
+    sameInvocations(prev.message, next.message),
+);

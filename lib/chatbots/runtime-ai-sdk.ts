@@ -1,5 +1,11 @@
 import "server-only";
-import { streamText, convertToCoreMessages, type StreamTextResult, type UIMessage } from "ai";
+import {
+  streamText,
+  convertToCoreMessages,
+  type CoreMessage,
+  type StreamTextResult,
+  type UIMessage,
+} from "ai";
 import type { Chatbot } from "@/db/schema/chatbots";
 import type { UserRole } from "@/db/schema/users";
 import { resolveModel } from "./providers";
@@ -25,10 +31,24 @@ export function streamViaAiSdk(args: {
   const model = resolveModel(bot.provider, bot.modelId);
   const tools = getToolsForBot(bot, user, threadId, datasetId);
 
+  // Anthropic prompt caching: the API caches the prompt prefix up to a
+  // cache_control breakpoint, and the prefix order is tools → system →
+  // messages. Putting the breakpoint on the system message therefore
+  // caches BOTH the (large) tool schemas and the system prompt, so a
+  // multi-step turn (maxSteps up to 8) re-sends them as a cache hit
+  // instead of re-billing/re-processing the full prefix every step. The
+  // anthropic-namespaced option is ignored by non-Anthropic providers,
+  // and Anthropic silently skips caching when the prefix is below the
+  // minimum cacheable size, so this is safe to always set.
+  const systemMessage: CoreMessage = {
+    role: "system",
+    content: bot.systemPrompt,
+    providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } },
+  };
+
   return streamText({
     model,
-    system: bot.systemPrompt,
-    messages: convertToCoreMessages(messages),
+    messages: [systemMessage, ...convertToCoreMessages(messages)],
     tools,
     maxSteps: bot.maxSteps,
     temperature: bot.temperature,

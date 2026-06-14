@@ -46,6 +46,11 @@ export function useBot(slug: string, opts: UseBotOptions = {}) {
   const chat = useChat({
     api: opts.api ?? `/api/v1/chatbots/${slug}/chat`,
     initialMessages: opts.initialMessages,
+    // Batch streamed-chunk re-renders to ~one per 50ms. Without this the
+    // message list re-renders (and re-parses markdown) on every token,
+    // which is O(n²) work over a streaming reply. 50ms keeps the stream
+    // feeling live while collapsing dozens of renders into a few.
+    experimental_throttle: 50,
     experimental_prepareRequestBody: ({ messages }) => ({
       messages,
       threadId: threadRef.current ?? undefined,

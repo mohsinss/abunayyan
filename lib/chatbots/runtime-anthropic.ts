@@ -89,10 +89,18 @@ async function runStep(
 ): Promise<StepCollected> {
   const { model, system, temperature, maxTokens, messages, tools, onText } = args;
 
+  // Prompt caching: mark the system prompt as an ephemeral cache
+  // breakpoint. Anthropic caches the prompt prefix up to the breakpoint,
+  // and the prefix order is tools → system → messages, so this single
+  // breakpoint caches BOTH the tool schemas and the system prompt. With
+  // the multi-step tool loop (up to bot.maxSteps iterations) the large
+  // static prefix is re-sent as a cache hit each step instead of being
+  // re-billed and re-processed in full. Anthropic skips caching silently
+  // when the prefix is under the minimum cacheable size.
   const stream = await client.messages.create({
     model,
     max_tokens: maxTokens,
-    system,
+    system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
     temperature,
     messages: messages as Anthropic.MessageParam[],
     tools: tools as unknown as Anthropic.ToolUnion[],
