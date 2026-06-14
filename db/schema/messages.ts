@@ -28,6 +28,11 @@ export const messages = pgTable(
     content: text("content").notNull(),
     toolCalls: jsonb("tool_calls").$type<unknown[]>(),
     toolResults: jsonb("tool_results").$type<unknown[]>(),
+    // Ordered UI message parts (text / tool-invocation, in emission order) so
+    // restored history interleaves commentary and charts exactly as streamed.
+    // Null for older rows + the user's own turns; rendering falls back to
+    // content + toolCalls when absent.
+    parts: jsonb("parts").$type<unknown[]>(),
     status: varchar("status", { length: 16, enum: MESSAGE_STATUSES })
       .default("complete")
       .notNull(),

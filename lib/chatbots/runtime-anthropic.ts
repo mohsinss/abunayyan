@@ -196,6 +196,9 @@ export function streamViaAnthropicDirect(args: {
             args: unknown;
             result?: unknown;
           }> = [];
+          // Ordered UI parts (text → tool → …) accumulated across steps, for
+          // history interleaving (mirrors the AI SDK engine).
+          const uiParts: unknown[] = [];
           let totalIn = 0;
           let totalOut = 0;
           let finalText = "";
@@ -224,6 +227,9 @@ export function streamViaAnthropicDirect(args: {
               totalOut += step.outputTokens;
               finalText = step.text;
               finalStopReason = step.stopReason;
+              if (step.text && step.text.trim()) {
+                uiParts.push({ type: "text", text: step.text });
+              }
 
               if (step.stopReason === "tool_use" && step.toolUses.length > 0) {
                 // Build the assistant turn for history (text + tool_use blocks)
@@ -280,6 +286,16 @@ export function streamViaAnthropicDirect(args: {
                     args: block.input,
                     result,
                   });
+                  uiParts.push({
+                    type: "tool-invocation",
+                    toolInvocation: {
+                      state: "result",
+                      toolCallId: block.id,
+                      toolName: block.name,
+                      args: block.input,
+                      result,
+                    },
+                  });
 
                   writer.write(
                     formatDataStreamPart("tool_result", {
@@ -324,6 +340,7 @@ export function streamViaAnthropicDirect(args: {
               threadId,
               text: finalText,
               toolCalls: accumulatedToolCalls,
+              parts: uiParts,
               usage: { promptTokens: totalIn, completionTokens: totalOut },
               finishReason,
             });
@@ -342,6 +359,7 @@ export function streamViaAnthropicDirect(args: {
               threadId,
               text: finalText,
               toolCalls: accumulatedToolCalls,
+              parts: uiParts,
               usage: { promptTokens: totalIn, completionTokens: totalOut },
               finishReason: "error",
             });

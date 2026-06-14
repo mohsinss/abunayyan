@@ -30,10 +30,12 @@ export async function recordTurnEnd(args: {
   threadId: string;
   text: string;
   toolCalls: unknown[];
+  // Ordered UI parts (text / tool-invocation) for history interleaving.
+  parts?: unknown[];
   usage: TurnUsage;
   finishReason: FinishReason;
 }) {
-  const { bot, user, threadId, text, toolCalls, usage, finishReason } = args;
+  const { bot, user, threadId, text, toolCalls, parts, usage, finishReason } = args;
   try {
     const costUsd = estimateCostUsd(bot.provider, bot.modelId, usage);
     await appendMessage({
@@ -41,6 +43,7 @@ export async function recordTurnEnd(args: {
       role: "assistant",
       content: text,
       toolCalls,
+      parts,
       tokensIn: usage.promptTokens,
       tokensOut: usage.completionTokens,
       costUsd,

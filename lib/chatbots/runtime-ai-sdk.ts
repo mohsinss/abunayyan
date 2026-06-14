@@ -81,12 +81,32 @@ export function streamViaAiSdk(args: {
       // all steps instead.
       const allToolCalls =
         steps.length > 0 ? steps.flatMap((s) => s.toolCalls ?? []) : toolCalls;
+      // Rebuild the ordered UI parts (text → tool → text → tool …) from the
+      // per-step sequence so restored history interleaves exactly as it
+      // streamed. Tools are pass-through, so result === args.
+      const parts: unknown[] = [];
+      for (const step of steps) {
+        if (step.text && step.text.trim()) parts.push({ type: "text", text: step.text });
+        for (const tc of step.toolCalls ?? []) {
+          parts.push({
+            type: "tool-invocation",
+            toolInvocation: {
+              state: "result",
+              toolCallId: tc.toolCallId,
+              toolName: tc.toolName,
+              args: tc.args,
+              result: tc.args,
+            },
+          });
+        }
+      }
       await recordTurnEnd({
         bot,
         user,
         threadId,
         text,
         toolCalls: allToolCalls as unknown as unknown[],
+        parts,
         usage: {
           promptTokens: usage.promptTokens,
           completionTokens: usage.completionTokens,

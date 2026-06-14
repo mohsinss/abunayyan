@@ -38,6 +38,7 @@ export async function appendMessage(args: {
   content: string;
   toolCalls?: unknown[];
   toolResults?: unknown[];
+  parts?: unknown[];
   tokensIn?: number;
   tokensOut?: number;
   costUsd?: number;
@@ -52,6 +53,7 @@ export async function appendMessage(args: {
     content: args.content,
     toolCalls: args.toolCalls ?? null,
     toolResults: args.toolResults ?? null,
+    parts: args.parts && args.parts.length ? args.parts : null,
     tokensIn: args.tokensIn,
     tokensOut: args.tokensOut,
     costUsd: args.costUsd,
@@ -177,6 +179,11 @@ export function toUIMessage(m: Message): UIMessage {
   };
   if (toolInvocations.length) {
     out.toolInvocations = toolInvocations;
+  }
+  // Ordered parts (when stored) let the UI interleave text + charts exactly as
+  // they were streamed; the renderer prefers parts over content+toolInvocations.
+  if (Array.isArray(m.parts) && m.parts.length) {
+    out.parts = m.parts as UIMessage["parts"];
   }
   return out;
 }
