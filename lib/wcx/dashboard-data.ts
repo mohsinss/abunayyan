@@ -3,8 +3,21 @@ import "server-only";
 // runs here (shared with the chat tools via derive.ts) so the client island
 // only renders. Everything returned is JSON-serializable.
 
-import { getFacts, listTargetsForUpload } from "@/lib/db/queries/wc-intelligence";
-import { GROUP_AGG, wcxContext, withGroupAggregate } from "./engine";
+import { unstable_cache } from "next/cache";
+import type { WcxUpload } from "@/db";
+import {
+  getActiveUpload,
+  getFacts,
+  listSbusForUpload,
+  listTargetsForUpload,
+} from "@/lib/db/queries/wc-intelligence";
+import { GROUP_AGG, withGroupAggregate } from "./engine";
+
+// Cache tag for the assembled dashboard payload. A WC Intelligence upload
+// is immutable once settled, so the payload is keyed by upload.id and only
+// needs invalidating when the active version changes or its targets/QA are
+// edited — the activate route calls revalidateTag(WCX_DASHBOARD_CACHE_TAG).
+export const WCX_DASHBOARD_CACHE_TAG = "wcx-dashboard";
 import { buildScenarioBaselines } from "./scenario-baseline";
 import type { WcxScenarioBaseline } from "./scenario";
 import {
@@ -130,9 +143,25 @@ function kpiOf(
 }
 
 export async function getWcxDashboardData(): Promise<WcxDashboardData | null> {
-  const ctx = await wcxContext();
-  if (!ctx) return null;
-  const { upload, sbus } = ctx;
+  // Resolve the active version uncached (one cheap query) — which upload is
+  // active can change at any time. The heavy part (facts + targets + all
+  // derivation) is then memoized per immutable upload.id so repeat loads
+  // skip ~3 Neon round-trips and the in-memory math entirely.
+  const upload = await getActiveUpload();
+  if (!upload) return null;
+  const cached = unstable_cache(
+    () => computeWcxDashboardData(upload),
+    ["wcx-dashboard", upload.id],
+    {
+      tags: [WCX_DASHBOARD_CACHE_TAG, `${WCX_DASHBOARD_CACHE_TAG}:${upload.id}`],
+      revalidate: 3600,
+    },
+  );
+  return cached();
+}
+
+async function computeWcxDashboardData(upload: WcxUpload): Promise<WcxDashboardData | null> {
+  const sbus = await listSbusForUpload(upload.id);
   const periodStart = upload.periodStart;
   const periodEnd = upload.periodEnd;
   if (!periodStart || !periodEnd) return null;

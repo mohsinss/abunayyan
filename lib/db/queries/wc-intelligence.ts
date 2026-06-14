@@ -63,23 +63,6 @@ export async function setActiveUpload(id: string): Promise<void> {
   await db.update(wcxUploads).set({ isActive: true }).where(eq(wcxUploads.id, id));
 }
 
-// Replace semantics: once a version is active, every other settled version
-// (and its facts/records/targets/sbus, via FK cascade) is deleted. Uploads
-// still queued/parsing are left alone — they'll be pruned when the next
-// activation happens.
-export async function pruneOtherUploads(activeId: string): Promise<number> {
-  const deleted = await db
-    .delete(wcxUploads)
-    .where(
-      and(
-        ne(wcxUploads.id, activeId),
-        inArray(wcxUploads.status, ["ready", "failed"]),
-      ),
-    )
-    .returning({ id: wcxUploads.id });
-  return deleted.length;
-}
-
 export async function updateUpload(
   id: string,
   patch: Partial<

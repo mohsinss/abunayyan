@@ -1,16 +1,16 @@
 import { requireAdminApi } from "@/lib/auth/rbac";
-import { revalidatePath } from "next/cache";
-import {
-  getUploadById,
-  pruneOtherUploads,
-  setActiveUpload,
-} from "@/lib/db/queries/wc-intelligence";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { getUploadById, setActiveUpload } from "@/lib/db/queries/wc-intelligence";
+import { WCX_DASHBOARD_CACHE_TAG } from "@/lib/wcx/dashboard-data";
 
 export const runtime = "nodejs";
 
 // Switch which upload version feeds the dashboard and the chatbot.
-// Replace semantics: activation permanently deletes every other settled
-// version — the new upload erases the former data.
+// Rollback semantics: activation only flips the active flag — every other
+// settled version (and its facts/targets) is RETAINED, so a board brief is
+// reproducible "as of" any prior upload and admins can roll back. Old
+// versions stay listed in /admin/wc-intelligence; the dashboard + chat read
+// only the active one (getActiveUpload filters isActive = true).
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -29,8 +29,10 @@ export async function POST(
   }
 
   await setActiveUpload(id);
-  const pruned = await pruneOtherUploads(id);
+  // Drop the cached dashboard payload so the newly-active version's numbers
+  // show immediately rather than after the 1h revalidate window.
+  revalidateTag(WCX_DASHBOARD_CACHE_TAG);
   revalidatePath("/dashboard/wc-intelligence");
   revalidatePath("/admin/wc-intelligence");
-  return Response.json({ ok: true, activeUploadId: id, prunedVersions: pruned });
+  return Response.json({ ok: true, activeUploadId: id });
 }

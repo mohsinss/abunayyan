@@ -30,8 +30,9 @@ export default async function AdminWcIntelligencePage() {
         <p className="mt-1 text-sm text-neutral-600">
           .xlsx only, same 18-sheet template. Parsing runs in the background — refresh to see
           status. New versions are <b>not</b> activated automatically (except the very first);
-          review the QA report, then activate. <b>Activating permanently deletes all other
-          versions</b> — the new upload replaces the former data.
+          review the QA report, then activate. Activating only switches which version feeds the
+          dashboard and chatbot — <b>previous versions are retained</b> and can be re-activated to
+          roll back.
         </p>
         <div className="mt-4 rounded-lg border border-neutral-200 bg-white p-5">
           <UploadPanel />
