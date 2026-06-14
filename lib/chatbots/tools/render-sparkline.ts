@@ -1,18 +1,19 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "./types";
+import { clampedString } from "./schema";
 
 const SparklineSchema = z.object({
-  label: z.string().min(1).max(80),
+  label: clampedString(80),
   // 60 matches wcxSeries' max range (e.g. a full 36-month workbook trend);
   // the SVG path renders any count without crowding.
   values: z.array(z.number()).min(2).max(60),
   current: z.number().optional(),
-  unit: z.string().max(12).optional(),
+  unit: clampedString(12).optional(),
   // Direction hint colours the line. "up-good": rising = green / falling
   // = red. "up-bad": rising = red / falling = green. "neutral": ink.
   tone: z.enum(["up-good", "up-bad", "neutral"]).optional(),
-  hint: z.string().max(120).optional(),
+  hint: clampedString(120).optional(),
 });
 
 const description =

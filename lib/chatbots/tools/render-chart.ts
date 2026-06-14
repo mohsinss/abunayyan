@@ -1,18 +1,19 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "./types";
+import { clampedString } from "./schema";
 
 const ChartSchema = z.object({
   type: z.enum(["bar", "horizontal-bar", "pie", "scatter", "line", "area"]),
-  title: z.string().max(90),
-  description: z.string().max(140).optional(),
-  unit: z.string().max(8).optional(),
-  xAxisLabel: z.string().max(30).optional(),
-  yAxisLabel: z.string().max(30).optional(),
+  title: clampedString(120),
+  description: clampedString(240).optional(),
+  unit: clampedString(12).optional(),
+  xAxisLabel: clampedString(60).optional(),
+  yAxisLabel: clampedString(60).optional(),
   data: z
     .array(
       z.object({
-        label: z.string().max(24),
+        label: clampedString(32),
         value: z.number().optional(),
         x: z.number().optional(),
         y: z.number().optional(),

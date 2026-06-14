@@ -1,24 +1,25 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "./types";
+import { clampedString } from "./schema";
 
 const HeatmapSchema = z.object({
-  title: z.string().min(1).max(90),
-  description: z.string().max(140).optional(),
-  xLabels: z.array(z.string().max(30)).min(2).max(30),
-  yLabels: z.array(z.string().max(30)).min(2).max(30),
+  title: clampedString(120),
+  description: clampedString(240).optional(),
+  xLabels: z.array(clampedString(40)).min(2).max(30),
+  yLabels: z.array(clampedString(40)).min(2).max(30),
   cells: z
     .array(
       z.object({
         x: z.number().int().min(0),
         y: z.number().int().min(0),
         value: z.number(),
-        label: z.string().max(40).optional(),
+        label: clampedString(40).optional(),
       }),
     )
     .min(1)
     .max(900),
-  unit: z.string().max(12).optional(),
+  unit: clampedString(12).optional(),
   scale: z
     .object({
       min: z.number().optional(),

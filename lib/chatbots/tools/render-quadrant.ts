@@ -1,32 +1,33 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "./types";
+import { clampedString } from "./schema";
 
 const QuadrantSchema = z.object({
-  title: z.string().min(1).max(90),
-  description: z.string().max(140).optional(),
+  title: clampedString(120),
+  description: clampedString(240).optional(),
   xAxis: z.object({
-    label: z.string().max(30),
-    unit: z.string().max(8).optional(),
+    label: clampedString(60),
+    unit: clampedString(12).optional(),
     threshold: z.number(),
   }),
   yAxis: z.object({
-    label: z.string().max(30),
-    unit: z.string().max(8).optional(),
+    label: clampedString(60),
+    unit: clampedString(12).optional(),
     threshold: z.number(),
   }),
   quadrants: z
     .object({
-      tl: z.string().max(30).optional(),
-      tr: z.string().max(30).optional(),
-      bl: z.string().max(30).optional(),
-      br: z.string().max(30).optional(),
+      tl: clampedString(40).optional(),
+      tr: clampedString(40).optional(),
+      bl: clampedString(40).optional(),
+      br: clampedString(40).optional(),
     })
     .optional(),
   points: z
     .array(
       z.object({
-        label: z.string().max(24),
+        label: clampedString(32),
         x: z.number(),
         y: z.number(),
         tone: z.enum(["good", "bad", "warn", "neutral"]).optional(),

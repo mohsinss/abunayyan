@@ -1,14 +1,15 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "./types";
+import { clampedString } from "./schema";
 
 const WaterfallSchema = z.object({
-  title: z.string().max(90),
+  title: clampedString(120),
   // Generous cap — bridge captions legitimately list their components.
-  description: z.string().max(240).optional(),
-  unit: z.string().max(8).optional(),
+  description: clampedString(240).optional(),
+  unit: clampedString(12).optional(),
   start: z.object({
-    label: z.string().max(24),
+    label: clampedString(32),
     value: z.number().finite(),
   }),
   // Signed deltas applied cumulatively after the start bar. Positive steps
@@ -16,14 +17,14 @@ const WaterfallSchema = z.object({
   steps: z
     .array(
       z.object({
-        label: z.string().max(24),
+        label: clampedString(32),
         delta: z.number().finite(),
         tone: z.enum(["positive", "neutral", "warn", "negative"]).optional(),
       }),
     )
     .min(1)
     .max(15),
-  endLabel: z.string().max(24).optional().describe("Label for the computed final bar."),
+  endLabel: clampedString(32).optional().describe("Label for the computed final bar."),
 });
 
 const description =
