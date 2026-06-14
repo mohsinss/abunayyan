@@ -10,6 +10,7 @@ import { ChatSparkline, type SparklineArgs } from "./chat-sparkline";
 import { ChatHeatmap, type HeatmapArgs } from "./chat-heatmap";
 import { ChatQuadrant, type QuadrantArgs } from "./chat-quadrant";
 import { ChatTimeline, type TimelineArgs } from "./chat-timeline";
+import { ChatWaterfall, type WaterfallArgs } from "./chat-waterfall";
 
 // Tool names whose results we render visually inside the bubble.
 // Anything else (searchDatasetDocs, atlasSnapshot, wcSnapshot,
@@ -24,6 +25,7 @@ const VISIBLE_TOOL_NAMES = new Set([
   "renderHeatmap",
   "renderQuadrant",
   "renderTimeline",
+  "renderWaterfall",
 ]);
 
 // Minimal markdown rendering — bold + inline code + line breaks. No full
@@ -149,6 +151,9 @@ export function ChatMessage({ message }: { message: Message }) {
             }
             if (inv.toolName === "renderTimeline") {
               return <ChatTimeline key={inv.toolCallId} args={args as TimelineArgs} />;
+            }
+            if (inv.toolName === "renderWaterfall") {
+              return <ChatWaterfall key={inv.toolCallId} args={args as WaterfallArgs} />;
             }
             return null;
           })}

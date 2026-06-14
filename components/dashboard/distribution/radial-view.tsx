@@ -93,7 +93,7 @@ export function RadialView({ data, onClick }: DistributionViewProps) {
             <Cell
               key={d.id}
               fill={d.fill}
-              stroke={isActive(d.id) ? "var(--atlas-gold)" : "transparent"}
+              stroke={isActive(d.id) ? "var(--atlas-accent)" : "transparent"}
               strokeWidth={isActive(d.id) ? 2 : 0}
               style={{ cursor: "pointer" }}
             />

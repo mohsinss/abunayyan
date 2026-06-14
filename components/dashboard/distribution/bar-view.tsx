@@ -56,7 +56,7 @@ export function BarView({ data, onClick }: DistributionViewProps) {
               style={{
                 cursor: "pointer",
                 opacity: isActive(d.id) ? 1 : 0.9,
-                stroke: isActive(d.id) ? "var(--atlas-gold)" : "transparent",
+                stroke: isActive(d.id) ? "var(--atlas-accent)" : "transparent",
                 strokeWidth: 2,
               }}
             />

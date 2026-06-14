@@ -41,6 +41,14 @@ export const BUILTIN_CARDS: Record<string, BuiltinCard> = {
     // working-capital-ccc dataset (the one with embedded chunks).
     chatbotSlug: "",
   },
+  "wc-intelligence": {
+    key: "wc-intelligence",
+    title: "WC Intelligence — Board Brief",
+    description:
+      "Excel-fed working capital intelligence across 12 SBUs: 36 months of P&L, balance-sheet, AR/AP aging, inventory, cash flow and drivers parsed from the data-collection workbook into a versioned metric store. Deterministic analyst chatbot answers with exact figures, comparisons and trends — zero LLM arithmetic.",
+    route: "wc-intelligence",
+    chatbotSlug: "wc-intelligence-analyst",
+  },
 };
 
 export function getBuiltinByKey(key: string | null | undefined): BuiltinCard | null {

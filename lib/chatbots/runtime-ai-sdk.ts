@@ -48,13 +48,19 @@ export function streamViaAiSdk(args: {
         modelId: bot.modelId,
       });
     },
-    onFinish: async ({ text, toolCalls, usage, finishReason }) => {
+    onFinish: async ({ text, toolCalls, usage, finishReason, steps }) => {
+      // `toolCalls` only covers the FINAL step of a multi-step turn — a
+      // turn that ends with a text closer would persist zero tool calls
+      // and lose its charts/tables on history restore. Flatten across
+      // all steps instead.
+      const allToolCalls =
+        steps.length > 0 ? steps.flatMap((s) => s.toolCalls ?? []) : toolCalls;
       await recordTurnEnd({
         bot,
         user,
         threadId,
         text,
-        toolCalls: toolCalls as unknown as unknown[],
+        toolCalls: allToolCalls as unknown as unknown[],
         usage: {
           promptTokens: usage.promptTokens,
           completionTokens: usage.completionTokens,

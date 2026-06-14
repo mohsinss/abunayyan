@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/db";
 import { chatbots, chatbotPrompts } from "@/db/schema/chatbots";
 import { eq } from "drizzle-orm";
+import { WCX_BOT_TOOLS, WCX_PROMPT } from "./wcx-prompt";
 
 const ATLAS_PROMPT = `You are Atlas Analyst, the FY2026 data co-pilot for the AHC leadership team.
 
@@ -57,6 +58,7 @@ type Seed = {
   rateLimitTokens: number;
   rateLimitWindow: string;
   dailyCostCapUsd: number;
+  maxSteps?: number;
 };
 
 const SEEDS: Seed[] = [
@@ -86,6 +88,23 @@ const SEEDS: Seed[] = [
     rateLimitTokens: 20,
     rateLimitWindow: "1 h",
     dailyCostCapUsd: 5,
+  },
+  {
+    slug: "wc-intelligence-analyst",
+    name: "WC Intelligence Analyst",
+    description:
+      "Deterministic analyst over the uploaded WC Data Collection workbook — exact numbers, comparisons, trends, targets.",
+    provider: "anthropic",
+    modelId: "claude-sonnet-4-6",
+    systemPrompt: WCX_PROMPT,
+    tools: [...WCX_BOT_TOOLS],
+    allowedRoles: [],
+    rateLimitTokens: 30,
+    rateLimitWindow: "1 h",
+    dailyCostCapUsd: 5,
+    // Cash-bridge / variance recipes legitimately chain several data calls
+    // before rendering; 8 steps gives headroom without runaway loops.
+    maxSteps: 8,
   },
   {
     slug: "general",

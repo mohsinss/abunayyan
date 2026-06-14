@@ -59,7 +59,7 @@ export function LineView({
                     value: xLabel,
                     position: "insideBottom",
                     offset: -5,
-                    fill: "#8a8780",
+                    fill: "#7F7F7F",
                     fontSize: 11,
                     fontFamily: "var(--font-plex-mono), ui-monospace, monospace",
                   }
@@ -74,7 +74,7 @@ export function LineView({
                     value: yLabel,
                     angle: -90,
                     position: "insideLeft",
-                    fill: "#8a8780",
+                    fill: "#7F7F7F",
                     fontSize: 11,
                     fontFamily: "var(--font-plex-mono), ui-monospace, monospace",
                   }

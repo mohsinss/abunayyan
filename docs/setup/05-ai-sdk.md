@@ -19,7 +19,7 @@ Drops the raw OpenAI SDK in favor of the **Vercel AI SDK** with **Anthropic Clau
 - **`@ai-sdk/anthropic`** — Claude provider.
 - **`@ai-sdk/openai`** — fallback.
 - **`@ai-sdk/react`** — `useChat()` hook for the UI.
-- Model IDs as of April 2026: `claude-sonnet-4-6`, `claude-opus-4-7`, `claude-haiku-4-5-20251001`.
+- Model IDs as of April 2026: `claude-sonnet-4-6`, `claude-opus-4-7`, `claude-haiku-4-5`.
 
 ## Steps
 
@@ -52,7 +52,7 @@ export const models = {
   // Maximum capability; use for hard reasoning, code, long-form writing
   smart: anthropic("claude-opus-4-7"),
   // Ultra-cheap; batch operations, embeddings generation prompts
-  cheap: anthropic("claude-haiku-4-5-20251001"),
+  cheap: anthropic("claude-haiku-4-5"),
   // Fallback provider
   openaiFallback: openai("gpt-4o"),
   openaiCheap: openai("gpt-4o-mini"),

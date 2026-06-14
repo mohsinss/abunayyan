@@ -47,7 +47,7 @@ export function DonutView({ data, total, onClick }: DistributionViewProps) {
             <Cell
               key={d.id}
               fill={colorForRank(i, data.length)}
-              stroke={isActive(d.id) ? "var(--atlas-gold)" : "var(--atlas-bg-2)"}
+              stroke={isActive(d.id) ? "var(--atlas-accent)" : "var(--atlas-bg-2)"}
               strokeWidth={isActive(d.id) ? 3 : 1.5}
               style={{ cursor: "pointer" }}
             />

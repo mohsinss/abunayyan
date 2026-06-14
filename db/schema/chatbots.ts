@@ -49,6 +49,15 @@ export const TOOL_IDS = [
   "atlasSnapshot",
   "wcSnapshot",
   "wcScenarioCalc",
+  "wcxLookup",
+  "wcxSeries",
+  "wcxCompare",
+  "wcxAggregate",
+  "wcxRank",
+  "wcxScenarioCalc",
+  "wcxSnapshot",
+  "wcxRecords",
+  "renderWaterfall",
 ] as const;
 export type ToolId = (typeof TOOL_IDS)[number];
 

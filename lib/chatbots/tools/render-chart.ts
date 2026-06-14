@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { ToolDefinition } from "./types";
 
 const ChartSchema = z.object({
-  type: z.enum(["bar", "horizontal-bar", "pie", "scatter"]),
+  type: z.enum(["bar", "horizontal-bar", "pie", "scatter", "line", "area"]),
   title: z.string().max(90),
   description: z.string().max(140).optional(),
   unit: z.string().max(8).optional(),
@@ -20,12 +20,15 @@ const ChartSchema = z.object({
       }),
     )
     .min(1)
-    .max(30),
+    // 60 fits a full monthly series from wcxSeries (36+ months).
+    .max(60),
 });
 
 const description =
   "Render a chart inline in the chat. Use 'bar' for rankings, 'horizontal-bar' for " +
-  "side-by-side comparisons, 'pie' for share-of-whole, 'scatter' for relationships. " +
+  "side-by-side comparisons, 'pie' for share-of-whole, 'scatter' for relationships, " +
+  "'line' for time series / trends (preferred for monthly series — labels are the periods), " +
+  "'area' for cumulative or magnitude-over-time trends. " +
   "Keep labels under 22 characters and units as short abbreviations ('SAR', '%', 'M SAR').";
 
 export const renderChart: ToolDefinition = {

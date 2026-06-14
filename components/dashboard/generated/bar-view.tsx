@@ -61,7 +61,7 @@ export function BarView({
                     value: xLabel,
                     position: "insideBottom",
                     offset: -5,
-                    fill: "#8a8780",
+                    fill: "#7F7F7F",
                     fontSize: 11,
                     fontFamily: "var(--font-plex-mono), ui-monospace, monospace",
                   }
@@ -76,14 +76,14 @@ export function BarView({
                     value: yLabel,
                     angle: -90,
                     position: "insideLeft",
-                    fill: "#8a8780",
+                    fill: "#7F7F7F",
                     fontSize: 11,
                     fontFamily: "var(--font-plex-mono), ui-monospace, monospace",
                   }
                 : undefined
             }
           />
-          <Tooltip {...ATLAS_TOOLTIP} cursor={{ fill: "rgba(139,111,46,0.06)" }} />
+          <Tooltip {...ATLAS_TOOLTIP} cursor={{ fill: "rgba(11,51,120,0.06)" }} />
           {seriesKeys.length > 1 ? <Legend {...ATLAS_LEGEND} /> : null}
           {seriesKeys.map((k, i) => (
             <Bar key={k} dataKey={k} fill={ATLAS_COLORS[i % ATLAS_COLORS.length]} radius={[2, 2, 0, 0]} />

@@ -20,6 +20,7 @@ type Tile = {
 // Per-route visual treatment. Routes not listed fall back to default.
 function accentForRoute(route: string): { accent: CardAccent; badge?: string } {
   if (route === "working-capital-data") return { accent: "navy", badge: "Live · DB" };
+  if (route === "wc-intelligence") return { accent: "navy", badge: "Excel-fed · AI" };
   if (route === "sbu-performance-atlas") return { accent: "atlas", badge: "FY-2026" };
   if (route === "working-capital-ccc") return { accent: "default", badge: "Static" };
   return { accent: "default" };

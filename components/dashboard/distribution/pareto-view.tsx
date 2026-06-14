@@ -95,7 +95,7 @@ export function ParetoView({ data, total, onClick }: DistributionViewProps) {
               fill={colorForRank(i, paretoData.length)}
               style={{
                 cursor: "pointer",
-                stroke: isActive(d.id) ? "var(--atlas-gold)" : "transparent",
+                stroke: isActive(d.id) ? "var(--atlas-accent)" : "transparent",
                 strokeWidth: 2,
               }}
             />

@@ -16,10 +16,10 @@ const clusterTone: Record<
     accent: "var(--atlas-alert)",
   },
   scale: {
-    stripe: "linear-gradient(90deg, var(--atlas-gold), var(--atlas-gold-2))",
-    chipBg: "var(--atlas-gold-soft)",
-    chipFg: "var(--atlas-gold)",
-    accent: "var(--atlas-gold)",
+    stripe: "linear-gradient(90deg, var(--atlas-accent), var(--atlas-accent-2))",
+    chipBg: "var(--atlas-accent-soft)",
+    chipFg: "var(--atlas-accent)",
+    accent: "var(--atlas-accent)",
   },
   watch: {
     stripe: "linear-gradient(90deg, var(--atlas-warn), #d48543)",

@@ -4,7 +4,9 @@ import type { ToolDefinition } from "./types";
 
 const SparklineSchema = z.object({
   label: z.string().min(1).max(80),
-  values: z.array(z.number()).min(2).max(24),
+  // 60 matches wcxSeries' max range (e.g. a full 36-month workbook trend);
+  // the SVG path renders any count without crowding.
+  values: z.array(z.number()).min(2).max(60),
   current: z.number().optional(),
   unit: z.string().max(12).optional(),
   // Direction hint colours the line. "up-good": rising = green / falling

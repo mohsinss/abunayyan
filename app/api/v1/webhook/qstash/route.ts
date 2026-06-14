@@ -20,6 +20,13 @@ async function handler(req: Request) {
         await runParseJob(fileId);
         break;
       }
+      case "parse-wcx-workbook": {
+        const { runWcxIngestJob } = await import("@/lib/wcx/ingest");
+        const { uploadId } = (payload as { uploadId?: string }) ?? {};
+        if (!uploadId) return new Response("Missing uploadId", { status: 400 });
+        await runWcxIngestJob(uploadId);
+        break;
+      }
       case "sweep-deleted-datasets": {
         const { runDatasetSweep } = await import("@/lib/datasets/sweep");
         const { writeAudit } = await import("@/lib/chatbots/audit");

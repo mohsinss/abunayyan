@@ -153,7 +153,7 @@ function ScatterPlot({
             }}
           />
           <ZAxis range={[120, 120]} />
-          <Tooltip content={<TooltipCard />} cursor={{ stroke: "var(--atlas-gold)", strokeWidth: 1, strokeDasharray: "2 2" }} />
+          <Tooltip content={<TooltipCard />} cursor={{ stroke: "var(--atlas-accent)", strokeWidth: 1, strokeDasharray: "2 2" }} />
           <Scatter
             data={data}
             onClick={(e) => onDotClick((e as unknown as DotDatum).id)}
@@ -172,7 +172,7 @@ function ScatterPlot({
                     fill={color}
                     stroke="white"
                     strokeWidth={2}
-                    style={{ filter: active ? "drop-shadow(0 0 6px rgba(139,111,46,0.6))" : "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
+                    style={{ filter: active ? "drop-shadow(0 0 6px rgba(11,51,120,0.6))" : "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
                   />
                 </g>
               );

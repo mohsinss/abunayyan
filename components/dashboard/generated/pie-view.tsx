@@ -17,9 +17,9 @@ export function PieView({ data }: { title: string; data: Slice[] }) {
             cx="50%"
             cy="50%"
             outerRadius={100}
-            stroke="#fafaf7"
+            stroke="#f8f9fb"
             strokeWidth={2}
-            label={{ fontSize: 11, fontFamily: "var(--font-plex-mono), ui-monospace, monospace", fill: "#4a4a48" }}
+            label={{ fontSize: 11, fontFamily: "var(--font-plex-mono), ui-monospace, monospace", fill: "#595959" }}
           >
             {data.map((_, i) => (
               <Cell key={i} fill={ATLAS_COLORS[i % ATLAS_COLORS.length]} />

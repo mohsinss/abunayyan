@@ -38,7 +38,7 @@ export function TreemapView({ data, onClick }: DistributionViewProps) {
                 width={p.width}
                 height={p.height}
                 fill={p.fill || "var(--atlas-bg-3)"}
-                stroke={p.id && isActive(p.id) ? "var(--atlas-gold)" : "white"}
+                stroke={p.id && isActive(p.id) ? "var(--atlas-accent)" : "white"}
                 strokeWidth={p.id && isActive(p.id) ? 3 : 1}
               />
               {p.width > 60 && p.height > 30 && (

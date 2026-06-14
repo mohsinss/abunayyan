@@ -16,6 +16,15 @@ import { queryDatasetRows } from "./query-dataset-rows";
 import { atlasSnapshot } from "./atlas-snapshot";
 import { wcSnapshot } from "./wc-snapshot";
 import { wcScenarioCalc } from "./wc-scenario-calc";
+import { wcxLookup } from "./wcx-lookup";
+import { wcxSeries } from "./wcx-series";
+import { wcxCompare } from "./wcx-compare";
+import { wcxAggregate } from "./wcx-aggregate";
+import { wcxRank } from "./wcx-rank";
+import { wcxScenarioCalc } from "./wcx-scenario-calc";
+import { wcxSnapshot } from "./wcx-snapshot";
+import { wcxRecords } from "./wcx-records";
+import { renderWaterfall } from "./render-waterfall";
 import type { ToolContext, ToolDefinition } from "./types";
 
 const ALL_TOOLS: Record<ToolId, ToolDefinition> = {
@@ -33,6 +42,15 @@ const ALL_TOOLS: Record<ToolId, ToolDefinition> = {
   atlasSnapshot,
   wcSnapshot,
   wcScenarioCalc,
+  wcxLookup,
+  wcxSeries,
+  wcxCompare,
+  wcxAggregate,
+  wcxRank,
+  wcxScenarioCalc,
+  wcxSnapshot,
+  wcxRecords,
+  renderWaterfall,
 };
 
 const RANK: Record<UserRole, number> = {

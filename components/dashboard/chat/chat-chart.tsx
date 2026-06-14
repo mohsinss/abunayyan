@@ -1,9 +1,15 @@
 "use client";
 
+import { useState } from "react";
+import { Maximize2 } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   Cell,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -13,9 +19,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ChatChartModal } from "./chat-chart-modal";
 
 export interface ChartArgs {
-  type: "bar" | "horizontal-bar" | "pie" | "scatter";
+  type: "bar" | "horizontal-bar" | "pie" | "scatter" | "line" | "area";
   title: string;
   description?: string;
   unit?: string;
@@ -161,6 +168,7 @@ const tooltipStyle = {
 
 export function ChatChart({ args }: { args: ChartArgs }) {
   const { type, title, description, unit, data } = args;
+  const [expanded, setExpanded] = useState(false);
   // Sort for bar/horizontal-bar: descending by value.
   const sorted =
     type === "bar" || type === "horizontal-bar"
@@ -168,14 +176,24 @@ export function ChatChart({ args }: { args: ChartArgs }) {
       : data;
 
   return (
-    <figure className="my-3 overflow-hidden rounded-sm border border-atlas-line bg-atlas-bg-2">
+    <figure
+      className="group/chart my-3 cursor-zoom-in overflow-hidden rounded-sm border border-atlas-line bg-atlas-bg-2 transition-shadow hover:shadow-md"
+      onClick={() => setExpanded(true)}
+      title="Click to expand"
+    >
+      {expanded && <ChatChartModal args={args} onClose={() => setExpanded(false)} />}
       <figcaption className="border-b border-atlas-line px-3 py-2">
-        <div className="font-serif text-[13px] font-medium text-atlas-ink">{title}</div>
-        {description && (
-          <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[1px] text-atlas-ink-3">
-            {description}
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="font-serif text-[13px] font-medium text-atlas-ink">{title}</div>
+            {description && (
+              <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[1px] text-atlas-ink-3">
+                {description}
+              </div>
+            )}
           </div>
-        )}
+          <Maximize2 className="mt-0.5 size-3 shrink-0 text-atlas-ink-3 opacity-0 transition-opacity group-hover/chart:opacity-100" />
+        </div>
       </figcaption>
       <div className="px-2 py-3">
         {type === "horizontal-bar" && (
@@ -294,6 +312,72 @@ export function ChatChart({ args }: { args: ChartArgs }) {
                 ))}
               </Pie>
             </PieChart>
+          </ResponsiveContainer>
+        )}
+
+        {(type === "line" || type === "area") && (
+          <ResponsiveContainer width="100%" height={230}>
+            {type === "line" ? (
+              <LineChart data={data} margin={{ top: 8, right: 12, bottom: 8, left: 8 }}>
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 9, fontFamily: "var(--font-plex-mono)", fill: "var(--atlas-ink-3)" }}
+                  axisLine={{ stroke: "var(--atlas-line-2)" }}
+                  tickLine={false}
+                  minTickGap={24}
+                />
+                <YAxis
+                  tick={{ fontSize: 9, fontFamily: "var(--font-plex-mono)", fill: "var(--atlas-ink-3)" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => formatValue(v, unit)}
+                  width={48}
+                />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  labelFormatter={(l) => String(l)}
+                  formatter={(v) => [formatValue(Number(v), unit), ""]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={BRAND_PRIMARY}
+                  strokeWidth={2}
+                  dot={data.length <= 16}
+                  activeDot={{ r: 4 }}
+                />
+              </LineChart>
+            ) : (
+              <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 8, left: 8 }}>
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 9, fontFamily: "var(--font-plex-mono)", fill: "var(--atlas-ink-3)" }}
+                  axisLine={{ stroke: "var(--atlas-line-2)" }}
+                  tickLine={false}
+                  minTickGap={24}
+                />
+                <YAxis
+                  tick={{ fontSize: 9, fontFamily: "var(--font-plex-mono)", fill: "var(--atlas-ink-3)" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => formatValue(v, unit)}
+                  width={48}
+                />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  labelFormatter={(l) => String(l)}
+                  formatter={(v) => [formatValue(Number(v), unit), ""]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke={BRAND_PRIMARY}
+                  strokeWidth={2}
+                  fill={`${BRAND_PRIMARY}22`}
+                  dot={false}
+                />
+              </AreaChart>
+            )}
           </ResponsiveContainer>
         )}
 

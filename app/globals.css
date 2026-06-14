@@ -10,7 +10,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 218 83% 26%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -22,24 +22,24 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 218 83% 26%;
     --radius: 0.5rem;
 
     /* ============ ATLAS EDITORIAL PALETTE ============ */
     /* Dashboard-only tokens. Namespace prevents collision with shadcn. */
-    --atlas-bg: #fafaf7;
+    --atlas-bg: #f8f9fb;
     --atlas-bg-2: #ffffff;
-    --atlas-bg-3: #f2f0e9;
-    --atlas-bg-4: #e8e5db;
+    --atlas-bg-3: #eef1f5;
+    --atlas-bg-4: #dde3eb;
     --atlas-ink: #1a1a1a;
-    --atlas-ink-2: #4a4a48;
-    --atlas-ink-3: #8a8780;
-    --atlas-ink-4: #c2bfb4;
-    --atlas-line: #e4e1d5;
-    --atlas-line-2: #d4d0c2;
-    --atlas-accent: #8B6F2E;
-    --atlas-accent-2: #b8923f;
-    --atlas-accent-soft: #f5efd9;
+    --atlas-ink-2: #595959;
+    --atlas-ink-3: #7F7F7F;
+    --atlas-ink-4: #BFBFBF;
+    --atlas-line: #dde3eb;
+    --atlas-line-2: #c8d2dd;
+    --atlas-accent: #0B3378;
+    --atlas-accent-2: #2964A9;
+    --atlas-accent-soft: #e5edf6;
     --atlas-alert: #a33828;
     --atlas-alert-soft: #f7e6e2;
     --atlas-warn: #b86f1d;
@@ -90,8 +90,8 @@
     background: var(--atlas-bg);
     color: var(--atlas-ink);
     background-image:
-      radial-gradient(circle at 15% 20%, rgba(139, 111, 46, 0.03) 0%, transparent 40%),
-      radial-gradient(circle at 85% 80%, rgba(74, 107, 53, 0.03) 0%, transparent 40%);
+      radial-gradient(circle at 15% 20%, rgba(11, 51, 120, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(65, 140, 192, 0.04) 0%, transparent 40%);
   }
   .atlas-section-anchor {
     scroll-margin-top: 80px;

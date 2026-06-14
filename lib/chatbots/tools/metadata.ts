@@ -69,4 +69,49 @@ export const TOOL_METADATA: readonly ToolMetadata[] = [
     description: "Run a working-capital what-if scenario (preset + per-SBU overrides).",
     costClass: "free",
   },
+  {
+    id: "wcxLookup",
+    description: "Exact-value lookup from the WC Intelligence workbook (with provenance).",
+    costClass: "free",
+  },
+  {
+    id: "wcxSeries",
+    description: "Monthly time series for a WC Intelligence metric (stored or derived).",
+    costClass: "free",
+  },
+  {
+    id: "wcxCompare",
+    description: "Deterministic SBU / period / target comparisons over the WC workbook.",
+    costClass: "free",
+  },
+  {
+    id: "wcxAggregate",
+    description: "Aggregate a WC metric over FY/range using its registered rule.",
+    costClass: "free",
+  },
+  {
+    id: "wcxRank",
+    description: "Rank SBUs by a WC metric (level or period-over-period change).",
+    costClass: "free",
+  },
+  {
+    id: "wcxScenarioCalc",
+    description: "What-if scenario on latest WC actuals (presets toward targets + lever overrides).",
+    costClass: "free",
+  },
+  {
+    id: "wcxSnapshot",
+    description: "Full WC panel for one SBU/GROUP in one call (balances, days, cash, target gaps).",
+    costClass: "free",
+  },
+  {
+    id: "wcxRecords",
+    description: "Read workbook record tables (customers, vendors, projects, benchmarks, forecast…).",
+    costClass: "free",
+  },
+  {
+    id: "renderWaterfall",
+    description: "Render a waterfall/bridge chart inline (cash bridges, NWC walks).",
+    costClass: "free",
+  },
 ];

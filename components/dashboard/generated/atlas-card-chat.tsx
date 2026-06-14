@@ -65,7 +65,7 @@ export function AtlasCardChat({
           onClick={() => setOpen(true)}
           aria-label={`Open ${datasetTitle} assistant`}
           className="group fixed bottom-6 right-6 z-50 flex size-14 items-center justify-center rounded-full bg-atlas-ink text-atlas-bg-2 shadow-lg transition-all hover:scale-105 hover:bg-atlas-gold hover:shadow-xl"
-          style={{ boxShadow: "0 8px 24px rgba(139, 111, 46, 0.25)" }}
+          style={{ boxShadow: "0 8px 24px rgba(11, 51, 120, 0.25)" }}
         >
           <Sparkles className="size-6" />
           <span className="absolute bottom-full right-0 mb-2 hidden whitespace-nowrap rounded-sm border border-atlas-line bg-atlas-bg-2 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[1.2px] text-atlas-ink shadow-md group-hover:block">
@@ -122,7 +122,7 @@ export function AtlasCardChat({
             className="flex-1 overflow-y-auto bg-atlas-bg px-4 py-4"
             style={{
               backgroundImage:
-                "radial-gradient(circle at 50% 0%, rgba(139,111,46,0.04) 0%, transparent 50%)",
+                "radial-gradient(circle at 50% 0%, rgba(11,51,120,0.04) 0%, transparent 50%)",
             }}
           >
             {messages.length === 0 ? (
