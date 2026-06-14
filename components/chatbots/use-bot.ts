@@ -2,7 +2,13 @@
 
 import { useChat } from "@ai-sdk/react";
 import type { Message } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+// If a turn is in flight but nothing (no token, no tool event) arrives for
+// this long, treat it as hung: abort the request and flag it so the UI can
+// offer a retry instead of spinning forever. Below the route's 60s
+// maxDuration so we surface a stall well before the platform kills it.
+const STALL_MS = 25_000;
 
 export type UseBotOptions = {
   initialThreadId?: string;
@@ -65,10 +71,45 @@ export function useBot(slug: string, opts: UseBotOptions = {}) {
     onError: opts.onError,
   });
 
+  // ── Stall watchdog ──────────────────────────────────────────────────
+  // A turn that opens its stream (HTTP 200) but then errors server-side or
+  // hangs can leave `isLoading` true forever — the classic "stuck" bubble.
+  // We mark progress on every message update (token or tool event) and, while
+  // loading, poll for silence longer than STALL_MS, then stop() + flag it.
+  const [stalled, setStalled] = useState(false);
+  const lastProgress = useRef(0);
+
+  useEffect(() => {
+    lastProgress.current = Date.now();
+  }, [chat.messages]);
+
+  useEffect(() => {
+    if (!chat.isLoading) return;
+    setStalled(false); // fresh turn — clear any prior stall
+    lastProgress.current = Date.now();
+    const id = setInterval(() => {
+      if (Date.now() - lastProgress.current > STALL_MS) {
+        chat.stop();
+        setStalled(true);
+      }
+    }, 3000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat.isLoading]);
+
+  const retry = useCallback(() => {
+    setStalled(false);
+    void chat.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat.reload]);
+
   function resetThread() {
     setThreadId(null);
+    setStalled(false);
     chat.setMessages([]);
   }
 
-  return { ...chat, threadId, resetThread };
+  // `failed` is the single signal a surface needs: either the stream errored
+  // or the watchdog tripped. `retry` re-runs the last user turn.
+  return { ...chat, threadId, resetThread, stalled, retry, failed: !!chat.error || stalled };
 }

@@ -36,6 +36,8 @@ export function WorkingCapitalChat() {
     isLoading,
     setInput,
     resetThread,
+    failed,
+    retry,
   } = useBot("working-capital-analyst", {
     onError: (err) => console.error("Working Capital chat error:", err),
   });
@@ -245,6 +247,18 @@ export function WorkingCapitalChat() {
                   >
                     <Loader2 className="size-3 animate-spin" />
                     Retrieving…
+                  </div>
+                )}
+                {failed && !isLoading && (
+                  <div className="flex items-center justify-between gap-3 rounded-sm border border-[#f3c4be] bg-[#fdeeec] px-3 py-2 text-[12px] text-[#b03a2e]">
+                    <span>The response didn&apos;t finish. It may have timed out mid-analysis.</span>
+                    <button
+                      type="button"
+                      onClick={retry}
+                      className="shrink-0 rounded-sm border border-[#b03a2e]/40 px-2 py-1 font-mono text-[10px] uppercase tracking-[1px] transition hover:bg-[#b03a2e]/10"
+                    >
+                      Retry
+                    </button>
                   </div>
                 )}
               </div>
