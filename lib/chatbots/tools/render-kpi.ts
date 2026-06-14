@@ -11,7 +11,10 @@ const KpiSchema = z.object({
         label: z.string(),
         value: z.string(),
         note: z.string().optional(),
-        tone: z.enum(["positive", "negative", "neutral"]).optional(),
+        // Accept the same tone vocabulary as the other render tools, and
+        // fall back to "neutral" for anything unexpected so an off-vocab tone
+        // never rejects the whole KPI card (it used to throw on "warn").
+        tone: z.enum(["positive", "negative", "neutral", "warn"]).catch("neutral").optional(),
       }),
     )
     .min(1)

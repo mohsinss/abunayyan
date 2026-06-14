@@ -16,12 +16,12 @@ const BodySchema = z.object({
  * `/api/v1/chatbots/[slug]/chat` route. One place to audit, one place to patch.
  */
 export async function handleChatRequest(req: Request, slug: string): Promise<Response> {
-  const session = await auth();
+  // Session and bot lookups are independent — fetch concurrently to shave a
+  // serial round-trip off time-to-first-token.
+  const [session, bot] = await Promise.all([auth(), getBotBySlug(slug)]);
   const user = session?.user;
   if (!user?.id) return new Response("Unauthorized", { status: 401 });
   if (user.disabled) return new Response("Disabled", { status: 403 });
-
-  const bot = await getBotBySlug(slug);
   if (!bot) return new Response("Not Found", { status: 404 });
 
   let body: z.infer<typeof BodySchema>;

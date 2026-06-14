@@ -7,7 +7,7 @@ export interface KpiArgs {
     label: string;
     value: string;
     note?: string;
-    tone?: "positive" | "negative" | "neutral";
+    tone?: "positive" | "negative" | "neutral" | "warn";
   }>;
 }
 
@@ -18,6 +18,7 @@ const toneColor: Record<NonNullable<KpiArgs["items"][0]["tone"]>, string> = {
   positive: "#0e8a5f",
   negative: "#c8463a",
   neutral: "#0b3378",
+  warn: "#c98a2b",
 };
 
 export function ChatKpi({ args }: { args: KpiArgs }) {

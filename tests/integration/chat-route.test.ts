@@ -77,7 +77,8 @@ describe("handleChatRequest", () => {
     authMock.mockResolvedValueOnce(null);
     const r = await handleChatRequest(req(), "test-bot");
     expect(r.status).toBe(401);
-    expect(vi.mocked(getBotBySlug)).not.toHaveBeenCalled();
+    // getBotBySlug now runs concurrently with auth (latency win); the
+    // unauthorized check still gates everything downstream.
     expect(vi.mocked(runBotStream)).not.toHaveBeenCalled();
   });
 
@@ -85,7 +86,7 @@ describe("handleChatRequest", () => {
     authMock.mockResolvedValueOnce(session({ disabled: true }));
     const r = await handleChatRequest(req(), "test-bot");
     expect(r.status).toBe(403);
-    expect(vi.mocked(getBotBySlug)).not.toHaveBeenCalled();
+    expect(vi.mocked(runBotStream)).not.toHaveBeenCalled();
   });
 
   it("returns 404 when the bot doesn't exist", async () => {

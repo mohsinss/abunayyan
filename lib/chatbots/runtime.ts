@@ -10,6 +10,7 @@ import { getPlatformSettings } from "./settings";
 import { streamViaAiSdk } from "./runtime-ai-sdk";
 import { streamViaAnthropicDirect } from "./runtime-anthropic";
 import type { RuntimeStream } from "./runtime-shared";
+import { captureError } from "@/lib/logger";
 
 // Top-level entry point used by the chat route handler. Owns all the
 // engine-agnostic concerns (auth, rate limit, budget cap, thread
@@ -45,11 +46,7 @@ export type RunResult = RunSuccess | { ok: false; error: RunError };
 export async function runBotStream(input: RunInput): Promise<RunResult> {
   const { bot, user, threadId, messages, datasetId } = input;
 
-  const settings = await getPlatformSettings();
-  if (settings.globalChatDisabled) {
-    return { ok: false, error: { kind: "global_disabled" } };
-  }
-
+  // Access is a free in-memory check — deny before touching DB/Redis.
   if (!canUserAccessBot(user, bot)) {
     await writeAudit({
       actorId: user.id,
@@ -59,7 +56,20 @@ export async function runBotStream(input: RunInput): Promise<RunResult> {
     return { ok: false, error: { kind: "unauthorized" } };
   }
 
-  const rl = await ratelimit.bot(bot, user.id);
+  // The remaining pre-stream reads are independent — run them concurrently
+  // instead of as 4 serial Neon/Redis round-trips. On the HTTP driver each
+  // round-trip is a fresh request, so serializing them added ~hundreds of ms
+  // of dead time before the model was even dispatched (time-to-first-token).
+  const [settings, rl, b, thread] = await Promise.all([
+    getPlatformSettings(),
+    ratelimit.bot(bot, user.id),
+    budget.check(bot, user.id),
+    getOrCreateThread({ userId: user.id, chatbotId: bot.id, threadId }),
+  ]);
+
+  if (settings.globalChatDisabled) {
+    return { ok: false, error: { kind: "global_disabled" } };
+  }
   if (!rl.success) {
     await writeAudit({
       actorId: user.id,
@@ -78,8 +88,6 @@ export async function runBotStream(input: RunInput): Promise<RunResult> {
       },
     };
   }
-
-  const b = await budget.check(bot, user.id);
   if (!b.ok) {
     await writeAudit({
       actorId: user.id,
@@ -93,20 +101,20 @@ export async function runBotStream(input: RunInput): Promise<RunResult> {
     };
   }
 
-  const thread = await getOrCreateThread({
-    userId: user.id,
-    chatbotId: bot.id,
-    threadId,
-  });
-
+  // Persist the user message OFF the critical path. Writing it (insert +
+  // thread bump + auto-title = 3 statements) used to block the model
+  // dispatch; the first token shouldn't wait on it. The assistant message is
+  // saved later in recordTurnEnd, and this insert fires now and completes in
+  // ~tens of ms (well before the stream closes), so createdAt ordering holds.
   const userMsg = messages.at(-1);
   if (userMsg?.role === "user" && typeof userMsg.content === "string" && userMsg.content.length) {
-    await appendMessage({
-      threadId: thread.id,
-      role: "user",
-      content: userMsg.content,
-    });
-    await autoTitleIfNeeded(thread.id, userMsg.content);
+    const content = userMsg.content;
+    void (async () => {
+      await appendMessage({ threadId: thread.id, role: "user", content });
+      await autoTitleIfNeeded(thread.id, content);
+    })().catch((err) =>
+      captureError(err, { route: "runtime.persistUserMsg", botId: bot.id, threadId: thread.id }),
+    );
   }
 
   // Dispatch to the engine. Default `ai_sdk` keeps the original
