@@ -92,6 +92,7 @@ export function WcxChat() {
     resetThread,
     failed,
     retry,
+    error,
   } = useBot(BOT_SLUG, {
     initialThreadId: initialThread ?? undefined,
     onThreadIdAssigned: (id) => localStorage.setItem(THREAD_KEY, id),
@@ -371,7 +372,11 @@ export function WcxChat() {
                 )}
                 {failed && !isLoading && (
                   <div className="flex items-center justify-between gap-3 rounded-sm border border-[#f3c4be] bg-[#fdeeec] px-3 py-2 text-[12px] text-[#b03a2e]">
-                    <span>The response didn&apos;t finish. It may have timed out mid-analysis.</span>
+                    <span className="min-w-0 break-words">
+                      {error?.message
+                        ? `Couldn't finish: ${error.message}`
+                        : "The response didn't finish — it may have timed out mid-analysis."}
+                    </span>
                     <button
                       type="button"
                       onClick={retry}
