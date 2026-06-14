@@ -102,8 +102,38 @@ function Prose({ text, caret = false }: { text: string; caret?: boolean }) {
   );
 }
 
+// Maps a tool name + args to its inline visual. Used both in part-ordered
+// rendering and the history fallback.
+function renderTool(toolName: string, args: unknown, key: string): React.ReactNode {
+  switch (toolName) {
+    case "renderChart":
+      return <ChatChart key={key} args={args as ChartArgs} />;
+    case "renderTable":
+      return <ChatTable key={key} args={args as TableArgs} />;
+    case "renderKpiList":
+      return <ChatKpi key={key} args={args as KpiArgs} />;
+    case "renderDelta":
+      return <ChatDelta key={key} args={args as DeltaArgs} />;
+    case "renderSparkline":
+      return <ChatSparkline key={key} args={args as SparklineArgs} />;
+    case "renderHeatmap":
+      return <ChatHeatmap key={key} args={args as HeatmapArgs} />;
+    case "renderQuadrant":
+      return <ChatQuadrant key={key} args={args as QuadrantArgs} />;
+    case "renderTimeline":
+      return <ChatTimeline key={key} args={args as TimelineArgs} />;
+    case "renderWaterfall":
+      return <ChatWaterfall key={key} args={args as WaterfallArgs} />;
+    default:
+      return null;
+  }
+}
+
 function ChatMessageImpl({ message, streaming = false }: { message: Message; streaming?: boolean }) {
   const isUser = message.role === "user";
+  // `parts` preserves the model's emission order (text, chart, text, chart…)
+  // so each chart sits directly under the commentary that introduces it.
+  const parts = !isUser ? message.parts : undefined;
 
   // Has the assistant produced anything visible yet? While the model is
   // mid-turn, the bubble might already exist with only an invisible
@@ -135,49 +165,38 @@ function ChatMessageImpl({ message, streaming = false }: { message: Message; str
           </div>
         )}
 
-        {/* Text content */}
-        {message.content && (
-          <div className={isUser ? "text-[13px] leading-relaxed" : ""}>
-            {isUser ? message.content : <Prose text={message.content} caret={streaming} />}
-          </div>
-        )}
-
-        {/* Tool invocations — render each chart/table inline */}
-        {!isUser &&
-          message.toolInvocations?.map((inv) => {
-            // The model's args are available immediately (state='call'),
-            // the full result comes when execute finishes (state='result').
-            // Since our execute is a pass-through, args === result.
-            const args = inv.args as unknown;
-            if (inv.toolName === "renderChart") {
-              return <ChatChart key={inv.toolCallId} args={args as ChartArgs} />;
+        {/* Body. For an assistant turn we walk message.parts in order so a
+            multi-chart answer interleaves commentary and charts (text →
+            chart → text → chart) instead of stacking all text above all
+            charts. Restored history has no parts (the DB stores content +
+            tool calls separately, losing interleaving) → fall back to the
+            text-then-tools layout. User turns render as plain text. */}
+        {!isUser && parts && parts.length > 0 ? (
+          parts.map((part, i) => {
+            if (part.type === "text") {
+              return part.text ? (
+                <Prose key={`t-${i}`} text={part.text} caret={streaming && i === parts.length - 1} />
+              ) : null;
             }
-            if (inv.toolName === "renderTable") {
-              return <ChatTable key={inv.toolCallId} args={args as TableArgs} />;
-            }
-            if (inv.toolName === "renderKpiList") {
-              return <ChatKpi key={inv.toolCallId} args={args as KpiArgs} />;
-            }
-            if (inv.toolName === "renderDelta") {
-              return <ChatDelta key={inv.toolCallId} args={args as DeltaArgs} />;
-            }
-            if (inv.toolName === "renderSparkline") {
-              return <ChatSparkline key={inv.toolCallId} args={args as SparklineArgs} />;
-            }
-            if (inv.toolName === "renderHeatmap") {
-              return <ChatHeatmap key={inv.toolCallId} args={args as HeatmapArgs} />;
-            }
-            if (inv.toolName === "renderQuadrant") {
-              return <ChatQuadrant key={inv.toolCallId} args={args as QuadrantArgs} />;
-            }
-            if (inv.toolName === "renderTimeline") {
-              return <ChatTimeline key={inv.toolCallId} args={args as TimelineArgs} />;
-            }
-            if (inv.toolName === "renderWaterfall") {
-              return <ChatWaterfall key={inv.toolCallId} args={args as WaterfallArgs} />;
+            if (part.type === "tool-invocation") {
+              const inv = part.toolInvocation;
+              return renderTool(inv.toolName, inv.args as unknown, inv.toolCallId);
             }
             return null;
-          })}
+          })
+        ) : (
+          <>
+            {message.content && (
+              <div className={isUser ? "text-[13px] leading-relaxed" : ""}>
+                {isUser ? message.content : <Prose text={message.content} caret={streaming} />}
+              </div>
+            )}
+            {!isUser &&
+              message.toolInvocations?.map((inv) =>
+                renderTool(inv.toolName, inv.args as unknown, inv.toolCallId),
+              )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -204,5 +223,6 @@ export const ChatMessage = memo(
     prev.message.id === next.message.id &&
     prev.message.role === next.message.role &&
     prev.message.content === next.message.content &&
+    (prev.message.parts?.length ?? 0) === (next.message.parts?.length ?? 0) &&
     sameInvocations(prev.message, next.message),
 );
