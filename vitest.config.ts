@@ -23,6 +23,7 @@ export default defineConfig({
         "lib/chatbots/providers.ts",
         "lib/chatbots/rate-limit.ts",
         "lib/chatbots/route-handler.ts",
+        "lib/chatbots/runtime.ts",
         "lib/validation/chatbot.ts",
         "lib/validation/schemas.ts",
         "lib/text/diff.ts",
