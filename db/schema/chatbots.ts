@@ -46,7 +46,6 @@ export const TOOL_IDS = [
   "searchDocs",
   "searchDatasetDocs",
   "queryDatasetRows",
-  "atlasSnapshot",
   "wcSnapshot",
   "wcScenarioCalc",
   "wcxLookup",

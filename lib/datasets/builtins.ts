@@ -14,27 +14,11 @@ export type BuiltinCard = {
 };
 
 export const BUILTIN_CARDS: Record<string, BuiltinCard> = {
-  "sbu-atlas": {
-    key: "sbu-atlas",
-    title: "SBU Performance Atlas — FY2026",
-    description:
-      "14 SBUs, 15 HQ departments, and the SLA allocation matrix. Composite ranking, quadrant analysis, cost matrix, and strategic readout across seven analytical sections.",
-    route: "sbu-performance-atlas",
-    chatbotSlug: "atlas-analyst",
-  },
-  "working-capital-ccc": {
-    key: "working-capital-ccc",
-    title: "Working Capital & CCC — Interactive Brief",
-    description:
-      "FY-2023 → FY-2025 working capital and cash conversion cycle model. Drag sliders for Inventory, AR, Contract Assets, AP and DIO/DSO/DPO across 10 SBUs to see live group impact and identified cash release.",
-    route: "working-capital-ccc",
-    chatbotSlug: "atlas-analyst",
-  },
   "working-capital-data": {
     key: "working-capital-data",
     title: "Working Capital & CCC — Live Brief (DB-backed)",
     description:
-      "Same interactive working-capital model, but every figure is sourced from Postgres (wc_groups / wc_sbus / wc_narrative) so admins can edit numbers in /admin/working-capital and the chatbot's vector knowledge base re-syncs on the next retrain. The static brief stays available alongside.",
+      "Interactive working-capital model where every figure is sourced from Postgres (wc_groups / wc_sbus / wc_narrative) so admins can edit numbers in /admin/working-capital and the chatbot's vector knowledge base re-syncs on the next retrain.",
     route: "working-capital-data",
     // Empty slug → seed leaves chatbot_id NULL on this dataset row, so
     // the existing dataset-by-chatbot lookup keeps resolving to the

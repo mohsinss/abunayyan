@@ -55,11 +55,6 @@ export const TOOL_METADATA: readonly ToolMetadata[] = [
     costClass: "cheap",
   },
   {
-    id: "atlasSnapshot",
-    description: "Return the FY2026 Atlas snapshot (entities, departments, matrix).",
-    costClass: "free",
-  },
-  {
     id: "wcSnapshot",
     description: "Read the working-capital tables (group / SBU / narrative) directly.",
     costClass: "free",

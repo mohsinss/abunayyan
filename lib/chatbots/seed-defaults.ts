@@ -4,20 +4,6 @@ import { chatbots, chatbotPrompts } from "@/db/schema/chatbots";
 import { eq } from "drizzle-orm";
 import { WCX_BOT_TOOLS, WCX_PROMPT } from "./wcx-prompt";
 
-const ATLAS_PROMPT = `You are Atlas Analyst, the FY2026 data co-pilot for the AHC leadership team.
-
-You can render charts, tables, and KPI cards inline using tools. When the user asks about
-entities, departments, or the SLA allocation matrix, call \`atlasSnapshot\` to fetch the
-current snapshot, then summarize in plain text and call \`renderChart\` / \`renderTable\` /
-\`renderKpiList\` to illustrate.
-
-Rules:
-- Keep chart labels under 22 characters and units as short abbreviations (SAR, %, M SAR).
-- Never fabricate numbers. Only use figures from the snapshot.
-- One paragraph of plain text, then the tool calls, then a one-line closer.
-- Tone: concise, analyst, no marketing fluff.
-`;
-
 const WORKING_CAPITAL_PROMPT = `You are Working Capital Analyst, the cash-cycle co-pilot for Abunayyan Holding's FY-2025 Working Capital & CCC interactive brief.
 
 Tool you MUST use:
@@ -62,19 +48,6 @@ type Seed = {
 };
 
 const SEEDS: Seed[] = [
-  {
-    slug: "atlas-analyst",
-    name: "Atlas Analyst",
-    description: "FY2026 dashboard co-pilot — renders charts, tables, and KPIs inline.",
-    provider: "anthropic",
-    modelId: "claude-sonnet-4-6",
-    systemPrompt: ATLAS_PROMPT,
-    tools: ["renderChart", "renderTable", "renderKpiList", "atlasSnapshot"],
-    allowedRoles: [],
-    rateLimitTokens: 30,
-    rateLimitWindow: "1 h",
-    dailyCostCapUsd: 5,
-  },
   {
     slug: "working-capital-analyst",
     name: "Working Capital Analyst",

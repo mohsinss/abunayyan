@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { ArrowUpRight, Plus, Radio, Sparkles } from "lucide-react";
+import { ArrowUpRight, Radio, Sparkles } from "lucide-react";
 
-// Visual accent on the gallery tiles. Default tiles render plain.
+// Visual accent on the hub tiles. Default tiles render plain.
 // "navy" tiles get the brand gradient stripe + a glowing badge — used
-// for the DB-backed Working Capital brief so it stands out from the
-// static FY-2025 card and reads as the live, editable surface.
-export type CardAccent = "default" | "navy" | "atlas";
+// for the live, DB/AI-backed dashboards so they stand out.
+export type CardAccent = "default" | "navy";
 
 type CardTileProps = {
   title: string;
@@ -29,7 +28,6 @@ export function CardTile({
   badge,
 }: CardTileProps) {
   if (accent === "navy") return <NavyTile {...{ title, description, href, meta, badge }} />;
-  if (accent === "atlas") return <AtlasTile {...{ title, description, href, meta, badge }} />;
   return <DefaultTile {...{ title, description, href, meta, badge }} />;
 }
 
@@ -154,88 +152,3 @@ function NavyTile({
   );
 }
 
-// Subtle warm accent for the SBU Atlas tile — matches the cream/gold
-// editorial palette used by /sbu-performance-atlas.
-function AtlasTile({
-  title,
-  description,
-  href,
-  meta,
-  badge,
-}: Omit<CardTileProps, "accent">) {
-  return (
-    <Link
-      href={href}
-      className="group relative flex h-full flex-col overflow-hidden rounded-lg p-6 transition hover:shadow-md"
-      style={{
-        background: "linear-gradient(180deg, #fdfaf2 0%, #ffffff 70%)",
-        border: "1px solid #efe5cc",
-        boxShadow: "0 1px 2px rgba(139,111,46,0.05)",
-      }}
-    >
-      <span
-        aria-hidden
-        className="absolute left-0 top-0 h-full w-[3px]"
-        style={{ background: "linear-gradient(180deg, #8b6f2e, #c9a44b)" }}
-      />
-      <div className="relative flex items-start justify-between gap-3">
-        <h3 className="text-lg font-semibold leading-tight" style={{ color: "#3a2f15" }}>
-          {title}
-        </h3>
-        <ArrowUpRight
-          className="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-          style={{ color: "#8b6f2e" }}
-        />
-      </div>
-      {description ? (
-        <p
-          className="relative mt-2 line-clamp-4 text-sm leading-relaxed"
-          style={{ color: "#5a4d2f" }}
-        >
-          {description}
-        </p>
-      ) : null}
-      <div className="relative mt-auto flex items-center gap-2 pt-4">
-        {badge ? (
-          <span
-            className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
-            style={{
-              background: "rgba(139,111,46,0.10)",
-              color: "#8b6f2e",
-              border: "1px solid rgba(139,111,46,0.22)",
-            }}
-          >
-            {badge}
-          </span>
-        ) : null}
-        {meta ? (
-          <p
-            className="text-[10.5px] font-medium uppercase tracking-[0.16em]"
-            style={{ color: "#8b6f2e" }}
-          >
-            {meta}
-          </p>
-        ) : null}
-      </div>
-    </Link>
-  );
-}
-
-type CreateTileProps = { href: string };
-
-export function CreateCardTile({ href }: CreateTileProps) {
-  return (
-    <Link
-      href={href}
-      className="group flex min-h-[180px] items-center justify-center rounded-lg border border-dashed border-border bg-card/40 p-6 text-center transition hover:border-foreground/40 hover:bg-card"
-    >
-      <div>
-        <Plus className="mx-auto h-6 w-6 text-muted-foreground group-hover:text-foreground" />
-        <div className="mt-2 text-sm font-medium text-foreground">Create new dataset</div>
-        <div className="mt-1 text-xs text-muted-foreground">
-          Upload files and let the AI propose a card
-        </div>
-      </div>
-    </Link>
-  );
-}

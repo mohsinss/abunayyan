@@ -13,7 +13,6 @@ import { renderTimeline } from "./render-timeline";
 import { searchDocs } from "./search-docs";
 import { searchDatasetDocs } from "./search-dataset-docs";
 import { queryDatasetRows } from "./query-dataset-rows";
-import { atlasSnapshot } from "./atlas-snapshot";
 import { wcSnapshot } from "./wc-snapshot";
 import { wcScenarioCalc } from "./wc-scenario-calc";
 import { wcxLookup } from "./wcx-lookup";
@@ -39,7 +38,6 @@ const ALL_TOOLS: Record<ToolId, ToolDefinition> = {
   searchDocs,
   searchDatasetDocs,
   queryDatasetRows,
-  atlasSnapshot,
   wcSnapshot,
   wcScenarioCalc,
   wcxLookup,
