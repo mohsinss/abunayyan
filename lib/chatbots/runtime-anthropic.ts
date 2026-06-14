@@ -208,9 +208,17 @@ export function streamViaAnthropicDirect(args: {
           // doesn't translate, so we provide a sane default when unset.
           const maxTokens = bot.maxTokens ?? 4096;
           const history: AnthropicMessage[] = [...baseMessages];
+          // One id for the whole assistant message, stamped on every step.
+          const messageId = crypto.randomUUID();
 
           try {
             while (stepIndex < bot.maxSteps) {
+              // Emit a step boundary. This is what lets the client (useChat)
+              // split assistant text into per-step parts and interleave them
+              // with tool calls (text → chart → text → chart). Without the
+              // start_step/finish_step markers, all text merges into a single
+              // leading part and every chart stacks beneath it.
+              writer.write(formatDataStreamPart("start_step", { messageId }));
               const step = await runStep(client, {
                 model: bot.modelId,
                 system: bot.systemPrompt,
@@ -314,11 +322,23 @@ export function streamViaAnthropicDirect(args: {
                 }
                 history.push({ role: "user", content: resultBlocks });
 
+                writer.write(
+                  formatDataStreamPart("finish_step", {
+                    finishReason: "tool-calls",
+                    isContinued: false,
+                  }),
+                );
                 stepIndex++;
                 continue;
               }
 
               // end_turn / max_tokens / stop_sequence — terminal.
+              writer.write(
+                formatDataStreamPart("finish_step", {
+                  finishReason: "stop",
+                  isContinued: false,
+                }),
+              );
               break;
             }
 
