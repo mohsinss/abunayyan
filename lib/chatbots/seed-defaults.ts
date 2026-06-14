@@ -75,9 +75,9 @@ const SEEDS: Seed[] = [
     rateLimitTokens: 30,
     rateLimitWindow: "1 h",
     dailyCostCapUsd: 5,
-    // Cash-bridge / variance recipes legitimately chain several data calls
-    // before rendering; 8 steps gives headroom without runaway loops.
-    maxSteps: 8,
+    // Speed-first: the prompt gathers in ~1 round and renders in the next, so
+    // 4 steps is ample while capping a runaway 8-round / 10-tool fan-out.
+    maxSteps: 4,
   },
   {
     slug: "general",

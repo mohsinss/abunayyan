@@ -38,7 +38,10 @@ async function main() {
       tools,
       systemPrompt: WCX_PROMPT,
       systemPromptVersion: nextVersion,
-      maxSteps: 8,
+      // Capped low: with the speed-first prompt the bot gathers in ~1 round
+      // and renders in the next, so 4 is ample headroom while preventing a
+      // runaway 8-round, 10-tool fan-out that takes 30s+ before any answer.
+      maxSteps: 4,
       updatedAt: new Date(),
     })
     .where(eq(schema.chatbots.id, bot.id));
