@@ -7,7 +7,9 @@
 // aging, targets) that the workbook data makes possible.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Download, Printer } from "lucide-react";
 import type { WcxDashboardData } from "@/lib/wcx/dashboard-data";
+import { downloadWorkbook } from "@/lib/export/download";
 import {
   applyLever,
   applyPreset,
@@ -130,6 +132,53 @@ export function WcxBrief({ data }: { data: WcxDashboardData }) {
 
   const active = baselines.find((b) => b.code === activeCode) ?? baselines[0];
 
+  // Export the board-relevant tables (raw numbers, not formatted strings, so
+  // finance can pivot/recompute) as a multi-sheet workbook keyed by the
+  // active version's period. Reflects the loaded actuals — not the live
+  // slider scenario — so the file is a stable snapshot of the brief.
+  const onExportExcel = useCallback(() => {
+    const k = data.kpis;
+    void downloadWorkbook(`WC-Intelligence_${data.upload.periodEnd}`, [
+      {
+        name: "Group KPIs",
+        headers: ["Metric", "Latest", "Δ 1-month", "Δ 12-month"],
+        rows: [
+          ["Operating NWC (SAR)", k.nwc.value, k.nwc.delta1m, k.nwc.delta12m],
+          ["Group CCC (days)", k.ccc.value, k.ccc.delta1m, k.ccc.delta12m],
+          ["Revenue TTM (SAR)", k.revenueTtm.value, k.revenueTtm.delta1m, k.revenueTtm.delta12m],
+          ["Operating CF TTM (SAR)", k.ocfTtm.value, k.ocfTtm.delta1m, k.ocfTtm.delta12m],
+          ["Closing Cash (SAR)", k.cash.value, k.cash.delta1m, k.cash.delta12m],
+        ],
+      },
+      {
+        name: "CCC by SBU",
+        headers: ["Code", "Name", "CCC", "DIO", "DSO", "DPO"],
+        rows: data.cccBySbu.map((s) => [s.code, s.name, s.ccc, s.dio, s.dso, s.dpo]),
+      },
+      {
+        name: "Targets vs Actuals",
+        headers: [
+          "Code", "Actual CCC", "Target CCC", "Actual DSO", "Target DSO",
+          "Actual DIO", "Target DIO", "Actual DPO", "Target DPO",
+        ],
+        rows: data.targets.map((t) => [
+          t.code, t.actualCcc, t.targetCcc, t.actualDso, t.targetDso,
+          t.actualDio, t.targetDio, t.actualDpo, t.targetDpo,
+        ]),
+      },
+      {
+        name: "NWC Trend",
+        headers: ["Month", "Inventory", "AR + Contract Assets", "AP", "NWC"],
+        rows: data.nwcTrend.map((r) => [r.month, r.inv, r.arCa, r.ap, r.nwc]),
+      },
+      {
+        name: "Revenue vs OCF",
+        headers: ["Month", "Revenue", "Operating Cash Flow"],
+        rows: data.revVsOcf.map((r) => [r.month, r.revenue, r.ocf]),
+      },
+    ]);
+  }, [data]);
+
   return (
     <div className={styles.root}>
       {/* Sticky executive ticker — live group impact */}
@@ -182,7 +231,25 @@ export function WcxBrief({ data }: { data: WcxDashboardData }) {
               tone={release > 0 ? "good" : release < 0 ? "bad" : undefined}
             />
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className={styles.tickerActions}>
+            <button
+              type="button"
+              onClick={onExportExcel}
+              className={styles.jumpPill}
+              title="Download the board tables as a multi-sheet Excel workbook"
+            >
+              <Download style={{ width: 12, height: 12 }} />
+              Export Excel
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className={styles.jumpPill}
+              title="Print or save the brief as a PDF board pack"
+            >
+              <Printer style={{ width: 12, height: 12 }} />
+              Print / PDF
+            </button>
             <button
               type="button"
               onClick={() => dashRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}

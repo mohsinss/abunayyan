@@ -1,5 +1,8 @@
 "use client";
 
+import { Download } from "lucide-react";
+import { downloadCsv } from "@/lib/export/download";
+
 export interface TableArgs {
   title: string;
   caption?: string;
@@ -21,13 +24,24 @@ export function ChatTable({ args }: { args: TableArgs }) {
   const emphasisMap = new Map((args.emphasis ?? []).map((e) => [e.rowIndex, e.tone]));
   return (
     <figure className="my-3 overflow-hidden rounded-sm border border-atlas-line bg-atlas-bg-2">
-      <figcaption className="border-b border-atlas-line px-3 py-2">
-        <div className="font-serif text-[13px] font-medium text-atlas-ink">{args.title}</div>
-        {args.caption && (
-          <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[1px] text-atlas-ink-3">
-            {args.caption}
-          </div>
-        )}
+      <figcaption className="flex items-start justify-between gap-2 border-b border-atlas-line px-3 py-2">
+        <div className="min-w-0">
+          <div className="font-serif text-[13px] font-medium text-atlas-ink">{args.title}</div>
+          {args.caption && (
+            <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[1px] text-atlas-ink-3">
+              {args.caption}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => downloadCsv(args.title || "table", args.headers, args.rows)}
+          className="flex shrink-0 items-center gap-1 rounded-sm border border-atlas-line px-1.5 py-1 font-mono text-[9px] uppercase tracking-[1px] text-atlas-ink-3 transition hover:border-atlas-ink-3 hover:text-atlas-ink"
+          title="Export this table as CSV"
+        >
+          <Download className="size-3" />
+          CSV
+        </button>
       </figcaption>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse font-mono text-[11px]">

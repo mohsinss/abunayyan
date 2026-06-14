@@ -1225,3 +1225,46 @@
   color: var(--bad);
   border: 1px solid #f3c4be;
 }
+
+/* Ticker action pills (Export / Print / jump links) — grouped so the print
+   stylesheet can drop the whole interactive cluster. */
+.tickerActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Print / "Save as PDF" board pack ──────────────────────────────────────
+   Turns the on-screen brief into a clean printable document: brand colours
+   are preserved, the sticky ticker and interactive pills are dropped, and
+   sections are kept from splitting across page breaks. Triggered by the
+   "Print / PDF" button (window.print) and any Ctrl/Cmd-P. */
+@media print {
+  .root {
+    background: #fff;
+    font-size: 11px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .ticker {
+    position: static;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .tickerActions {
+    display: none !important;
+  }
+  .hero {
+    padding: 16px 24px 8px;
+  }
+  .hero h1 {
+    font-size: 24px;
+  }
+  /* Sections and chart canvases shouldn't be sliced across page breaks. */
+  .section,
+  .root :global(canvas) {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

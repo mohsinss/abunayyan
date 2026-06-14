@@ -6,7 +6,8 @@
 // data table. Closes on backdrop click, the X button, or Escape.
 
 import { useEffect } from "react";
-import { X } from "lucide-react";
+import { Download, X } from "lucide-react";
+import { downloadCsv } from "@/lib/export/download";
 import {
   Area,
   AreaChart,
@@ -410,8 +411,37 @@ export function ChatChartModal({ args, onClose }: { args: ChartArgs; onClose: ()
 
           {/* Underlying data */}
           <div className="border-t px-5 py-4" style={{ borderColor: "#e3e8f1" }}>
-            <div className="mb-2 font-mono text-[10px] uppercase tracking-[1.4px]" style={{ color: "#7f7f7f" }}>
-              Underlying data
+            <div className="mb-2 flex items-center justify-between">
+              <div className="font-mono text-[10px] uppercase tracking-[1.4px]" style={{ color: "#7f7f7f" }}>
+                Underlying data
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const headers =
+                    type === "scatter"
+                      ? ["Label", args.xAxisLabel ?? "X", args.yAxisLabel ?? "Y"]
+                      : ["Label", `Value${unit ? ` (${unit})` : ""}`, "Share %"];
+                  const rows = sorted.map((d) =>
+                    type === "scatter"
+                      ? [d.label, d.x ?? "", d.y ?? ""]
+                      : [
+                          d.label,
+                          d.value ?? "",
+                          total > 0 && d.value !== undefined
+                            ? +((d.value / total) * 100).toFixed(1)
+                            : "",
+                        ],
+                  );
+                  downloadCsv(title || "chart", headers, rows);
+                }}
+                className="flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-[9.5px] uppercase tracking-[0.8px] transition-colors hover:bg-[#f0f6fd]"
+                style={{ borderColor: "#e3e8f1", color: "#4a5568" }}
+                title="Export underlying data as CSV"
+              >
+                <Download className="size-3" />
+                CSV
+              </button>
             </div>
             <table className="w-full text-[12px]" style={{ color: "#1a2233" }}>
               <thead>
