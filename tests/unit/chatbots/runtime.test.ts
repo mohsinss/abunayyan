@@ -75,7 +75,9 @@ function bot(overrides: Partial<Chatbot> = {}): Chatbot {
 }
 
 const user = { id: "u1", role: "member" as const, disabled: false };
-const userMessages = [{ id: "1", role: "user" as const, content: "hi" }];
+// runtime only reads the last message's role/content, so a minimal shape is
+// fine — cast past the AI SDK UIMessage's `parts` requirement.
+const userMessages = [{ id: "1", role: "user", content: "hi" }] as never;
 
 const AI_SDK_STREAM = { __engine: "ai_sdk" } as never;
 const ANTHROPIC_STREAM = { __engine: "anthropic_direct" } as never;

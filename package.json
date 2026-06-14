@@ -104,6 +104,7 @@
   },
   "devDependencies": {
     "@clack/prompts": "^0.8.0",
+    "@electric-sql/pglite": "^0.5.2",
     "@playwright/test": "^1.49.0",
     "@react-email/components": "^0.0.31",
     "@testing-library/jest-dom": "^6.6.0",
