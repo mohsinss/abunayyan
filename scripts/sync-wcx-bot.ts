@@ -38,6 +38,11 @@ async function main() {
       tools,
       systemPrompt: WCX_PROMPT,
       systemPromptVersion: nextVersion,
+      // Direct Anthropic engine: enforces one-tool-per-turn interleaving
+      // (disable_parallel_tool_use), smooths the stream, and — unlike the AI
+      // SDK path — recovers from a tool-arg validation failure instead of
+      // killing the turn (the runtime returns it as a retryable tool_result).
+      engine: "anthropic_direct",
       // One tool per turn (disable_parallel_tool_use) means each visual is
       // its own step: framing+snapshot, then one render per beat, then a
       // text closer. A 4-chart answer needs ~6 steps, so 8 gives headroom

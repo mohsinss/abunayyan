@@ -76,13 +76,37 @@ export function buildAnthropicTools(
       if (!t) {
         return { error: "unknown_tool", message: `No tool registered for "${name}"` };
       }
+      // Validate (and normalize) the model's args through the tool's own Zod
+      // schema before executing. The AI SDK path does this inside streamText —
+      // and a failure there kills the whole turn. Here we do it ourselves so
+      // that (a) the render tools' tolerant schemas actually apply their
+      // .catch()/.transform() cleaning (clamped arrays, off-vocab tones) before
+      // the value reaches a React render component, and (b) a genuinely invalid
+      // arg becomes a recoverable tool_result error the model can retry from,
+      // never a thrown crash.
+      const params = (t as Tool & { parameters?: z.ZodTypeAny }).parameters;
+      let parsedInput = input;
+      if (params) {
+        const result = params.safeParse(input);
+        if (!result.success) {
+          return {
+            error: "invalid_tool_arguments",
+            message: `Arguments for "${name}" failed validation — correct them and call the tool again.`,
+            issues: result.error.issues.map((i: z.ZodIssue) => ({
+              path: i.path.join("."),
+              message: i.message,
+            })),
+          };
+        }
+        parsedInput = result.data;
+      }
       // The AI SDK tool's execute is async and may throw; we surface
       // errors as tool_result content with is_error=true upstream.
       const exec = (t as Tool & {
         execute?: (_args: unknown, _opts: { toolCallId: string; messages: [] }) => Promise<unknown>;
       }).execute;
       if (!exec) return { error: "no_execute", message: `Tool "${name}" has no execute function` };
-      return exec(input, { toolCallId: `${name}-direct`, messages: [] });
+      return exec(parsedInput, { toolCallId: `${name}-direct`, messages: [] });
     },
   };
 }

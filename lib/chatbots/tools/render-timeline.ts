@@ -1,23 +1,21 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "./types";
-import { clampedString } from "./schema";
+import { clampedArray, clampedString, tolerantEnum } from "./schema";
 
 const TimelineSchema = z.object({
   title: clampedString(120),
   description: clampedString(240).optional(),
-  events: z
-    .array(
-      z.object({
-        at: clampedString(40),
-        label: clampedString(72),
-        detail: clampedString(240).optional(),
-        tone: z.enum(["info", "good", "bad", "warn"]).optional(),
-        group: clampedString(40).optional(),
-      }),
-    )
-    .min(1)
-    .max(40),
+  events: clampedArray(
+    z.object({
+      at: clampedString(40),
+      label: clampedString(72),
+      detail: clampedString(240).optional(),
+      tone: tolerantEnum(["info", "good", "bad", "warn"], "info").optional(),
+      group: clampedString(40).optional(),
+    }),
+    { min: 1, max: 40 },
+  ),
   range: z
     .object({
       from: z.string().optional(),

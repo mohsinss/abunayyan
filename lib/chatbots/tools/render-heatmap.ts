@@ -1,24 +1,22 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "./types";
-import { clampedString } from "./schema";
+import { clampedArray, clampedString, tolerantEnum } from "./schema";
 
 const HeatmapSchema = z.object({
   title: clampedString(120),
   description: clampedString(240).optional(),
-  xLabels: z.array(clampedString(40)).min(2).max(30),
-  yLabels: z.array(clampedString(40)).min(2).max(30),
-  cells: z
-    .array(
-      z.object({
-        x: z.number().int().min(0),
-        y: z.number().int().min(0),
-        value: z.number(),
-        label: clampedString(40).optional(),
-      }),
-    )
-    .min(1)
-    .max(900),
+  xLabels: clampedArray(clampedString(40), { min: 2, max: 30 }),
+  yLabels: clampedArray(clampedString(40), { min: 2, max: 30 }),
+  cells: clampedArray(
+    z.object({
+      x: z.number().int().min(0),
+      y: z.number().int().min(0),
+      value: z.number(),
+      label: clampedString(40).optional(),
+    }),
+    { min: 1, max: 900 },
+  ),
   unit: clampedString(12).optional(),
   scale: z
     .object({
@@ -28,7 +26,7 @@ const HeatmapSchema = z.object({
       // light-to-dark brand-3 → brand-1 ramp used for non-negative
       // values; `diverging` is for matrices where values genuinely
       // cross zero (red→white→green). No off-brand warm/gold ramp.
-      palette: z.enum(["navy", "diverging"]).optional(),
+      palette: tolerantEnum(["navy", "diverging"], "navy").optional(),
     })
     .optional(),
 });

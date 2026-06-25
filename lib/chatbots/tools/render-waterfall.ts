@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "./types";
-import { clampedString } from "./schema";
+import { clampedArray, clampedString, tolerantEnum } from "./schema";
 
 const WaterfallSchema = z.object({
   title: clampedString(120),
@@ -14,16 +14,14 @@ const WaterfallSchema = z.object({
   }),
   // Signed deltas applied cumulatively after the start bar. Positive steps
   // rise (green), negative fall (red) unless a tone overrides.
-  steps: z
-    .array(
-      z.object({
-        label: clampedString(32),
-        delta: z.number().finite(),
-        tone: z.enum(["positive", "neutral", "warn", "negative"]).optional(),
-      }),
-    )
-    .min(1)
-    .max(15),
+  steps: clampedArray(
+    z.object({
+      label: clampedString(32),
+      delta: z.number().finite(),
+      tone: tolerantEnum(["positive", "neutral", "warn", "negative"], "neutral").optional(),
+    }),
+    { min: 1, max: 15 },
+  ),
   endLabel: clampedString(32).optional().describe("Label for the computed final bar."),
 });
 

@@ -1,28 +1,26 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "./types";
-import { clampedString } from "./schema";
+import { clampedArray, clampedString, tolerantEnum } from "./schema";
 
 const ChartSchema = z.object({
-  type: z.enum(["bar", "horizontal-bar", "pie", "scatter", "line", "area"]),
+  type: tolerantEnum(["bar", "horizontal-bar", "pie", "scatter", "line", "area"], "bar"),
   title: clampedString(120),
   description: clampedString(240).optional(),
   unit: clampedString(12).optional(),
   xAxisLabel: clampedString(60).optional(),
   yAxisLabel: clampedString(60).optional(),
-  data: z
-    .array(
-      z.object({
-        label: clampedString(32),
-        value: z.number().optional(),
-        x: z.number().optional(),
-        y: z.number().optional(),
-        tone: z.enum(["positive", "neutral", "warn", "negative"]).optional(),
-      }),
-    )
-    .min(1)
-    // 60 fits a full monthly series from wcxSeries (36+ months).
-    .max(60),
+  // 60 fits a full monthly series from wcxSeries (36+ months); clamps if over.
+  data: clampedArray(
+    z.object({
+      label: clampedString(32),
+      value: z.number().optional(),
+      x: z.number().optional(),
+      y: z.number().optional(),
+      tone: tolerantEnum(["positive", "neutral", "warn", "negative"], "neutral").optional(),
+    }),
+    { min: 1, max: 60 },
+  ),
 });
 
 const description =

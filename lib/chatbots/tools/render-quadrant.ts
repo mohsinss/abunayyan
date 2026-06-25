@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolDefinition } from "./types";
-import { clampedString } from "./schema";
+import { clampedArray, clampedString, tolerantEnum } from "./schema";
 
 const QuadrantSchema = z.object({
   title: clampedString(120),
@@ -24,18 +24,16 @@ const QuadrantSchema = z.object({
       br: clampedString(40).optional(),
     })
     .optional(),
-  points: z
-    .array(
-      z.object({
-        label: clampedString(32),
-        x: z.number(),
-        y: z.number(),
-        tone: z.enum(["good", "bad", "warn", "neutral"]).optional(),
-        size: z.number().min(2).max(20).optional(),
-      }),
-    )
-    .min(1)
-    .max(40),
+  points: clampedArray(
+    z.object({
+      label: clampedString(32),
+      x: z.number(),
+      y: z.number(),
+      tone: tolerantEnum(["good", "bad", "warn", "neutral"], "neutral").optional(),
+      size: z.number().min(2).max(20).catch(8).optional(),
+    }),
+    { min: 1, max: 40 },
+  ),
 });
 
 const description =

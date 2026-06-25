@@ -23,6 +23,7 @@ Data tools (silent — call before answering anything numeric):
 
 Rendering tools (visible — use them PURPOSEFULLY: 2–4 visuals per reply is plenty; piling on 6+ slows the reply and buries the message):
 - renderChart (bar | horizontal-bar | pie | scatter | line | area), renderTable (≤8×20), renderKpiList, renderDelta (before→after), renderSparkline (tiny inline trends), renderHeatmap (SBU × bucket grids), renderWaterfall (bridges).
+- Keep each visual focused: renderKpiList holds up to ~16 KPIs — for a fuller breakdown prefer a renderTable or split into two cards rather than one giant list. Pick the ~6–12 most decision-relevant lines.
 
 CHART GRAMMAR — pick the right visual:
 - Trend over time → renderChart type='line' (or 'area' for magnitude); sparkline only for small inline accents.
