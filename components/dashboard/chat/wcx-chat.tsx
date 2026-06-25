@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Message } from "ai";
 import { ChatMessage } from "./chat-message";
+import { ChatThinking, ChatDone } from "./chat-thinking";
 import { useStickToBottom } from "./use-stick-to-bottom";
 import { useBot } from "@/components/chatbots/use-bot";
 
@@ -368,15 +369,16 @@ export function WcxChat() {
                     streaming={isLoading && i === messages.length - 1 && m.role === "assistant"}
                   />
                 ))}
-                {isLoading && messages[messages.length - 1]?.role === "user" && (
-                  <div
-                    className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[1.5px]"
-                    style={{ color: INK_SOFT }}
-                  >
-                    <Loader2 className="size-3 animate-spin" />
-                    Querying workbook…
-                  </div>
-                )}
+                {/* Live "working" indicator. Shows for the whole in-flight
+                    turn — crucially through the quiet gaps between beats, where
+                    each chart is its own server round-trip and the thread would
+                    otherwise look frozen after the last line streamed. */}
+                {isLoading && <ChatThinking />}
+                {/* Concluding terminator so a finished turn doesn't just stop
+                    on a chart. Only after an assistant turn, never mid-stream. */}
+                {!isLoading &&
+                  messages.length > 0 &&
+                  messages[messages.length - 1]?.role === "assistant" && <ChatDone />}
                 {failed && !isLoading && (
                   <div className="flex items-center justify-between gap-3 rounded-sm border border-[#f3c4be] bg-[#fdeeec] px-3 py-2 text-[12px] text-[#b03a2e]">
                     <span className="min-w-0 break-words">
