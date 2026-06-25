@@ -1,83 +1,72 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { TurnActivity } from "./use-turn-activity";
 
 // Same navy palette as the WC Intelligence bubble (kept inline so the
 // indicator renders identically wherever it's mounted).
-const NAVY_2 = "#2964a9";
 const NAVY_3 = "#418cc0";
 const INK_SOFT = "#4a5568";
 const LINE = "#e3e8f1";
 
-// Rotating status lines. With one tool call per turn each chart is its own
-// server round-trip, so between beats there's a real pause; cycling a label
-// (the way ChatGPT rotates "Thinking… / Searching…") makes the wait read as
-// progress rather than a hang.
-const PHASES = [
-  "Reading the workbook",
-  "Crunching the figures",
-  "Shaping the view",
-  "Composing the answer",
-];
+// Rotating ring of fading dots — the iOS/Claude-style activity spinner. Built
+// from positioned dots so it reads crisp at small sizes.
+function DotRing({ size = 18, color = NAVY_3 }: { size?: number; color?: string }) {
+  const dots = 8;
+  const dot = Math.max(2, Math.round(size * 0.15));
+  const radius = size * 0.42;
+  return (
+    <span
+      aria-hidden
+      className="relative inline-block shrink-0"
+      style={{ width: size, height: size, animation: "wcxSpin 0.9s linear infinite" }}
+    >
+      {Array.from({ length: dots }).map((_, i) => (
+        <span
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            width: dot,
+            height: dot,
+            left: "50%",
+            top: "50%",
+            background: color,
+            opacity: (i + 1) / dots,
+            transform: `rotate(${i * (360 / dots)}deg) translateY(-${radius}px)`,
+            transformOrigin: `${dot / 2}px ${dot / 2}px`,
+            marginLeft: -dot / 2,
+            marginTop: -dot / 2,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
 
 /**
- * Live "working" indicator shown at the bottom of the thread whenever a turn
- * is in flight — including the quiet gaps between beats while the model runs
- * the next step. A light bar sweeps across a small tile and the label shimmers
- * and rotates, so the user always has motion to watch.
+ * Live "working" indicator. The label and elapsed seconds come straight from
+ * the runtime's stream state (see useTurnActivity), so it names the real
+ * current action — a tool that's executing, or the quiet gap between beats —
+ * and steps aside while prose streams.
  */
-export function ChatThinking() {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setI((p) => (p + 1) % PHASES.length), 2000);
-    return () => clearInterval(id);
-  }, []);
-
+export function ChatActivity({ activity }: { activity: TurnActivity }) {
   return (
     <div className="flex items-center gap-2.5">
       <style jsx global>{`
-        @keyframes wcxThinkSweep {
-          0% {
-            transform: translateX(-120%);
-          }
-          100% {
-            transform: translateX(320%);
-          }
-        }
-        @keyframes wcxThinkShimmer {
-          0% {
-            background-position: 200% 0;
-          }
-          100% {
-            background-position: -200% 0;
+        @keyframes wcxSpin {
+          to {
+            transform: rotate(360deg);
           }
         }
       `}</style>
-      <div
-        className="relative h-6 w-6 shrink-0 overflow-hidden rounded-md"
-        style={{ border: `1px solid ${LINE}`, background: "#fff" }}
-        aria-hidden
-      >
-        <div
-          className="absolute inset-y-0 w-1/3"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${NAVY_3}, transparent)`,
-            animation: "wcxThinkSweep 1.15s ease-in-out infinite",
-          }}
-        />
-      </div>
+      <DotRing />
       <span
-        className="font-mono text-[10px] uppercase tracking-[1.4px]"
-        style={{
-          backgroundImage: `linear-gradient(90deg, ${INK_SOFT}, ${INK_SOFT} 35%, ${NAVY_2} 50%, ${INK_SOFT} 65%, ${INK_SOFT})`,
-          backgroundSize: "200% 100%",
-          WebkitBackgroundClip: "text",
-          backgroundClip: "text",
-          color: "transparent",
-          animation: "wcxThinkShimmer 1.6s linear infinite",
-        }}
+        className="font-mono text-[10.5px] tracking-[0.3px]"
+        style={{ color: INK_SOFT }}
       >
-        {PHASES[i]}…
+        {activity.label}…
+        {activity.seconds >= 2 && (
+          <span style={{ opacity: 0.55 }}>{`  ·  ${activity.seconds}s`}</span>
+        )}
       </span>
     </div>
   );

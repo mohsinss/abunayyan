@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import type { Message } from "ai";
 import { ChatMessage } from "./chat-message";
-import { ChatThinking, ChatDone } from "./chat-thinking";
+import { ChatActivity, ChatDone } from "./chat-thinking";
+import { useTurnActivity } from "./use-turn-activity";
 import { useStickToBottom } from "./use-stick-to-bottom";
 import { useBot } from "@/components/chatbots/use-bot";
 
@@ -139,6 +140,10 @@ export function WcxChat() {
     localStorage.removeItem(THREAD_KEY);
     resetThread();
   };
+
+  // Backend-accurate live activity (which tool is running / thinking gap),
+  // null while prose streams or when idle.
+  const activity = useTurnActivity(messages, isLoading);
 
   const panelRef = useRef<HTMLDivElement>(null);
   // Sticks to the bottom while streaming, releases when the user scrolls up.
@@ -369,11 +374,11 @@ export function WcxChat() {
                     streaming={isLoading && i === messages.length - 1 && m.role === "assistant"}
                   />
                 ))}
-                {/* Live "working" indicator. Shows for the whole in-flight
-                    turn — crucially through the quiet gaps between beats, where
-                    each chart is its own server round-trip and the thread would
-                    otherwise look frozen after the last line streamed. */}
-                {isLoading && <ChatThinking />}
+                {/* Live "working" indicator. Reflects the real stream state:
+                    it names the running tool, shows "Thinking…" through the
+                    quiet gaps between beats, and disappears while prose streams
+                    (re-emerging when the next step starts). */}
+                {activity && <ChatActivity activity={activity} />}
                 {/* Concluding terminator so a finished turn doesn't just stop
                     on a chart. Only after an assistant turn, never mid-stream. */}
                 {!isLoading &&

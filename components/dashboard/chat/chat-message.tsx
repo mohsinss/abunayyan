@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { type Message } from "ai";
 import { ChatChart, type ChartArgs } from "./chat-chart";
 import { ChatTable, type TableArgs } from "./chat-table";
@@ -28,6 +28,32 @@ const VISIBLE_TOOL_NAMES = new Set([
   "renderTimeline",
   "renderWaterfall",
 ]);
+
+// Silent data tools — they return no visual, but we surface each as a small
+// completed "step" row (Claude-style processing trail) so the reply shows the
+// work it did, interleaved with the prose and charts. Past tense: by the time
+// a step renders in the bubble its result has landed.
+const STEP_LABELS: Record<string, string> = {
+  wcxSnapshot: "Read the workbook",
+  wcxLookup: "Looked up the figure",
+  wcxSeries: "Pulled the trend",
+  wcxCompare: "Compared the numbers",
+  wcxAggregate: "Totalled the period",
+  wcxRank: "Ranked the SBUs",
+  wcxRecords: "Read the records",
+  wcxScenarioCalc: "Ran the scenario",
+};
+
+function ChatStep({ toolName }: { toolName: string }) {
+  const label = STEP_LABELS[toolName];
+  if (!label) return null;
+  return (
+    <div className="my-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[1px] text-atlas-ink-3">
+      <Check className="size-3 opacity-70" />
+      <span>{label}</span>
+    </div>
+  );
+}
 
 // Minimal markdown rendering — bold + inline code + line breaks. No full
 // markdown parser needed; responses are intentionally terse.
@@ -125,7 +151,9 @@ function renderTool(toolName: string, args: unknown, key: string): React.ReactNo
     case "renderWaterfall":
       return <ChatWaterfall key={key} args={args as WaterfallArgs} />;
     default:
-      return null;
+      // Silent data tools render as a step row; anything else (truly internal
+      // tools) renders nothing.
+      return <ChatStep key={key} toolName={toolName} />;
   }
 }
 
@@ -142,8 +170,12 @@ function ChatMessageImpl({ message, streaming = false }: { message: Message; str
   // placeholder instead.
   const invocations = !isUser ? (message.toolInvocations ?? []) : [];
   const hasVisibleTool = invocations.some((inv) => VISIBLE_TOOL_NAMES.has(inv.toolName));
+  const hasStep = invocations.some((inv) => inv.toolName in STEP_LABELS);
   const hasText = !!(message.content && message.content.length > 0);
-  const showRetrieving = !isUser && !hasText && !hasVisibleTool && invocations.length > 0;
+  // Only the truly-blank case (an internal tool in flight, no text/step/chart
+  // yet) needs the placeholder; the bottom activity indicator covers the rest.
+  const showRetrieving =
+    !isUser && !hasText && !hasVisibleTool && !hasStep && invocations.length > 0;
 
   return (
     <div className={`flex gap-2 ${isUser ? "justify-end" : "justify-start"}`}>
