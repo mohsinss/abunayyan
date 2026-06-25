@@ -104,6 +104,13 @@ async function runStep(
     temperature,
     messages: messages as Anthropic.MessageParam[],
     tools: tools as unknown as Anthropic.ToolUnion[],
+    // One tool call per turn. This is what produces the chat → chart →
+    // chat → chart rhythm: Claude emits all text first then all tool_use
+    // blocks within a turn, so parallel tool use collapses a whole answer
+    // into one text blob followed by a clump of charts. Capping the turn
+    // at a single tool forces each visual into its own step, preceded by
+    // its own narration — the way ChatGPT/Claude present analysis.
+    tool_choice: { type: "auto", disable_parallel_tool_use: true },
     stream: true,
   });
 
@@ -112,6 +119,38 @@ async function runStep(
   let stopReason: string | null = null;
   let inputTokens = 0;
   let outputTokens = 0;
+
+  // Word-level smoothing. Anthropic emits text_delta events in bursty
+  // multi-token lumps; writing them straight to the wire reveals text in
+  // visible chunks. We queue deltas and a pump drains them one word at a
+  // time with a small delay, giving the steady cadence the AI SDK runtime
+  // gets from smoothStream({ chunking: "word" }). We await the pump before
+  // returning so all text is flushed ahead of this step's tool_call parts.
+  let queue = "";
+  let streamEnded = false;
+  const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+  const pump = (async () => {
+    for (;;) {
+      // A complete word = leading whitespace + non-space run + one trailing
+      // whitespace. We only release a word once its trailing boundary has
+      // arrived, so we never split mid-token while the stream is live.
+      const m = queue.match(/^\s*\S+\s/);
+      if (m) {
+        onText(m[0]);
+        queue = queue.slice(m[0].length);
+        await sleep(12);
+        continue;
+      }
+      if (streamEnded) {
+        if (queue) {
+          onText(queue);
+          queue = "";
+        }
+        return;
+      }
+      await sleep(4);
+    }
+  })();
 
   for await (const event of stream) {
     switch (event.type) {
@@ -133,7 +172,7 @@ async function runStep(
       case "content_block_delta":
         if (event.delta.type === "text_delta") {
           text += event.delta.text;
-          onText(event.delta.text);
+          queue += event.delta.text;
         } else if (event.delta.type === "input_json_delta") {
           const tu = toolUses.find((t) => t.index === event.index);
           if (tu) tu.partialJson += event.delta.partial_json;
@@ -146,6 +185,10 @@ async function runStep(
       // message_stop / content_block_stop / ping: nothing to do
     }
   }
+
+  // Drain any buffered words before the caller emits tool_call parts.
+  streamEnded = true;
+  await pump;
 
   return { text, toolUses, stopReason, inputTokens, outputTokens };
 }

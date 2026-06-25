@@ -26,6 +26,8 @@ type StoredMessage = {
   content: string;
   createdAt: string;
   toolCalls?: Array<{ toolCallId: string; toolName: string; args: unknown }> | null;
+  // Ordered text/tool parts as they streamed (text → chart → text → chart).
+  parts?: Message["parts"] | null;
 };
 
 // DB message → useChat UIMessage. Stored tool calls are promoted to
@@ -48,6 +50,11 @@ function toUiMessage(m: StoredMessage): Message {
     content: m.content,
     createdAt: new Date(m.createdAt),
     ...(toolInvocations.length > 0 ? { toolInvocations } : {}),
+    // Restore the streamed order so a refreshed conversation keeps its
+    // chat → chart → chat → chart interleaving. The renderer prefers
+    // `parts` over content+toolInvocations; without this the bubble falls
+    // back to all-text-then-all-charts even though the live stream was right.
+    ...(Array.isArray(m.parts) && m.parts.length > 0 ? { parts: m.parts } : {}),
   };
 }
 

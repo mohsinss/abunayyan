@@ -38,10 +38,11 @@ async function main() {
       tools,
       systemPrompt: WCX_PROMPT,
       systemPromptVersion: nextVersion,
-      // Capped low: with the speed-first prompt the bot gathers in ~1 round
-      // and renders in the next, so 4 is ample headroom while preventing a
-      // runaway 8-round, 10-tool fan-out that takes 30s+ before any answer.
-      maxSteps: 4,
+      // One tool per turn (disable_parallel_tool_use) means each visual is
+      // its own step: framing+snapshot, then one render per beat, then a
+      // text closer. A 4-chart answer needs ~6 steps, so 8 gives headroom
+      // (an extra data tool + 4 charts + closer) without a runaway fan-out.
+      maxSteps: 8,
       updatedAt: new Date(),
     })
     .where(eq(schema.chatbots.id, bot.id));
