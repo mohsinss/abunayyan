@@ -379,11 +379,16 @@ export function WcxChat() {
                     quiet gaps between beats, and disappears while prose streams
                     (re-emerging when the next step starts). */}
                 {activity && <ChatActivity activity={activity} />}
-                {/* Concluding terminator so a finished turn doesn't just stop
-                    on a chart. Only after an assistant turn, never mid-stream. */}
+                {/* Concluding terminator so a finished analysis doesn't just
+                    stop on a chart. Only after an assistant turn that actually
+                    ran tools — a one-line reply/refusal gets no "end of
+                    analysis" footer — and never mid-stream. */}
                 {!isLoading &&
                   messages.length > 0 &&
-                  messages[messages.length - 1]?.role === "assistant" && <ChatDone />}
+                  messages[messages.length - 1]?.role === "assistant" &&
+                  (messages[messages.length - 1]?.toolInvocations?.length ?? 0) > 0 && (
+                    <ChatDone />
+                  )}
                 {failed && !isLoading && (
                   <div className="flex items-center justify-between gap-3 rounded-sm border border-[#f3c4be] bg-[#fdeeec] px-3 py-2 text-[12px] text-[#b03a2e]">
                     <span className="min-w-0 break-words">

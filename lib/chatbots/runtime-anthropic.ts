@@ -152,43 +152,47 @@ async function runStep(
     }
   })();
 
-  for await (const event of stream) {
-    switch (event.type) {
-      case "message_start":
-        inputTokens = event.message.usage?.input_tokens ?? 0;
-        // Output tokens come on message_delta; the count on message_start
-        // is the prompt usage only.
-        break;
-      case "content_block_start":
-        if (event.content_block.type === "tool_use") {
-          toolUses.push({
-            index: event.index,
-            id: event.content_block.id,
-            name: event.content_block.name,
-            partialJson: "",
-          });
-        }
-        break;
-      case "content_block_delta":
-        if (event.delta.type === "text_delta") {
-          text += event.delta.text;
-          queue += event.delta.text;
-        } else if (event.delta.type === "input_json_delta") {
-          const tu = toolUses.find((t) => t.index === event.index);
-          if (tu) tu.partialJson += event.delta.partial_json;
-        }
-        break;
-      case "message_delta":
-        stopReason = event.delta.stop_reason ?? null;
-        outputTokens = event.usage?.output_tokens ?? outputTokens;
-        break;
-      // message_stop / content_block_stop / ping: nothing to do
+  try {
+    for await (const event of stream) {
+      switch (event.type) {
+        case "message_start":
+          inputTokens = event.message.usage?.input_tokens ?? 0;
+          // Output tokens come on message_delta; the count on message_start
+          // is the prompt usage only.
+          break;
+        case "content_block_start":
+          if (event.content_block.type === "tool_use") {
+            toolUses.push({
+              index: event.index,
+              id: event.content_block.id,
+              name: event.content_block.name,
+              partialJson: "",
+            });
+          }
+          break;
+        case "content_block_delta":
+          if (event.delta.type === "text_delta") {
+            text += event.delta.text;
+            queue += event.delta.text;
+          } else if (event.delta.type === "input_json_delta") {
+            const tu = toolUses.find((t) => t.index === event.index);
+            if (tu) tu.partialJson += event.delta.partial_json;
+          }
+          break;
+        case "message_delta":
+          stopReason = event.delta.stop_reason ?? null;
+          outputTokens = event.usage?.output_tokens ?? outputTokens;
+          break;
+        // message_stop / content_block_stop / ping: nothing to do
+      }
     }
+  } finally {
+    // Always release the pump — on the error path too, otherwise its
+    // `for (;;)` would spin on setTimeout forever (a leaked timer loop that
+    // pins this invocation). The drain runs before the error propagates.
+    streamEnded = true;
+    await pump;
   }
-
-  // Drain any buffered words before the caller emits tool_call parts.
-  streamEnded = true;
-  await pump;
 
   return { text, toolUses, stopReason, inputTokens, outputTokens };
 }
@@ -242,9 +246,14 @@ export function streamViaAnthropicDirect(args: {
           // Ordered UI parts (text → tool → …) accumulated across steps, for
           // history interleaving (mirrors the AI SDK engine).
           const uiParts: unknown[] = [];
+          // Every step's prose, joined for the persisted `content`. toAnthropic-
+          // Messages rebuilds assistant history from `content` (not `parts`), and
+          // the prompt deliberately spreads narration across steps — so persisting
+          // only the last step's text would feed Claude just the closing sentence
+          // of each prior turn after a refresh. Accumulate the whole turn instead.
+          const textSegments: string[] = [];
           let totalIn = 0;
           let totalOut = 0;
-          let finalText = "";
           let finalStopReason: string | null = null;
           let stepIndex = 0;
           // Anthropic requires max_tokens; the AI SDK's nullable maxTokens
@@ -276,10 +285,10 @@ export function streamViaAnthropicDirect(args: {
 
               totalIn += step.inputTokens;
               totalOut += step.outputTokens;
-              finalText = step.text;
               finalStopReason = step.stopReason;
               if (step.text && step.text.trim()) {
                 uiParts.push({ type: "text", text: step.text });
+                textSegments.push(step.text.trim());
               }
 
               if (step.stopReason === "tool_use" && step.toolUses.length > 0) {
@@ -386,6 +395,7 @@ export function streamViaAnthropicDirect(args: {
             }
 
             const finishReason = toFinishReason(finalStopReason);
+            const fullText = textSegments.join("\n\n");
 
             writer.write(
               formatDataStreamPart("finish_message", {
@@ -401,7 +411,7 @@ export function streamViaAnthropicDirect(args: {
               bot,
               user,
               threadId,
-              text: finalText,
+              text: fullText,
               toolCalls: accumulatedToolCalls,
               parts: uiParts,
               usage: { promptTokens: totalIn, completionTokens: totalOut },
@@ -420,7 +430,7 @@ export function streamViaAnthropicDirect(args: {
               bot,
               user,
               threadId,
-              text: finalText,
+              text: textSegments.join("\n\n"),
               toolCalls: accumulatedToolCalls,
               parts: uiParts,
               usage: { promptTokens: totalIn, completionTokens: totalOut },

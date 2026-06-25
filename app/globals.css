@@ -97,3 +97,17 @@
     scroll-margin-top: 80px;
   }
 }
+
+/* Respect the OS "reduce motion" setting: collapse looping animations
+   (chat activity spinner, progress shimmers, pulses) and smooth-scroll so the
+   UI stays still for users who opt out of motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

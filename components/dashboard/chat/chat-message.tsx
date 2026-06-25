@@ -212,6 +212,14 @@ function ChatMessageImpl({ message, streaming = false }: { message: Message; str
             }
             if (part.type === "tool-invocation") {
               const inv = part.toolInvocation;
+              // Step rows are past-tense ("Read the workbook ✓"), so only show
+              // them once the result has landed — until then the present-tense
+              // bottom indicator owns the "running" state and the two would
+              // otherwise contradict each other. Charts carry their data in
+              // args and render at any state.
+              if (!VISIBLE_TOOL_NAMES.has(inv.toolName) && inv.state !== "result") {
+                return null;
+              }
               return renderTool(inv.toolName, inv.args as unknown, inv.toolCallId);
             }
             return null;

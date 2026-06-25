@@ -3,11 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import type { Message } from "ai";
 
-// Live, backend-accurate activity for an in-flight assistant turn. We read
-// the real stream state off the last assistant message — which tool is
-// running, whether prose is actively streaming, or whether we're in the quiet
-// gap between steps — and surface a Claude-style label for it. Nothing here is
-// faked on a timer: the phase always reflects what the runtime is doing.
+// Live activity for an in-flight assistant turn, read off the real stream
+// state of the last assistant message — which tool is running, whether prose
+// is actively streaming, or whether we're in the quiet gap between steps.
+// The phase is derived from events, not faked on a timer. Caveat: the slow
+// wcx DATA tools (DB round-trips) reliably surface their running state, so
+// "Reading the workbook…" is genuinely backend-accurate; the instant render
+// tools resolve within one throttle tick, so their running labels rarely
+// paint and the phase falls back to "Thinking…" — which is still honest about
+// where the time goes (the LLM round-trip between charts).
 
 export type TurnPhase = "thinking" | "tool" | "writing";
 

@@ -50,7 +50,7 @@ function DotRing({ size = 18, color = NAVY_3 }: { size?: number; color?: string 
  */
 export function ChatActivity({ activity }: { activity: TurnActivity }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-2.5" role="status" aria-live="polite">
       <style jsx global>{`
         @keyframes wcxSpin {
           to {
